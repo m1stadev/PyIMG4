@@ -51,15 +51,14 @@ class IM4M(dict):
                 else:
                     break
 
-            if tag.cls == asn1.Classes.Private:
-                print(f'\nObject type: Private {tag.nr}')
-            else:
-                try:
-                    print(
-                        f"\nObject type: {next(t.name for t in asn1.Numbers if t.value == tag.nr)}"
-                    )
-                except StopIteration:
-                    print(tag)
+            try:
+                print(
+                    f"\nObject type: {next(t.name for t in asn1.Numbers if t.value == tag.nr)}"
+                )
+            except StopIteration:
+                print(
+                    f"\nObject type: {next(t.name for t in asn1.Classes if t.value == tag.cls)} {tag.nr if tag.cls == asn1.Classes.Private else ''}"
+                )
 
             if tag.typ == asn1.Types.Constructed:
                 print('Entering object')

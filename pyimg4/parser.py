@@ -114,13 +114,10 @@ class IM4M(dict):
                 if isinstance(prop_data, bytes):
                     prop_data = prop_data.hex().removeprefix('0x')
 
-                if tag == 'MANP':
-                    self['properties'][prop_name] = prop_data
-                else:
-                    if tag not in self['signed'].keys():
-                        self['signed'][tag] = dict()
+                if tag not in self.keys():
+                    self[tag] = dict()
 
-                    self['signed'][tag].update({prop_name: prop_data})
+                self[tag][prop_name] = prop_data
 
                 for _ in range(2):
                     decoder.leave()
@@ -133,3 +130,24 @@ class IM4M(dict):
 
         self['RSA'] = decoder.read()[1].hex().removeprefix('0x')
         self['CERT'] = decoder.read()[1].hex().removeprefix('0x')
+
+    @property
+    def apnonce(self) -> Optional[str]:
+        props = self.get('MANP')
+
+        if isinstance(props, dict):
+            return props.get('BNCH')
+
+    @property
+    def sepnonce(self) -> Optional[str]:
+        props = self.get('MANP')
+
+        if isinstance(props, dict):
+            return props.get('snon')
+
+    @property
+    def ecid(self) -> Optional[int]:
+        props = self.get('MANP')
+
+        if isinstance(props, dict):
+            return props.get('ECID')

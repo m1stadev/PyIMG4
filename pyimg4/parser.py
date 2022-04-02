@@ -1,3 +1,5 @@
+from typing import Optional
+
 import asn1
 
 
@@ -20,15 +22,15 @@ class IM4P(dict):
         self['payload'] = decoder.read()[1]
 
     @property
-    def tag(self):
+    def tag(self) -> Optional[str]:
         return self.get('tag')
 
     @property
-    def description(self):
+    def description(self) -> Optional[str]:
         return self.get('description')
 
     @property
-    def payload(self):
+    def payload(self) -> Optional[bytes]:
         return self.get('payload')
 
 

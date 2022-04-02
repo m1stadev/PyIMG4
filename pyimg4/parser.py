@@ -33,46 +33,98 @@ class IM4P(dict):
 
 
 class IM4M(dict):
-    def __init__(
-        self, data: bytes
-    ) -> None:  # Right now, this just reads the IM4M and prints human-readable output
+    def __init__(self, data: bytes) -> None:
+        self['properties'] = dict()
+        self['signed'] = dict()
         decoder = asn1.Decoder()
         decoder.start(data)
 
-        level = 0
+        if decoder.peek().nr != asn1.Numbers.Sequence:
+            pass  # raise error
+
+        decoder.enter()
+
+        if decoder.read()[1] != 'IM4M':
+            pass  # raise error
+
+        decoder.read()  # Manifest version (0)
+        if decoder.peek().nr != asn1.Numbers.Set:
+            pass  # raise error
+
+        decoder.enter()
+
+        if decoder.peek().cls != asn1.Classes.Private:
+            pass  # raise error
+
+        decoder.enter()
+
+        if decoder.peek().nr != asn1.Numbers.Sequence:
+            pass
+
+        decoder.enter()
+        if decoder.read()[1] != 'MANB':  # Manifest body
+            pass  # raise error
+
+        if decoder.peek().nr != asn1.Numbers.Set:
+            pass  # raise error
+
+        decoder.enter()
         while True:
-            tag = decoder.peek()
-            if tag is None:
-                if level > 0:
-                    print('\nLeaving object')
-                    decoder.leave()
-                    level -= 1
-                    continue
-                else:
+            if decoder.eof():
+                break
+
+            if decoder.peek().cls != asn1.Classes.Private:
+                pass  # raise error
+
+            decoder.enter()
+
+            if decoder.peek().nr != asn1.Numbers.Sequence:
+                print(decoder.peek())
+                pass  # raise error
+
+            decoder.enter()
+
+            tag = decoder.read()[1]
+            if not isinstance(tag, str) or len(tag) != 4:
+                pass  # raise error
+
+            if decoder.peek().nr != asn1.Numbers.Set:
+                pass  # raise error
+
+            decoder.enter()
+
+            while True:
+                if decoder.eof():
                     break
 
-            try:
-                print(
-                    f"\nObject type: {next(t.name for t in asn1.Numbers if t.value == tag.nr)}"
-                )
-            except StopIteration:
-                print(
-                    f"\nObject type: {next(t.name for t in asn1.Classes if t.value == tag.cls)} {tag.nr if tag.cls == asn1.Classes.Private else ''}"
-                )
+                if decoder.peek().cls != asn1.Classes.Private:
+                    pass  # raise error
 
-            if tag.typ == asn1.Types.Constructed:
-                print('Entering object')
                 decoder.enter()
-                level += 1
-                continue
 
-            data = decoder.read()[1]
+                if decoder.peek().nr != asn1.Numbers.Sequence:
+                    pass  # raise error
 
-            if isinstance(data, bytes) and len(data) > 20:
-                print(f'Raw data with len: {len(data)}')
-            elif tag.nr == asn1.Numbers.Null:
-                print('No data')
-            else:
-                print(f'Data: {data}')
+                decoder.enter()
+                prop_name = decoder.read()[1]
+                if not isinstance(data, str) or len(data) != 4:
+                    pass  # raise error
 
-        print('\n\nEOF')
+                prop_data = decoder.read()[1]
+
+                if isinstance(prop_data, bytes):
+                    prop_data = prop_data.hex().removeprefix('0x')
+
+                if tag == 'MANP':
+                    self['properties'][prop_name] = prop_data
+                else:
+                    if tag not in self['signed'].keys():
+                        self['signed'][tag] = dict()
+
+                    self['signed'][tag].update({prop_name: prop_data})
+
+                for _ in range(2):
+                    decoder.leave()
+
+            for _ in range(3):
+                decoder.leave()

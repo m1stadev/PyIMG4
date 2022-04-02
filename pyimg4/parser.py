@@ -8,8 +8,7 @@ class IM4P(dict):
         decoder = asn1.Decoder()
         decoder.start(data)
 
-        tag = decoder.peek()
-        if tag.typ != asn1.Types.Constructed:
+        if decoder.peek().nr != asn1.Numbers.Sequence:
             pass  # raise error
 
         decoder.enter()
@@ -36,8 +35,6 @@ class IM4P(dict):
 
 class IM4M(dict):
     def __init__(self, data: bytes) -> None:
-        self['properties'] = dict()
-        self['signed'] = dict()
         decoder = asn1.Decoder()
         decoder.start(data)
 
@@ -153,3 +150,46 @@ class IM4M(dict):
 
         if isinstance(props, dict):
             return props.get('ECID')
+
+
+class IMG4(dict):
+    def __init__(self, data: bytes) -> None:
+        decoder = asn1.Decoder()
+        encoder = asn1.Encoder()
+
+        decoder.start(data)
+
+        if decoder.peek().nr != asn1.Numbers.Sequence:
+            pass  # raise error
+
+        decoder.enter()
+
+        if decoder.read()[1] != 'IMG4':
+            pass  # raise error
+
+        if decoder.peek().nr != asn1.Numbers.Sequence:
+            pass  # raise error
+
+        encoder.start()
+        encoder.write(
+            decoder.read()[1],
+            asn1.Numbers.Sequence,
+            asn1.Types.Constructed,
+            asn1.Classes.Universal,
+        )
+        self.im4p = IM4P(encoder.output())  # IM4P
+
+        tag = decoder.peek()
+        if tag.cls != asn1.Classes.Context or tag.typ != asn1.Types.Constructed:
+            pass  # raise error
+
+        decoder.enter()
+
+        encoder.start()
+        encoder.write(
+            decoder.read()[1],
+            asn1.Numbers.Sequence,
+            asn1.Types.Constructed,
+            asn1.Classes.Universal,
+        )
+        self.im4m = IM4M(encoder.output())  # IM4M

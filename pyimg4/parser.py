@@ -79,7 +79,6 @@ class IM4M(dict):
             decoder.enter()
 
             if decoder.peek().nr != asn1.Numbers.Sequence:
-                print(decoder.peek())
                 pass  # raise error
 
             decoder.enter()
@@ -128,3 +127,9 @@ class IM4M(dict):
 
             for _ in range(3):
                 decoder.leave()
+
+        for _ in range(4):
+            decoder.leave()
+
+        self['RSA'] = decoder.read()[1].hex().removeprefix('0x')
+        self['CERT'] = decoder.read()[1].hex().removeprefix('0x')

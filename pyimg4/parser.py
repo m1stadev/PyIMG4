@@ -1,3 +1,4 @@
+from .errors import ASN1Error, UnexpectedDataError
 from typing import Optional
 
 import asn1
@@ -9,12 +10,13 @@ class IM4P(dict):
         decoder.start(data)
 
         if decoder.peek().nr != asn1.Numbers.Sequence:
-            pass  # raise error
+            raise ASN1Error(decoder.peek(), asn1.Numbers.Sequence)
 
         decoder.enter()
 
-        if decoder.read()[1] != 'IM4P':
-            pass  # raise error
+        data = decoder.read()[1]
+        if data != 'IM4P':
+            raise UnexpectedDataError('IM4P', data)
 
         self['tag'] = decoder.read()[1]
         self['description'] = decoder.read()[1]
@@ -39,33 +41,36 @@ class IM4M(dict):
         decoder.start(data)
 
         if decoder.peek().nr != asn1.Numbers.Sequence:
-            pass  # raise error
+            raise ASN1Error(decoder.peek(), asn1.Numbers.Sequence)
 
         decoder.enter()
 
-        if decoder.read()[1] != 'IM4M':
-            pass  # raise error
+        data = decoder.read()[1]
+        if data != 'IM4M':
+            raise UnexpectedDataError('IM4M', data)
 
         decoder.read()  # Manifest version (0)
+
         if decoder.peek().nr != asn1.Numbers.Set:
-            pass  # raise error
+            raise ASN1Error(decoder.peek(), asn1.Numbers.Set)
 
         decoder.enter()
 
         if decoder.peek().cls != asn1.Classes.Private:
-            pass  # raise error
+            raise ASN1Error(decoder.peek(), asn1.Classes.Private)
 
         decoder.enter()
 
         if decoder.peek().nr != asn1.Numbers.Sequence:
-            pass
+            raise ASN1Error(decoder.peek(), asn1.Numbers.Sequence)
 
         decoder.enter()
-        if decoder.read()[1] != 'MANB':  # Manifest body
-            pass  # raise error
+        data = decoder.read()[1]
+        if data != 'MANB':  # Manifest body
+            raise UnexpectedDataError('MANB', data)
 
         if decoder.peek().nr != asn1.Numbers.Set:
-            pass  # raise error
+            raise ASN1Error(decoder.peek(), asn1.Numbers.Set)
 
         decoder.enter()
         while True:
@@ -73,21 +78,24 @@ class IM4M(dict):
                 break
 
             if decoder.peek().cls != asn1.Classes.Private:
-                pass  # raise error
+                raise ASN1Error(decoder.peek(), asn1.Classes.Private)
 
             decoder.enter()
 
             if decoder.peek().nr != asn1.Numbers.Sequence:
-                pass  # raise error
+                raise ASN1Error(decoder.peek(), asn1.Numbers.Sequence)
 
             decoder.enter()
 
-            tag = decoder.read()[1]
-            if not isinstance(tag, str) or len(tag) != 4:
-                pass  # raise error
+            data = decoder.read()[1]
+            if not isinstance(data, str):
+                raise UnexpectedDataError('string', data)
+
+            if len(data) != 4:
+                raise UnexpectedDataError('string with len of 4', data)
 
             if decoder.peek().nr != asn1.Numbers.Set:
-                pass  # raise error
+                raise ASN1Error(decoder.peek(), asn1.Numbers.Set)
 
             decoder.enter()
 
@@ -96,27 +104,29 @@ class IM4M(dict):
                     break
 
                 if decoder.peek().cls != asn1.Classes.Private:
-                    pass  # raise error
+                    raise ASN1Error(decoder.peek(), asn1.Classes.Private)
 
                 decoder.enter()
 
                 if decoder.peek().nr != asn1.Numbers.Sequence:
-                    pass  # raise error
+                    raise ASN1Error(decoder.peek(), asn1.Numbers.Sequence)
 
                 decoder.enter()
                 prop_name = decoder.read()[1]
-                if not isinstance(data, str) or len(data) != 4:
-                    pass  # raise error
+                if not isinstance(prop_name, str):
+                    raise UnexpectedDataError('string', prop_name)
+
+                if len(prop_name) != 4:
+                    raise UnexpectedDataError('string with len of 4', prop_name)
 
                 prop_data = decoder.read()[1]
-
                 if isinstance(prop_data, bytes):
                     prop_data = prop_data.hex().removeprefix('0x')
 
-                if tag not in self.keys():
-                    self[tag] = dict()
+                if data not in self.keys():
+                    self[data] = dict()
 
-                self[tag][prop_name] = prop_data
+                self[data][prop_name] = prop_data
 
                 for _ in range(2):
                     decoder.leave()
@@ -160,15 +170,16 @@ class IMG4(dict):
         decoder.start(data)
 
         if decoder.peek().nr != asn1.Numbers.Sequence:
-            pass  # raise error
+            raise ASN1Error(decoder.peek(), asn1.Numbers.Sequence)
 
         decoder.enter()
 
-        if decoder.read()[1] != 'IMG4':
-            pass  # raise error
+        data = decoder.read()[1]
+        if data != 'IMG4':
+            raise UnexpectedDataError('IM4P', data)
 
         if decoder.peek().nr != asn1.Numbers.Sequence:
-            pass  # raise error
+            raise ASN1Error(decoder.peek(), asn1.Numbers.Sequence)
 
         encoder.start()
         encoder.write(
@@ -180,8 +191,8 @@ class IMG4(dict):
         self.im4p = IM4P(encoder.output())  # IM4P
 
         tag = decoder.peek()
-        if tag.cls != asn1.Classes.Context or tag.typ != asn1.Types.Constructed:
-            pass  # raise error
+        if tag.cls != asn1.Classes.Context:
+            raise ASN1Error(decoder.peek(), asn1.Classes.Context)
 
         decoder.enter()
 

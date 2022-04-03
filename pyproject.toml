@@ -25,6 +25,8 @@ pyimg4 = "pyimg4.__main__:main"
 [tool.poetry.dependencies]
 python = "^3.9"
 asn1 = "^2.5.0"
+lzss = "^0.3"
+pyliblzfse = "^0.4.1"
 
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"

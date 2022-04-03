@@ -2,6 +2,21 @@ from .errors import ASN1Error, UnexpectedDataError
 from typing import Optional
 
 import asn1
+import liblzfse
+import lzss
+
+
+class IM4PData:
+    def __init__(self, data: bytes) -> None:
+        self.data = data
+
+    @property
+    def decompressed_data(self) -> Optional[bytes]:
+        if b'lzss' in self.data:
+            return lzss.decompress(self.data)
+
+        elif b'bvx$' in self.data:
+            return liblzfse.decompress(self.data)
 
 
 class IM4P(dict):
@@ -20,7 +35,7 @@ class IM4P(dict):
 
         self['tag'] = decoder.read()[1]
         self['description'] = decoder.read()[1]
-        self['payload'] = decoder.read()[1]
+        self['payload'] = IM4PData(decoder.read()[1])
 
     @property
     def tag(self) -> Optional[str]:

@@ -19,8 +19,14 @@ class IM4PData:
             return liblzfse.decompress(self.data)
 
 
-class IM4P(dict):
-    def __init__(self, data: bytes) -> None:
+class IM4P:
+    def __init__(self, data: bytes = None) -> None:
+        if data:
+            self._data = data
+
+            self.parse(data)
+
+    def parse(self, data: bytes) -> None:
         decoder = asn1.Decoder()
         decoder.start(data)
 
@@ -33,21 +39,48 @@ class IM4P(dict):
         if data != 'IM4P':
             raise UnexpectedDataError('IM4P', data)
 
-        self['tag'] = decoder.read()[1]
-        self['description'] = decoder.read()[1]
-        self['payload'] = IM4PData(decoder.read()[1])
+        fourcc = decoder.read()[1]
+        if not isinstance(fourcc, str):
+            raise UnexpectedDataError('string', fourcc)
 
-    @property
-    def tag(self) -> Optional[str]:
-        return self.get('tag')
+        if len(fourcc) != 4:
+            raise UnexpectedDataError('string with len of 4', fourcc)
 
-    @property
-    def description(self) -> Optional[str]:
-        return self.get('description')
+        self.tag = fourcc
+        self.description = decoder.read()[1]
+        self.payload = IM4PData(decoder.read()[1])
 
-    @property
-    def payload(self) -> Optional[bytes]:
-        return self.get('payload')
+    def create(self, fourcc: str, payload: bytes, description: str = None) -> bytes:
+        encoder = asn1.Encoder()
+        encoder.start()
+
+        encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+        encoder.write(
+            'IM4P', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
+        )
+
+        if not isinstance(fourcc, str):
+            raise UnexpectedDataError('string', fourcc)
+
+        if len(fourcc) != 4:
+            raise UnexpectedDataError('string with len of 4', fourcc)
+
+        encoder.write(
+            fourcc, asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
+        )
+
+        if description is None:
+            description = str()
+
+        encoder.write(
+            description,
+            asn1.Numbers.IA5String,
+            asn1.Types.Primitive,
+            asn1.Classes.Universal,
+        )
+
+        encoder.leave()
+        return encoder.output()
 
 
 class IM4M(dict):

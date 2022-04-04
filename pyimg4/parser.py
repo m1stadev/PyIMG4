@@ -1,4 +1,4 @@
-from .errors import ASN1Error, UnexpectedDataError
+from .errors import UnexpectedDataError, UnexpectedTagError
 from .types import Compression
 from typing import Optional
 
@@ -42,7 +42,7 @@ class ManifestProperty(_PyIMG4):
         self.decoder.start(self.raw_data)
 
         if self.decoder.peek().nr != asn1.Numbers.Sequence:
-            raise ASN1Error(self.decoder.peek(), asn1.Numbers.Sequence)
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
 
         self.decoder.enter()
         self.name = self._verify_fourcc(self.decoder.read()[1])
@@ -61,7 +61,7 @@ class ManifestImageData(_PyIMG4):
         self.decoder.start(self.raw_data)
 
         if self.decoder.peek().cls != asn1.Classes.Private:
-            raise ASN1Error(self.decoder.peek(), asn1.Classes.Private)
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Classes.Private)
 
         while not self.decoder.eof():
             self.properties.append(ManifestProperty(self.decoder.read()[1]))
@@ -91,26 +91,26 @@ class IM4M(_PyIMG4):
         self.decoder.start(self.raw_data)
 
         if self.decoder.peek().nr != asn1.Numbers.Sequence:
-            raise ASN1Error(self.decoder.peek(), asn1.Numbers.Sequence)
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
 
         self.decoder.enter()
         self._verify_fourcc(self.decoder.read()[1], 'IM4M')
 
         if self.decoder.read()[0].nr != asn1.Numbers.Integer:
-            raise ASN1Error(self.decoder.peek(), asn1.Numbers.Integer)
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Integer)
 
         if self.decoder.peek().nr != asn1.Numbers.Set:
-            raise ASN1Error(self.decoder.peek(), asn1.Numbers.Set)
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Set)
 
         self.decoder.enter()
 
         if self.decoder.peek().cls != asn1.Classes.Private:
-            raise ASN1Error(self.decoder.peek(), asn1.Classes.Private)
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Classes.Private)
 
         self.decoder.enter()
 
         if self.decoder.peek().nr != asn1.Numbers.Sequence:
-            raise ASN1Error(self.decoder.peek(), asn1.Numbers.Sequence)
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
 
         self.decoder.enter()
         self._verify_fourcc(
@@ -118,7 +118,7 @@ class IM4M(_PyIMG4):
         )  # Verify MANB (Manifest Body) tag
 
         if self.decoder.peek().nr != asn1.Numbers.Set:
-            raise ASN1Error(self.decoder.peek(), asn1.Numbers.Set)
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Set)
 
         self.decoder.enter()
         while True:
@@ -126,18 +126,18 @@ class IM4M(_PyIMG4):
                 break
 
             if self.decoder.peek().cls != asn1.Classes.Private:
-                raise ASN1Error(self.decoder.peek(), asn1.Classes.Private)
+                raise UnexpectedTagError(self.decoder.peek(), asn1.Classes.Private)
 
             self.decoder.enter()
 
             if self.decoder.peek().nr != asn1.Numbers.Sequence:
-                raise ASN1Error(self.decoder.peek(), asn1.Numbers.Sequence)
+                raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
 
             self.decoder.enter()
             fourcc = self._verify_fourcc(self.decoder.read()[1])
 
             if self.decoder.peek().nr != asn1.Numbers.Set:
-                raise ASN1Error(self.decoder.peek(), asn1.Numbers.Set)
+                raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Set)
 
             if fourcc == 'MANP':
                 self.decoder.enter()
@@ -225,7 +225,7 @@ class IM4P(_PyIMG4):
         self.decoder.start(self.raw_data)
 
         if self.decoder.peek().nr != asn1.Numbers.Sequence:
-            raise ASN1Error(self.decoder.peek(), asn1.Numbers.Sequence)
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
 
         self.decoder.enter()
         self._verify_fourcc(
@@ -233,19 +233,19 @@ class IM4P(_PyIMG4):
         )  # Verify IM4P (IMG4 Payload) tag
 
         if self.decoder.peek().nr != asn1.Numbers.IA5String:
-            raise ASN1Error(self.decoder.peek(), asn1.Numbers.IA5String)
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.IA5String)
 
         self.fourcc = self._verify_fourcc(
             self.decoder.read()[1]
         )  # Will raise error if tag is invalid
 
         if self.decoder.peek().nr != asn1.Numbers.IA5String:
-            raise ASN1Error(self.decoder.peek(), asn1.Numbers.IA5String)
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.IA5String)
 
         self.description = self.decoder.read()[1]
 
         if self.decoder.peek().nr != asn1.Numbers.OctetString:
-            raise ASN1Error(self.decoder.peek(), asn1.Numbers.OctetString)
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.OctetString)
 
         self.payload = IM4PData(self.decoder.read()[1])
 
@@ -291,13 +291,13 @@ class IMG4(_PyIMG4):
         self.encoder.start()
 
         if self.decoder.peek().nr != asn1.Numbers.Sequence:
-            raise ASN1Error(self.decoder.peek(), asn1.Numbers.Sequence)
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
 
         self.decoder.enter()
         self._verify_fourcc(self.decoder.read()[1], 'IMG4')  # Verify IMG4 tag
 
         if self.decoder.peek().nr != asn1.Numbers.Sequence:
-            raise ASN1Error(self.decoder.peek(), asn1.Numbers.Sequence)
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
 
         self.encoder.write(
             self.decoder.read()[1],
@@ -308,7 +308,7 @@ class IMG4(_PyIMG4):
         self.im4p = IM4P(self.encoder.output())  # IM4P
 
         if self.decoder.peek().cls != asn1.Classes.Context:
-            raise ASN1Error(self.decoder.peek(), asn1.Classes.Context)
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Classes.Context)
 
         self.decoder.enter()
 

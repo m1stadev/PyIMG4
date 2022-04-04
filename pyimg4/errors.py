@@ -6,7 +6,15 @@ class PyIMG4Error(Exception):
     pass
 
 
-class ASN1Error(PyIMG4Error):
+class UnexpectedDataError(PyIMG4Error):
+    def __init__(self, expect: str, real: Any) -> NoReturn:
+        if not isinstance(real, (float, int)) and len(real) > 15:
+            real = f'{type(real).__name__} with len of {len(real)}'
+
+        super().__init__(f"Expected data: {expect}, got: {real}")
+
+
+class UnexpectedTagError(PyIMG4Error):
     def __init__(self, tag: Tag, valid: Union[Classes, Numbers]) -> NoReturn:
         try:
             tag_type = next(t.name for t in Numbers if t.value == tag.nr)
@@ -19,11 +27,3 @@ class ASN1Error(PyIMG4Error):
             expected_type = next(t.name for t in Classes if t.value == tag.cls)
 
         super().__init__(f"Expected tag of type {expected_type}, got {tag_type}")
-
-
-class UnexpectedDataError(PyIMG4Error):
-    def __init__(self, expect: str, real: Any) -> NoReturn:
-        if not isinstance(real, (float, int)) and len(real) > 15:
-            real = f'{type(real).__name__} with len of {len(real)}'
-
-        super().__init__(f"Expected data: {expect}, got: {real}")

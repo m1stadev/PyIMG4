@@ -38,6 +38,9 @@ class ManifestProperty(PyIMG4):
         self.value = None
         self._parse()
 
+    def __repr__(self) -> str:
+        return f'ManifestProperty({self.name}={self.value})'
+
     def _parse(self) -> None:
         self.decoder.start(self.raw_data)
 
@@ -56,6 +59,9 @@ class ManifestImageData(PyIMG4):
         self.fourcc = fourcc
         self.properties: list[ManifestProperty] = list()
         self._parse()
+
+    def __repr__(self) -> str:
+        return f'ManifestImageData(fourcc={self.fourcc})'
 
     def _parse(self) -> None:
         self.decoder.start(self.raw_data)

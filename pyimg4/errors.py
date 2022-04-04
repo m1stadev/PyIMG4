@@ -1,5 +1,5 @@
 from asn1 import Classes, Numbers, Tag
-from typing import Any, Union
+from typing import Any, NoReturn, Union
 
 
 class PyIMG4Error(Exception):
@@ -7,7 +7,7 @@ class PyIMG4Error(Exception):
 
 
 class ASN1Error(PyIMG4Error):
-    def __init__(self, tag: Tag, valid: Union[Classes, Numbers]) -> None:
+    def __init__(self, tag: Tag, valid: Union[Classes, Numbers]) -> NoReturn:
         try:
             tag_type = next(t.name for t in Numbers if t.value == tag.nr)
         except StopIteration:
@@ -18,11 +18,11 @@ class ASN1Error(PyIMG4Error):
         if isinstance(valid, Classes):
             expected_type = next(t.name for t in Classes if t.value == tag.cls)
 
-        super().__init__(f"Expect tag of type {expected_type}, got {tag_type}")
+        super().__init__(f"Expected tag of type {expected_type}, got {tag_type}")
 
 
 class UnexpectedDataError(PyIMG4Error):
-    def __init__(self, expect: str, real: Any) -> None:
+    def __init__(self, expect: str, real: Any) -> NoReturn:
         if not isinstance(real, (float, int)) and len(real) > 15:
             real = f'{type(real).__name__} with len of {len(real)}'
 

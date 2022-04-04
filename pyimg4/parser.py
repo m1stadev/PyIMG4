@@ -7,7 +7,7 @@ import liblzfse
 import lzss
 
 
-class _PyIMG4:
+class PyIMG4:
     def __init__(self, data: bytes = None) -> None:
         self.raw_data = data
 
@@ -30,7 +30,7 @@ class _PyIMG4:
         return fourcc
 
 
-class ManifestProperty(_PyIMG4):
+class ManifestProperty(PyIMG4):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
@@ -49,7 +49,7 @@ class ManifestProperty(_PyIMG4):
         self.value = self.decoder.read()[1]
 
 
-class ManifestImageData(_PyIMG4):
+class ManifestImageData(PyIMG4):
     def __init__(self, fourcc: str, data: bytes) -> None:
         super().__init__(data)
 
@@ -67,7 +67,7 @@ class ManifestImageData(_PyIMG4):
             self.properties.append(ManifestProperty(self.decoder.read()[1]))
 
 
-class IM4M(_PyIMG4):
+class IM4M(PyIMG4):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
@@ -187,7 +187,7 @@ class IM4M(_PyIMG4):
         return prop.value
 
 
-class IM4PData(_PyIMG4):
+class IM4PData(PyIMG4):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
@@ -211,7 +211,7 @@ class IM4PData(_PyIMG4):
             return liblzfse.decompress(self.raw_data)
 
 
-class IM4P(_PyIMG4):
+class IM4P(PyIMG4):
     def __init__(self, data: bytes = None) -> None:
         super().__init__(data)
 
@@ -277,7 +277,7 @@ class IM4P(_PyIMG4):
         return self.encoder.output()
 
 
-class IMG4(_PyIMG4):
+class IMG4(PyIMG4):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 

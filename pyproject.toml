@@ -3,7 +3,7 @@ name = "pyimg4"
 version = "0.1"
 description = "A Python library/CLI tool for parsing Apple's IMG4 format."
 authors = ["m1stadev <adamhamdi31@gmail.com>"]
-license = "BSD-3-Clause"
+license = "MIT"
 readme = "README.md"
 repository = "https://github.com/m1stadev/pyimg4"
 keywords = ["ios", "jailbreak", "iboot", "img4"]
@@ -19,8 +19,8 @@ packages = [
     { include = "pyimg4" }
 ]
 
-[tool.poetry.scripts]
-pyimg4 = "pyimg4.__main__:main"
+#[tool.poetry.scripts]
+#pyimg4 = "pyimg4.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.9"

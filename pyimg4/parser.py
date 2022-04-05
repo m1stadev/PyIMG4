@@ -312,7 +312,7 @@ class IM4P(PyIMG4):
 
                 self.keybags.append(Keybag(kbag_decoder.read()[1], gt))
 
-    def create(self, fourcc: str, payload: bytes, description: str = '') -> bytes:
+    def create(self, fourcc: str, payload: IM4PData, description: str = '') -> bytes:
         self.encoder.start()
 
         self.encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
@@ -321,7 +321,6 @@ class IM4P(PyIMG4):
         )
 
         self._verify_fourcc(fourcc)
-
         self.encoder.write(
             fourcc, asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
         )
@@ -332,6 +331,29 @@ class IM4P(PyIMG4):
             asn1.Types.Primitive,
             asn1.Classes.Universal,
         )
+
+        self.encoder.write(
+            payload.raw_data,
+            asn1.Numbers.OctetString,
+            asn1.Types.Primitive,
+            asn1.Classes.Universal,
+        )
+
+        if payload.compression == Compression.LZFSE:
+            self.encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+
+            self.encoder.write(
+                1, asn1.Numbers.Integer, asn1.Types.Primitive, asn1.Classes.Universal
+            )
+
+            self.encoder.write(
+                len(payload.decompress()),
+                asn1.Numbers.Integer,
+                asn1.Types.Primitive,
+                asn1.Classes.Universal,
+            )
+
+            self.encoder.leave()
 
         self.encoder.leave()
         return self.encoder.output()

@@ -1,5 +1,5 @@
 from .errors import UnexpectedDataError, UnexpectedTagError
-from .types import Compression
+from .types import Compression, GIDKeyType
 from typing import Optional
 
 import asn1
@@ -218,16 +218,19 @@ class IM4PData(PyIMG4):
 
 
 class Keybag(PyIMG4):
-    def __init__(self, data: bytes) -> None:
+    def __init__(self, data: bytes, gid_type: GIDKeyType) -> None:
         super().__init__(data)
 
         self.iv = None
         self.key = None
+        self.type = gid_type
 
         self._parse()
 
     def __repr__(self) -> str:
-        return f'KeyBag(iv={self.iv.hex()}, key={self.key.hex()})'
+        return (
+            f'KeyBag(iv={self.iv.hex()}, key={self.key.hex()}, type={self.type.name})'
+        )
 
     def _parse(self) -> None:
         self.decoder.start(self.raw_data)
@@ -301,11 +304,11 @@ class IM4P(PyIMG4):
 
             kbag_decoder.enter()
 
-            while not kbag_decoder.eof():
+            for gt in GIDKeyType:
                 if kbag_decoder.peek().nr != asn1.Numbers.Sequence:
                     raise UnexpectedTagError(kbag_decoder.peek(), asn1.Numbers.Sequence)
 
-                self.keybags.append(Keybag(kbag_decoder.read()[1]))
+                self.keybags.append(Keybag(kbag_decoder.read()[1], gt))
 
     def create(self, fourcc: str, payload: bytes, description: str = '') -> bytes:
         self.encoder.start()

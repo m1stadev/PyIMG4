@@ -32,7 +32,6 @@ A Python library/CLI tool for parsing Apple's IMG4 format.
 
 ## TODO
 - Finish IM4P creation
-- Implement payload decryption
 - Implement IMG4 creation
 - Write CLI tool
 

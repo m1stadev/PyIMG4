@@ -1,5 +1,6 @@
 from .errors import UnexpectedDataError, UnexpectedTagError
 from .types import Compression, GIDKeyType
+from Crypto.Cipher import AES
 from typing import Optional
 
 import asn1
@@ -198,7 +199,7 @@ class IM4PData(PyIMG4):
         super().__init__(data)
 
     def __repr__(self) -> str:
-        return f'IM4PData(payload length={len(self.payload)}, compression={next(c.name for c in Compression if c.value == self.compression)})'
+        return f'IM4PData(payload length={len(self.raw_data)}, compression={next(c.name for c in Compression if c.value == self.compression)})'
 
     @property
     def compression(self) -> Compression:
@@ -215,6 +216,9 @@ class IM4PData(PyIMG4):
             return lzss.decompress(self.raw_data)
         elif compression_type == Compression.LZFSE:
             return liblzfse.decompress(self.raw_data)
+
+    def decrypt(self, iv: bytes, key: bytes) -> bytes:
+        return AES.new(key, AES.MODE_CBC, iv).decrypt(self.raw_data)
 
 
 class Keybag(PyIMG4):

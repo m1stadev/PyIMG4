@@ -312,7 +312,7 @@ class IM4P(PyIMG4):
 
                 self.keybags.append(Keybag(kbag_decoder.read()[1], gt))
 
-    def create(self, fourcc: str, payload: IM4PData, description: str = '') -> bytes:
+    def create(self, fourcc: str, description: str, payload: IM4PData) -> bytes:
         self.encoder.start()
 
         self.encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)

@@ -95,6 +95,14 @@ docs = ["Sphinx (>=4)", "furo (>=2021.7.5b38)", "proselint (>=0.10.2)", "sphinx-
 test = ["appdirs (==1.4.4)", "pytest (>=6)", "pytest-cov (>=2.7)", "pytest-mock (>=3.6)"]
 
 [[package]]
+name = "pyaes"
+version = "1.6.1"
+description = "Pure-Python Implementation of the AES block-cipher and common modes of operation"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "pyliblzfse"
 version = "0.4.1"
 description = "Python bindings for the LZFSE reference implementation"
@@ -121,7 +129,7 @@ python-versions = ">=3.6"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "ead7547b02edd25a28b986379cbfd026b41fdd3efda28dbff1c7fd7544db4320"
+content-hash = "00c127d07dcea71ebcd32710557931c85ddc69cf860cd1779fb92c4746afb758"
 
 [metadata.files]
 asn1 = [
@@ -180,6 +188,9 @@ pathspec = [
 platformdirs = [
     {file = "platformdirs-2.5.1-py3-none-any.whl", hash = "sha256:bcae7cab893c2d310a711b70b24efb93334febe65f8de776ee320b517471e227"},
     {file = "platformdirs-2.5.1.tar.gz", hash = "sha256:7535e70dfa32e84d4b34996ea99c5e432fa29a708d0f4e394bbcb2a8faa4f16d"},
+]
+pyaes = [
+    {file = "pyaes-1.6.1.tar.gz", hash = "sha256:02c1b1405c38d3c370b085fb952dd8bea3fadcee6411ad99f312cc129c536d8f"},
 ]
 pyliblzfse = [
     {file = "pyliblzfse-0.4.1-cp36-cp36m-macosx_10_6_intel.whl", hash = "sha256:69439a557a2979f18b816f7ccfcfdd2dc2021612811213ab569d0b35f1a04c22"},

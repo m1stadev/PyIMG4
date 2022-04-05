@@ -26,6 +26,7 @@ packages = [
 python = "^3.9"
 asn1 = "^2.5.0"
 lzss = "^0.3"
+pyaes = "^1.6.1"
 pyliblzfse = "^0.4.1"
 
 [tool.poetry.dev-dependencies]

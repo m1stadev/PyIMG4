@@ -31,7 +31,7 @@ A Python library/CLI tool for parsing Apple's IMG4 format.
     - Requires [Poetry](https://python-poetry.org)
 
 ## TODO
-- Finish IM4P parsing
+- Finish IM4P creation
 - Implement IMG4 creation
 - Write CLI tool
 

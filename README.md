@@ -26,8 +26,10 @@ A Python library/CLI tool for parsing Apple's <a href="https://www.theiphonewiki
 - Python 3.9 or higher
 
 ## Installation
-- ```python3 -m pip install -U pyimg4```
-- Local installation: `./install.sh`
+- Install from [PyPI](https://pypi.org/project/pyimg4/):
+    - ```python3 -m pip install -U pyimg4```
+- Local installation:
+    - `./install.sh`
     - Requires [Poetry](https://python-poetry.org)
 
 ## TODO

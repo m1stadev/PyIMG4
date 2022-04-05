@@ -44,8 +44,8 @@ def main() -> None:
         )
 
     print(f"  ECID (hex): {hex(im4m.ecid).removeprefix('0x')}")
-    print(f"  ApNonce: {im4m.apnonce.hex().removeprefix('0x')}")
-    print(f"  SepNonce: {im4m.sepnonce.hex().removeprefix('0x')}")
+    print(f"  ApNonce: {im4m.apnonce}")
+    print(f"  SepNonce: {im4m.sepnonce}")
 
 
 if __name__ == '__main__':

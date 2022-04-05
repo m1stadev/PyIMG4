@@ -227,7 +227,7 @@ class Keybag(PyIMG4):
         self._parse()
 
     def __repr__(self) -> str:
-        return f'KeyBag(iv={self.iv.hex()}, keys={self.key.hex()})'
+        return f'KeyBag(iv={self.iv.hex()}, key={self.key.hex()})'
 
     def _parse(self) -> None:
         self.decoder.start(self.raw_data)

@@ -173,7 +173,7 @@ class IM4M(PyIMG4):
         except StopIteration:
             return None
 
-        return prop.value
+        return prop.value.hex().removeprefix('0x')
 
     @property
     def sepnonce(self) -> Optional[str]:
@@ -182,7 +182,7 @@ class IM4M(PyIMG4):
         except StopIteration:
             return None
 
-        return prop.value
+        return prop.value.hex().removeprefix('0x')
 
     @property
     def ecid(self) -> Optional[int]:

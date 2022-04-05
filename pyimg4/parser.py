@@ -10,7 +10,7 @@ import lzss
 
 class PyIMG4:
     def __init__(self, data: bytes = None) -> None:
-        self.raw_data = data
+        self.data = data
 
         self.decoder = asn1.Decoder()
         self.encoder = asn1.Encoder()
@@ -43,7 +43,7 @@ class ManifestProperty(PyIMG4):
         return f'ManifestProperty({self.name}={self.value})'
 
     def _parse(self) -> None:
-        self.decoder.start(self.raw_data)
+        self.decoder.start(self.data)
 
         if self.decoder.peek().nr != asn1.Numbers.Sequence:
             raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
@@ -65,7 +65,7 @@ class ManifestImageData(PyIMG4):
         return f'ManifestImageData(fourcc={self.fourcc})'
 
     def _parse(self) -> None:
-        self.decoder.start(self.raw_data)
+        self.decoder.start(self.data)
 
         if self.decoder.peek().cls != asn1.Classes.Private:
             raise UnexpectedTagError(self.decoder.peek(), asn1.Classes.Private)
@@ -95,7 +95,7 @@ class IM4M(PyIMG4):
         return rep[:-2] + ')'
 
     def _parse(self) -> None:
-        self.decoder.start(self.raw_data)
+        self.decoder.start(self.data)
 
         if self.decoder.peek().nr != asn1.Numbers.Sequence:
             raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
@@ -199,26 +199,27 @@ class IM4PData(PyIMG4):
         super().__init__(data)
 
     def __repr__(self) -> str:
-        return f'IM4PData(payload length={len(self.raw_data)}, compression={next(c.name for c in Compression if c.value == self.compression)})'
+        return f'IM4PData(payload length={len(self.data)}, compression={next(c.name for c in Compression if c.value == self.compression)})'
 
     @property
     def compression(self) -> Compression:
-        if self.raw_data.startswith(b'complzss'):
+        if b'complzss' in self.data:
             return Compression.LZSS
 
-        elif self.raw_data.endswith(b'bvx$'):
+        elif b'bvx$' in self.data:
             return Compression.LZFSE
 
         return Compression.NONE
 
-    def decompress(self, compression_type: Compression) -> Optional[bytes]:
-        if compression_type == Compression.LZSS:
-            return lzss.decompress(self.raw_data)
-        elif compression_type == Compression.LZFSE:
-            return liblzfse.decompress(self.raw_data)
+    @property
+    def decompressed(self) -> Optional[bytes]:
+        if self.compression == Compression.LZSS:
+            return lzss.decompress(self.data)
+        elif self.compression == Compression.LZFSE:
+            return liblzfse.decompress(self.data)
 
     def decrypt(self, iv: bytes, key: bytes) -> bytes:
-        return AES.new(key, AES.MODE_CBC, iv).decrypt(self.raw_data)
+        return AES.new(key, AES.MODE_CBC, iv).decrypt(self.data)
 
 
 class Keybag(PyIMG4):
@@ -235,7 +236,7 @@ class Keybag(PyIMG4):
         return f'KeyBag(iv={self.iv.hex()}, key={self.key.hex()}, type=GIDKeyType.{self.type.name})'
 
     def _parse(self) -> None:
-        self.decoder.start(self.raw_data)
+        self.decoder.start(self.data)
 
         if self.decoder.read()[0].nr != asn1.Numbers.Integer:
             raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Integer)
@@ -257,14 +258,14 @@ class IM4P(PyIMG4):
 
         self.keybags: list[Keybag] = list()
 
-        if self.raw_data:  # Parse provided data
+        if self.data:  # Parse provided data
             self._parse()
 
     def __repr__(self) -> str:
         return f'IM4P(fourcc={self.fourcc}, description={self.description})'
 
     def _parse(self) -> None:
-        self.decoder.start(self.raw_data)
+        self.decoder.start(self.data)
 
         if self.decoder.peek().nr != asn1.Numbers.Sequence:
             raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
@@ -347,7 +348,7 @@ class IM4P(PyIMG4):
             )
 
             self.encoder.write(
-                len(payload.decompress()),
+                len(payload.decompressed),
                 asn1.Numbers.Integer,
                 asn1.Types.Primitive,
                 asn1.Classes.Universal,
@@ -369,7 +370,7 @@ class IMG4(PyIMG4):
         return f'IMG4(fourcc={self.im4p.fourcc}, description={self.im4p.description})'
 
     def _parse(self) -> None:
-        self.decoder.start(self.raw_data)
+        self.decoder.start(self.data)
         self.encoder.start()
 
         if self.decoder.peek().nr != asn1.Numbers.Sequence:

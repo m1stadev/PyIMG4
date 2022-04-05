@@ -217,9 +217,40 @@ class IM4PData(PyIMG4):
             return liblzfse.decompress(self.raw_data)
 
 
+class Keybag(PyIMG4):
+    def __init__(self, data: bytes) -> None:
+        super().__init__(data)
+
+        self.iv = None
+        self.key = None
+
+        self._parse()
+
+    def __repr__(self) -> str:
+        return f'KeyBag(iv={self.iv.hex()}, keys={self.key.hex()})'
+
+    def _parse(self) -> None:
+        self.decoder.start(self.raw_data)
+
+        if self.decoder.read()[0].nr != asn1.Numbers.Integer:
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Integer)
+
+        if self.decoder.peek().nr != asn1.Numbers.OctetString:
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.OctetString)
+
+        self.iv = self.decoder.read()[1]
+
+        if self.decoder.peek().nr != asn1.Numbers.OctetString:
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.OctetString)
+
+        self.key = self.decoder.read()[1]
+
+
 class IM4P(PyIMG4):
     def __init__(self, data: bytes = None) -> None:
         super().__init__(data)
+
+        self.keybags: list[Keybag] = list()
 
         if self.raw_data:  # Parse provided data
             self._parse()
@@ -255,8 +286,26 @@ class IM4P(PyIMG4):
 
         self.payload = IM4PData(self.decoder.read()[1])
 
-        if self.decoder.peek().nr == asn1.Numbers.Sequence:  # TODO: Parse KBAG
-            pass
+        kbag_data = None
+        while not self.decoder.eof():
+            if self.decoder.peek().nr == asn1.Numbers.OctetString:
+                kbag_data = self.decoder.read()[1]
+                break
+
+        if kbag_data is not None:
+            kbag_decoder = asn1.Decoder()
+            kbag_decoder.start(kbag_data)
+
+            if kbag_decoder.peek().nr != asn1.Numbers.Sequence:
+                raise UnexpectedTagError(kbag_decoder.peek(), asn1.Numbers.Sequence)
+
+            kbag_decoder.enter()
+
+            while not kbag_decoder.eof():
+                if kbag_decoder.peek().nr != asn1.Numbers.Sequence:
+                    raise UnexpectedTagError(kbag_decoder.peek(), asn1.Numbers.Sequence)
+
+                self.keybags.append(Keybag(kbag_decoder.read()[1]))
 
     def create(self, fourcc: str, payload: bytes, description: str = '') -> bytes:
         self.encoder.start()

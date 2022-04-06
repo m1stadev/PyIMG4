@@ -118,7 +118,7 @@ class IM4PData(PyIMG4):
     def decrypt(self, kbag: Keybag) -> None:
         try:
             self.data = AES.new(kbag.key, AES.MODE_CBC, kbag.iv).decrypt(self.data)
-            self.keybags = None
+            self.keybags = list()
         except:
             raise AESError('Failed to decrypt payload.')
 

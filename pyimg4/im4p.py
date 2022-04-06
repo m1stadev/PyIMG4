@@ -1,7 +1,7 @@
-from .errors import UnexpectedTagError
+from .errors import AESError, UnexpectedTagError
 from .types import PyIMG4, Compression, GIDKeyType
 from Crypto.Cipher import AES
-from typing import Optional
+from typing import Optional, Union
 
 import asn1
 import liblzfse
@@ -9,17 +9,46 @@ import lzss
 
 
 class Keybag(PyIMG4):
-    def __init__(self, data: bytes, gid_type: GIDKeyType) -> None:
-        super().__init__(data)
+    def __init__(
+        self,
+        *,
+        iv: Union[bytes, str] = None,
+        key: Union[bytes, str] = None,
+        data: bytes = None,
+        gid_type: GIDKeyType = None,
+    ) -> None:
+        if iv and key:
+            if isinstance(iv, str):
+                try:
+                    iv = bytes.fromhex(iv)
+                except ValueError:
+                    raise AESError('Invalid IV provided.')
 
-        self.iv = None
-        self.key = None
-        self.type = gid_type
+            if len(iv) == 16:
+                self.iv = iv
+            else:
+                raise AESError('Invalid IV length.')
 
-        self._parse()
+            if isinstance(key, str):
+                try:
+                    key = bytes.fromhex(key)
+                except ValueError:
+                    raise AESError('Invalid key provided.')
+
+            if len(key) == 32:
+                self.key = key
+            else:
+                raise AESError('Invalid key length.')
+
+        elif data and gid_type:
+            super().__init__(data)
+            self._parse()
+
+        else:
+            raise AESError('No data/GIDType or IV/Key provided.')
 
     def __repr__(self) -> str:
-        return f'KeyBag(iv={self.iv.hex()}, key={self.key.hex()}, type=GIDKeyType.{self.type.name})'
+        return f"KeyBag(iv={self.iv.hex().removeprefix('0x')}, key={self.key.hex().removeprefix('0x')}, type=GIDKeyType.{self.type.name})"
 
     def _parse(self) -> None:
         self.decoder.start(self.data)

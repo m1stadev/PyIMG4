@@ -1,4 +1,4 @@
-from .errors import AESError, UnexpectedTagError
+from .errors import AESError, CompressionError, UnexpectedTagError
 from .types import PyIMG4, Compression, GIDKeyType
 from Crypto.Cipher import AES
 from typing import Optional, Union
@@ -68,14 +68,21 @@ class Keybag(PyIMG4):
 
 
 class IM4PData(PyIMG4):
-    def __init__(self, data: bytes) -> None:
+    def __init__(self, data: bytes, keybags: list[Keybag] = []) -> None:
         super().__init__(data)
+
+        self.keybags = keybags
 
     def __repr__(self) -> str:
         return f'IM4PData(payload length={len(self.data)}, compression={next(c.name for c in Compression if c.value == self.compression)})'
 
     @property
     def compression(self) -> Compression:
+        if self.encrypted:
+            raise CompressionError(
+                'Cannot check compression type of encrypted payload.'
+            )
+
         if b'complzss' in self.data:
             return Compression.LZSS
 
@@ -85,14 +92,35 @@ class IM4PData(PyIMG4):
         return Compression.NONE
 
     @property
-    def decompressed(self) -> Optional[bytes]:
-        if self.compression == Compression.LZSS:
-            return lzss.decompress(self.data)
-        elif self.compression == Compression.LZFSE:
-            return liblzfse.decompress(self.data)
+    def encrypted(self) -> bool:
+        return len(self.keybags) > 0
 
-    def decrypt(self, iv: bytes, key: bytes) -> bytes:
-        return AES.new(key, AES.MODE_CBC, iv).decrypt(self.data)
+    def compress(self, compression: Compression) -> None:
+        if self.compression != Compression.NONE:
+            raise CompressionError(f'Payload is already {compression.name}-compressed.')
+
+        if compression == Compression.LZSS:
+            self.data = lzss.compress(self.data)
+        elif compression == Compression.LZFSE:
+            self.data = liblzfse.compress(self.data)
+
+    def decompress(self) -> None:
+        if self.encrypted:
+            raise CompressionError('Cannot decompress encrypted payload.')
+
+        if self.compression == Compression.LZSS:
+            self.data = lzss.decompress(self.data)
+        elif self.compression == Compression.LZFSE:
+            self.data = liblzfse.decompress(self.data)
+        else:
+            raise CompressionError('Payload is not compressed.')
+
+    def decrypt(self, kbag: Keybag) -> None:
+        try:
+            self.data = AES.new(kbag.key, AES.MODE_CBC, kbag.iv).decrypt(self.data)
+            self.keybags = None
+        except:
+            raise AESError('Failed to decrypt payload.')
 
 
 class IM4P(PyIMG4):

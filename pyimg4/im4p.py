@@ -8,34 +8,6 @@ import liblzfse
 import lzss
 
 
-class IM4PData(PyIMG4):
-    def __init__(self, data: bytes) -> None:
-        super().__init__(data)
-
-    def __repr__(self) -> str:
-        return f'IM4PData(payload length={len(self.data)}, compression={next(c.name for c in Compression if c.value == self.compression)})'
-
-    @property
-    def compression(self) -> Compression:
-        if b'complzss' in self.data:
-            return Compression.LZSS
-
-        elif b'bvx$' in self.data:
-            return Compression.LZFSE
-
-        return Compression.NONE
-
-    @property
-    def decompressed(self) -> Optional[bytes]:
-        if self.compression == Compression.LZSS:
-            return lzss.decompress(self.data)
-        elif self.compression == Compression.LZFSE:
-            return liblzfse.decompress(self.data)
-
-    def decrypt(self, iv: bytes, key: bytes) -> bytes:
-        return AES.new(key, AES.MODE_CBC, iv).decrypt(self.data)
-
-
 class Keybag(PyIMG4):
     def __init__(self, data: bytes, gid_type: GIDKeyType) -> None:
         super().__init__(data)
@@ -64,6 +36,34 @@ class Keybag(PyIMG4):
             raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.OctetString)
 
         self.key = self.decoder.read()[1]
+
+
+class IM4PData(PyIMG4):
+    def __init__(self, data: bytes) -> None:
+        super().__init__(data)
+
+    def __repr__(self) -> str:
+        return f'IM4PData(payload length={len(self.data)}, compression={next(c.name for c in Compression if c.value == self.compression)})'
+
+    @property
+    def compression(self) -> Compression:
+        if b'complzss' in self.data:
+            return Compression.LZSS
+
+        elif b'bvx$' in self.data:
+            return Compression.LZFSE
+
+        return Compression.NONE
+
+    @property
+    def decompressed(self) -> Optional[bytes]:
+        if self.compression == Compression.LZSS:
+            return lzss.decompress(self.data)
+        elif self.compression == Compression.LZFSE:
+            return liblzfse.decompress(self.data)
+
+    def decrypt(self, iv: bytes, key: bytes) -> bytes:
+        return AES.new(key, AES.MODE_CBC, iv).decrypt(self.data)
 
 
 class IM4P(PyIMG4):

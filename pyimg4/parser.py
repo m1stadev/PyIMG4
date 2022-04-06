@@ -110,9 +110,9 @@ class IM4M(PyIMG4Data):
 
         return rep[:-2] + ')'
 
-    def __add__(self, other: Any) -> Any:
-        if isinstance(other, IM4P):
-            return other.create_img4(self)
+    def __add__(self, obj: Any) -> Any:
+        if isinstance(obj, IM4P):
+            return obj.create_img4(self)
 
     def _parse(self) -> None:
         self.decoder.start(self._data)
@@ -272,22 +272,65 @@ class IMG4(PyIMG4Data):
             'IMG4', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
         )
 
+        self.encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
         self.encoder.write(
-            self.im4p.output(),
-            asn1.Numbers.Sequence,
-            asn1.Types.Constructed,
+            'IM4P', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
+        )
+
+        self.encoder.write(
+            self.im4p.fourcc,
+            asn1.Numbers.IA5String,
+            asn1.Types.Primitive,
             asn1.Classes.Universal,
         )
 
-        self.encoder.enter(0, asn1.Classes.Context)
         self.encoder.write(
-            self.im4m.data,
-            asn1.Numbers.Sequence,
-            asn1.Types.Constructed,
+            self.im4p.description,
+            asn1.Numbers.IA5String,
+            asn1.Types.Primitive,
             asn1.Classes.Universal,
         )
+
+        self.encoder.write(
+            self.im4p.payload.data,
+            asn1.Numbers.OctetString,
+            asn1.Types.Primitive,
+            asn1.Classes.Universal,
+        )
+
+        if (
+            self.im4p.payload.encrypted == False
+            and self.im4p.payload.compression == Compression.LZFSE
+        ):  # Need to write compression type + unpacked size
+            self.encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+
+            self.encoder.write(
+                1,
+                asn1.Numbers.Integer,
+                asn1.Types.Primitive,
+                asn1.Classes.Universal,
+            )
+
+            self.im4p.payload.decompress()
+            self.encoder.write(
+                len(self.im4p.payload.data),
+                asn1.Numbers.Integer,
+                asn1.Types.Primitive,
+                asn1.Classes.Universal,
+            )
+            self.im4p.payload.compress(Compression.LZFSE)  # Re-compress data
+
+            self.encoder.leave()
 
         self.encoder.leave()
+
+        self.encoder.write(
+            self.im4m.data,
+            0,
+            asn1.Types.Constructed,
+            asn1.Classes.Context,
+        )
+
         self.encoder.leave()
         return self.encoder.output()
 
@@ -301,9 +344,9 @@ class IM4P(PyIMG4Data):
         if self._data:  # Parse provided data
             self._parse()
 
-    def __add__(self, other) -> Optional[IMG4]:
-        if isinstance(other, IM4M):
-            return self.create_img4(other)
+    def __add__(self, obj) -> Optional[IMG4]:
+        if isinstance(obj, IM4M):
+            return self.create_img4(obj)
 
     def __repr__(self) -> str:
         return f'IM4P(fourcc={self.fourcc}, description={self.description})'

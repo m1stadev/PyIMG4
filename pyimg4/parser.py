@@ -497,11 +497,11 @@ class IM4P(PyIMG4Data):
 class Keybag(PyIMG4Data):
     def __init__(
         self,
+        gid: GIDKeyType = GIDKeyType.RELEASE,  # Assume RELEASE if not provided
         *,
         iv: Union[bytes, str] = None,
         key: Union[bytes, str] = None,
         data: bytes = None,
-        gid_type: GIDKeyType = None,
     ) -> None:
         if iv and key:
             if isinstance(iv, str):
@@ -526,12 +526,13 @@ class Keybag(PyIMG4Data):
             else:
                 raise AESError('Invalid key length.')
 
-        elif data and gid_type:
+        elif data:
             super().__init__(data)
-            self._parse()
 
         else:
-            raise AESError('No data/GIDType or IV/Key provided.')
+            raise AESError('No data or IV/Key provided.')
+
+        self.type = gid
 
     def __repr__(self) -> str:
         return f"KeyBag(iv={self.iv.hex().removeprefix('0x')}, key={self.key.hex().removeprefix('0x')}, type=GIDKeyType.{self.type.name})"

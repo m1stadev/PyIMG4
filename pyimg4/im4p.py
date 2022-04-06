@@ -161,7 +161,7 @@ class IM4P(PyIMG4):
         if self.decoder.peek().nr != asn1.Numbers.OctetString:
             raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.OctetString)
 
-        self.payload = IM4PData(self.decoder.read()[1])
+        payload_data = self.decoder.read()[1]
 
         kbag_data = None
         while not self.decoder.eof():
@@ -183,6 +183,8 @@ class IM4P(PyIMG4):
                     raise UnexpectedTagError(kbag_decoder.peek(), asn1.Numbers.Sequence)
 
                 self.keybags.append(Keybag(kbag_decoder.read()[1], gt))
+
+        self.payload = IM4PData(payload_data, self.keybags)
 
     def create(self, fourcc: str, description: str, payload: IM4PData) -> bytes:
         self.encoder.start()

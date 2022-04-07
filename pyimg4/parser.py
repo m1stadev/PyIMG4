@@ -51,8 +51,6 @@ class ManifestProperty(PyIMG4Data):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
-        self.name: Optional[str] = None
-        self.value: Optional[str] = None
         self._parse()
 
     def __repr__(self) -> str:

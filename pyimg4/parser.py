@@ -33,18 +33,24 @@ class PyIMG4Data:
     def get_type(self) -> Union['IMG4', 'IM4P', 'IM4M']:
         self.decoder.start(self._data)
 
-        if self.decoder.peek().nr != asn1.Numbers.Sequence:
-            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
+        try:
+            if self.decoder.peek().nr != asn1.Numbers.Sequence:
+                raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
 
-        self.decoder.enter()
+            self.decoder.enter()
 
-        fourcc = self._verify_fourcc(self.decoder.read()[1])
-        if fourcc == 'IMG4':
-            return IMG4(self._data)
-        elif fourcc == 'IM4P':
-            return IM4P(self._data)
-        elif fourcc == 'IM4M':
-            return IM4M(self._data)
+            fourcc = self._verify_fourcc(self.decoder.read()[1])
+            if fourcc == 'IMG4':
+                return IMG4(self._data)
+            elif fourcc == 'IM4P':
+                return IM4P(self._data)
+            elif fourcc == 'IM4M':
+                return IM4M(self._data)
+
+        except:
+            raise TypeError(
+                'Provided data is not of a known PyIMG4 format (IM4M, IM4P, IMG4)'
+            )
 
 
 class ManifestProperty(PyIMG4Data):

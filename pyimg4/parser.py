@@ -40,11 +40,11 @@ class PyIMG4Data:
 
         fourcc = self._verify_fourcc(self.decoder.read()[1])
         if fourcc == 'IMG4':
-            return IMG4
+            return IMG4(self._data)
         elif fourcc == 'IM4P':
-            return IM4P
+            return IM4P(self._data)
         elif fourcc == 'IM4M':
-            return IM4M
+            return IM4M(self._data)
 
 
 class ManifestProperty(PyIMG4Data):

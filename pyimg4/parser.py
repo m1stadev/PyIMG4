@@ -240,29 +240,12 @@ class IMG4(PyIMG4Data):
         if self.decoder.peek().nr != asn1.Numbers.Sequence:
             raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
 
-        self.encoder.write(
-            self.decoder.read()[1],
-            asn1.Numbers.Sequence,
-            asn1.Types.Constructed,
-            asn1.Classes.Universal,
-        )
-
-        self.im4p = IM4P(self.encoder.output())  # IM4P
+        self.im4p = IM4P(self.decoder.read()[1])  # IM4P
 
         if self.decoder.peek().cls != asn1.Classes.Context:
             raise UnexpectedTagError(self.decoder.peek(), asn1.Classes.Context)
 
-        self.decoder.enter()
-
-        self.encoder.start()
-        self.encoder.write(
-            self.decoder.read()[1],
-            asn1.Numbers.Sequence,
-            asn1.Types.Constructed,
-            asn1.Classes.Universal,
-        )
-
-        self.im4m = IM4M(self.encoder.output())  # IM4M
+        self.im4m = IM4M(self.decoder.read()[1])  # IM4M
 
     def output(self) -> bytes:
         self.encoder.start()
@@ -272,57 +255,12 @@ class IMG4(PyIMG4Data):
             'IMG4', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
         )
 
-        self.encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
         self.encoder.write(
-            'IM4P', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
-        )
-
-        self.encoder.write(
-            self.im4p.fourcc,
-            asn1.Numbers.IA5String,
-            asn1.Types.Primitive,
+            self.im4p.output(),
+            asn1.Numbers.Sequence,
+            asn1.Types.Constructed,
             asn1.Classes.Universal,
         )
-
-        self.encoder.write(
-            self.im4p.description,
-            asn1.Numbers.IA5String,
-            asn1.Types.Primitive,
-            asn1.Classes.Universal,
-        )
-
-        self.encoder.write(
-            self.im4p.payload.data,
-            asn1.Numbers.OctetString,
-            asn1.Types.Primitive,
-            asn1.Classes.Universal,
-        )
-
-        if (
-            self.im4p.payload.encrypted == False
-            and self.im4p.payload.compression == Compression.LZFSE
-        ):  # Need to write compression type + unpacked size
-            self.encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
-
-            self.encoder.write(
-                1,
-                asn1.Numbers.Integer,
-                asn1.Types.Primitive,
-                asn1.Classes.Universal,
-            )
-
-            self.im4p.payload.decompress()
-            self.encoder.write(
-                len(self.im4p.payload.data),
-                asn1.Numbers.Integer,
-                asn1.Types.Primitive,
-                asn1.Classes.Universal,
-            )
-            self.im4p.payload.compress(Compression.LZFSE)  # Re-compress data
-
-            self.encoder.leave()
-
-        self.encoder.leave()
 
         self.encoder.write(
             self.im4m.data,
@@ -405,74 +343,31 @@ class IM4P(PyIMG4Data):
         self.payload = IM4PData(payload_data, self.keybags)
 
     def create_img4(self, im4m: IM4M) -> IMG4:
-        self.encoder.start()
+        # Don't use self.encoder as it will be used by IM4P.output()
+        encoder = asn1.Encoder()
+        encoder.start()
 
-        self.encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
-        self.encoder.write(
+        encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+        encoder.write(
             'IMG4', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
         )
 
-        self.encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
-        self.encoder.write(
-            'IM4P', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
-        )
-
-        self.encoder.write(
-            self.fourcc,
-            asn1.Numbers.IA5String,
-            asn1.Types.Primitive,
+        encoder.write(
+            self.output(),
+            asn1.Numbers.Sequence,
+            asn1.Types.Constructed,
             asn1.Classes.Universal,
         )
 
-        self.encoder.write(
-            self.description,
-            asn1.Numbers.IA5String,
-            asn1.Types.Primitive,
-            asn1.Classes.Universal,
-        )
-
-        self.encoder.write(
-            self.payload.data,
-            asn1.Numbers.OctetString,
-            asn1.Types.Primitive,
-            asn1.Classes.Universal,
-        )
-
-        if (
-            self.payload.encrypted == False
-            and self.payload.compression == Compression.LZFSE
-        ):  # Need to write compression type + unpacked size
-            self.encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
-
-            self.encoder.write(
-                1,
-                asn1.Numbers.Integer,
-                asn1.Types.Primitive,
-                asn1.Classes.Universal,
-            )
-
-            self.payload.decompress()
-            self.encoder.write(
-                len(self.payload.data),
-                asn1.Numbers.Integer,
-                asn1.Types.Primitive,
-                asn1.Classes.Universal,
-            )
-            self.payload.compress(Compression.LZFSE)  # Re-compress data
-
-            self.encoder.leave()
-
-        self.encoder.leave()
-
-        self.encoder.write(
+        encoder.write(
             im4m.data,
             0,
             asn1.Types.Constructed,
             asn1.Classes.Context,
         )
 
-        self.encoder.leave()
-        return IMG4(self.encoder.output())
+        encoder.leave()
+        return IMG4(encoder.output())
 
     def output(self, fourcc: str = None, description: Optional[str] = None) -> bytes:
         self.encoder.start()

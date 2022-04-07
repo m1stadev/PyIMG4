@@ -255,8 +255,9 @@ class IMG4(PyIMG4Data):
             'IMG4', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
         )
 
+        self.decoder.start(self.im4p.output())
         self.encoder.write(
-            self.im4p.output(),
+            self.decoder.read()[1],
             asn1.Numbers.Sequence,
             asn1.Types.Constructed,
             asn1.Classes.Universal,

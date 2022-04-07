@@ -335,11 +335,11 @@ class IM4P(PyIMG4Data):
 
             kbag_decoder.enter()
 
-            for gt in GIDKeyType:
+            for kt in KeybagType:
                 if kbag_decoder.peek().nr != asn1.Numbers.Sequence:
                     raise UnexpectedTagError(kbag_decoder.peek(), asn1.Numbers.Sequence)
 
-                self.keybags.append(Keybag(data=kbag_decoder.read()[1], gid=gt))
+                self.keybags.append(Keybag(data=kbag_decoder.read()[1], type=kt))
 
         self.payload = IM4PData(payload_data, self.keybags)
 
@@ -437,7 +437,7 @@ class IM4P(PyIMG4Data):
 class Keybag(PyIMG4Data):
     def __init__(
         self,
-        gid: GIDKeyType = GIDKeyType.RELEASE,  # Assume RELEASE if not provided
+        type_: KeybagType = KeybagType.RELEASE,  # Assume RELEASE if not provided
         *,
         iv: Union[bytes, str] = None,
         key: Union[bytes, str] = None,
@@ -472,10 +472,10 @@ class Keybag(PyIMG4Data):
         else:
             raise AESError('No data or IV/Key provided.')
 
-        self.type = gid
+        self.type = type_
 
     def __repr__(self) -> str:
-        return f"KeyBag(iv={self.iv.hex().removeprefix('0x')}, key={self.key.hex().removeprefix('0x')}, type=GIDKeyType.{self.type.name})"
+        return f"KeyBag(iv={self.iv.hex().removeprefix('0x')}, key={self.key.hex().removeprefix('0x')}, type={self.type.name})"
 
     def _parse(self) -> None:
         self.decoder.start(self._data)

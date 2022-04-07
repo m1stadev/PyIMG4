@@ -7,6 +7,6 @@ class Compression(IntEnum):
     LZFSE = 2
 
 
-class GIDKeyType(IntEnum):
-    RELEASE = 0
-    INTERNAL = 1
+class KeybagType(IntEnum):
+    RELEASE = 0x0
+    INTERNAL = 0x1

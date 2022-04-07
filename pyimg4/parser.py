@@ -9,7 +9,7 @@ import lzss
 
 
 class PyIMG4Data:
-    def __init__(self, data: bytes = None) -> None:
+    def __init__(self, data: bytes) -> None:
         self._data = data
 
         self.decoder = asn1.Decoder()
@@ -30,8 +30,8 @@ class PyIMG4Data:
 
         return fourcc
 
-    def get_type(self, data: bytes) -> Any:
-        self.decoder.start(data)
+    def get_type(self) -> Union['IMG4', 'IM4P', 'IM4M']:
+        self.decoder.start(self._data)
 
         if self.decoder.peek().nr != asn1.Numbers.Sequence:
             raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
@@ -40,19 +40,19 @@ class PyIMG4Data:
 
         fourcc = self._verify_fourcc(self.decoder.read()[1])
         if fourcc == 'IMG4':
-            return IMG4(data)
+            return IMG4
         elif fourcc == 'IM4P':
-            return IM4P(data)
+            return IM4P
         elif fourcc == 'IM4M':
-            return IM4M(data)
+            return IM4M
 
 
 class ManifestProperty(PyIMG4Data):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
-        self.name = None
-        self.value = None
+        self.name: Optional[str] = None
+        self.value: Optional[str] = None
         self._parse()
 
     def __repr__(self) -> str:

@@ -439,7 +439,8 @@ class IM4P(PyIMG4Data):
         )
 
         if (
-            self.payload.compression == Compression.LZFSE
+            self.payload.encrypted == False
+            and self.payload.compression == Compression.LZFSE
         ):  # Need to write compression type + unpacked size
             self.encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
 
@@ -465,7 +466,7 @@ class IM4P(PyIMG4Data):
 
         self.encoder.write(
             im4m.data,
-            asn1.Numbers.Sequence,
+            0,
             asn1.Types.Constructed,
             asn1.Classes.Context,
         )

@@ -339,7 +339,7 @@ class IM4P(PyIMG4Data):
                 if kbag_decoder.peek().nr != asn1.Numbers.Sequence:
                     raise UnexpectedTagError(kbag_decoder.peek(), asn1.Numbers.Sequence)
 
-                self.keybags.append(Keybag(data=kbag_decoder.read()[1], type=kt))
+                self.keybags.append(Keybag(kt, data=kbag_decoder.read()[1]))
 
         self.payload = IM4PData(payload_data, self.keybags)
 

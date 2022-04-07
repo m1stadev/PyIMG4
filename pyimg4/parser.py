@@ -111,6 +111,8 @@ class IM4M(PyIMG4Data):
     def __add__(self, obj: Any) -> Any:
         if isinstance(obj, IM4P):
             return obj.create_img4(self)
+        else:
+            raise TypeError(f'can only concatenate IM4P (not "{obj.__name__}") to IM4M')
 
     def _parse(self) -> None:
         self.decoder.start(self._data)
@@ -284,6 +286,8 @@ class IM4P(PyIMG4Data):
     def __add__(self, obj) -> Optional[IMG4]:
         if isinstance(obj, IM4M):
             return self.create_img4(obj)
+        else:
+            raise TypeError(f'can only concatenate IM4M (not "{obj.__name__}") to IM4P')
 
     def __repr__(self) -> str:
         return f'IM4P(fourcc={self.fourcc}, description={self.description})'

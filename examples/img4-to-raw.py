@@ -30,10 +30,9 @@ def main() -> None:
                 f'Raw data is {next(c.name for c in pyimg4.Compression if c.value == img4.im4p.payload.compression)} compressed, decompressing.'
             )
 
-            f.write(img4.im4p.payload.decompressed)
+            img4.im4p.payload.decompress()
 
-        else:
-            f.write(img4.im4p.payload.data)
+        f.write(img4.im4p.payload.data)
 
     print(f'Raw data outputted to: {raw_data}.')
 

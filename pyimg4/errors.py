@@ -6,6 +6,14 @@ class PyIMG4Error(Exception):
     pass
 
 
+class AESError(PyIMG4Error):
+    pass
+
+
+class CompressionError(PyIMG4Error):
+    pass
+
+
 class UnexpectedDataError(PyIMG4Error):
     def __init__(self, expect: str, real: Any) -> NoReturn:
         if not isinstance(real, (float, int)) and len(real) > 15:

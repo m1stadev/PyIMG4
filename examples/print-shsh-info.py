@@ -9,7 +9,7 @@ import sys
 
 def main() -> None:
     if len(sys.argv) != 2:
-        sys.exit(f'Usage: {sys.argv[0]} <SHSH blob file>')
+        sys.exit(f'Usage: {sys.argv[0]} <SHSH blob>')
 
     shsh_path = Path(sys.argv[1])
     if not shsh_path.is_file():
@@ -44,8 +44,8 @@ def main() -> None:
         )
 
     print(f"  ECID (hex): {hex(im4m.ecid).removeprefix('0x')}")
-    print(f"  ApNonce: {im4m.apnonce.hex().removeprefix('0x')}")
-    print(f"  SepNonce: {im4m.sepnonce.hex().removeprefix('0x')}")
+    print(f"  ApNonce: {im4m.apnonce}")
+    print(f"  SepNonce: {im4m.sepnonce}")
 
 
 if __name__ == '__main__':

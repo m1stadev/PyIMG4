@@ -9,7 +9,7 @@ import sys
 
 def main() -> None:
     if len(sys.argv) != 2:
-        sys.exit(f'Usage: {sys.argv[0]} <SHSH blob file>')
+        sys.exit(f'Usage: {sys.argv[0]} <SHSH blob>')
 
     shsh_path = Path(sys.argv[1])
     if not shsh_path.is_file():

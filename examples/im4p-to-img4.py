@@ -9,7 +9,7 @@ import sys
 
 def main() -> None:
     if len(sys.argv) != 3:
-        sys.exit(f'Usage: {sys.argv[0]} <IM4P file> <SHSH file>')
+        sys.exit(f'Usage: {sys.argv[0]} <IM4P file> <SHSH blob>')
 
     im4p_path = Path(sys.argv[1])
     if not im4p_path.is_file():
@@ -17,7 +17,7 @@ def main() -> None:
 
     shsh_path = Path(sys.argv[2])
     if not shsh_path.is_file():
-        sys.exit(f'[ERROR] SHSH file not found: {shsh_path}')
+        sys.exit(f'[ERROR] SHSH blob not found: {shsh_path}')
 
     with im4p_path.open('rb') as f:
         try:

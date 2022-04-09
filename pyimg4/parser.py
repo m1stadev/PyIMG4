@@ -1,7 +1,7 @@
 from .errors import AESError, CompressionError, UnexpectedDataError, UnexpectedTagError
 from .types import *
 from Crypto.Cipher import AES
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 import asn1
 import liblzfse
@@ -72,7 +72,7 @@ class ManifestImageData(PyIMG4Data):
         super().__init__(data)
 
         self.fourcc = fourcc
-        self.properties: list[ManifestProperty] = list()
+        self.properties: list[ManifestProperty] = []
         self._parse()
 
     def __repr__(self) -> str:
@@ -92,8 +92,8 @@ class IM4M(PyIMG4Data):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
-        self.properties: list[ManifestProperty] = list()
-        self.images: list[ManifestImageData] = list()
+        self.properties: list[ManifestProperty] = []
+        self.images: list[ManifestImageData] = []
         self._parse()
 
     def __repr__(self) -> str:
@@ -108,7 +108,7 @@ class IM4M(PyIMG4Data):
 
         return rep[:-2] + ')'
 
-    def __add__(self, obj: Any) -> Any:
+    def __add__(self, obj: 'IM4P') -> 'IMG4':
         if isinstance(obj, IM4P):
             return obj.create_img4(self)
         else:
@@ -126,7 +126,7 @@ class IM4M(PyIMG4Data):
         if self.decoder.read()[0].nr != asn1.Numbers.Integer:
             raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Integer)
 
-        if self.decoder.peek().nr != asn1.Numbers.Set:
+        elif self.decoder.peek().nr != asn1.Numbers.Set:
             raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Set)
 
         self.decoder.enter()
@@ -188,12 +188,7 @@ class IM4M(PyIMG4Data):
 
     @property
     def apnonce(self) -> Optional[str]:
-        try:
-            prop = next(prop for prop in self.properties if prop.name == 'BNCH')
-        except StopIteration:
-            return None
-
-        return prop.value.hex().removeprefix('0x')
+        return next((format(prop.value, 'x') for prop in self.properties if prop.name == 'BNCH'), None)
 
     @property
     def data(self) -> bytes:
@@ -201,21 +196,11 @@ class IM4M(PyIMG4Data):
 
     @property
     def sepnonce(self) -> Optional[str]:
-        try:
-            prop = next(prop for prop in self.properties if prop.name == 'snon')
-        except StopIteration:
-            return None
-
-        return prop.value.hex().removeprefix('0x')
+        return next((format(prop.value, 'x') for prop in self.properties if prop.name == 'snon'), None)
 
     @property
     def ecid(self) -> Optional[int]:
-        try:
-            prop = next(prop for prop in self.properties if prop.name == 'ECID')
-        except StopIteration:
-            return None
-
-        return prop.value
+        return next((prop.value for prop in self.properties if prop.name == 'ECID'), None)
 
 
 class IMG4(PyIMG4Data):
@@ -278,12 +263,12 @@ class IM4P(PyIMG4Data):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
-        self.keybags: list[Keybag] = list()
+        self.keybags: list[Keybag] = []
 
         if self._data:  # Parse provided data
             self._parse()
 
-    def __add__(self, obj) -> Optional[IMG4]:
+    def __add__(self, obj: IM4M) -> IMG4:
         if isinstance(obj, IM4M):
             return self.create_img4(obj)
         else:
@@ -478,7 +463,7 @@ class Keybag(PyIMG4Data):
         self.type = type_
 
     def __repr__(self) -> str:
-        return f"KeyBag(iv={self.iv.hex().removeprefix('0x')}, key={self.key.hex().removeprefix('0x')}, type={self.type.name})"
+        return f"Keybag(iv={format(self.iv, 'x')}, key={format(self.key, 'x')}, type={self.type.name})"
 
     def _parse(self) -> None:
         self.decoder.start(self._data)
@@ -504,7 +489,7 @@ class IM4PData(PyIMG4Data):
         self.keybags = keybags
 
     def __repr__(self) -> str:
-        return f'IM4PData(payload length={len(self._data)}, compression={next(c.name for c in Compression if c.value == self.compression)})'
+        return f'IM4PData(payload length={len(self._data)}, compression={self.compression.name})'
 
     @property
     def compression(self) -> Compression:
@@ -519,7 +504,8 @@ class IM4PData(PyIMG4Data):
         elif b'bvx$' in self._data:
             return Compression.LZFSE
 
-        return Compression.NONE
+        else:
+            return Compression.NONE
 
     @property
     def data(self) -> bytes:
@@ -530,8 +516,15 @@ class IM4PData(PyIMG4Data):
         return len(self.keybags) > 0
 
     def compress(self, compression: Compression) -> None:
-        if self.compression != Compression.NONE:
+        if self.compression == compression:
             raise CompressionError(f'Payload is already {compression.name}-compressed.')
+        elif compression == Compression.NONE:
+            raise CompressionError("Payload cannot be compressed with no compression.")
+
+        if self.compression == Compression.LZFSE:
+            self._data = liblzfse.decompress(self._data)
+        elif self.compression == Compression.LZSS:
+            self._data = lzss.decompress(self._data)
 
         if compression == Compression.LZSS:
             self._data = lzss.compress(self._data)
@@ -543,12 +536,18 @@ class IM4PData(PyIMG4Data):
 
         self.encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
         self.encoder.write(
-            'IM4P', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
+            'IM4P', 
+            asn1.Numbers.IA5String, 
+            asn1.Types.Primitive, 
+            asn1.Classes.Universal
         )
 
         self._verify_fourcc(fourcc)
         self.encoder.write(
-            fourcc, asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
+            fourcc, 
+            asn1.Numbers.IA5String, 
+            asn1.Types.Primitive, 
+            asn1.Classes.Universal
         )
 
         self.encoder.write(
@@ -598,6 +597,6 @@ class IM4PData(PyIMG4Data):
     def decrypt(self, kbag: Keybag) -> None:
         try:
             self._data = AES.new(kbag.key, AES.MODE_CBC, kbag.iv).decrypt(self._data)
-            self.keybags = list()
+            self.keybags = []
         except:
             raise AESError('Failed to decrypt payload.')

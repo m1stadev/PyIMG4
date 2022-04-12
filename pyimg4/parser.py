@@ -1,7 +1,7 @@
 from .errors import AESError, CompressionError, UnexpectedDataError, UnexpectedTagError
 from .types import *
 from Crypto.Cipher import AES
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 import asn1
 import liblzfse
@@ -33,24 +33,21 @@ class PyIMG4Data:
     def get_type(self) -> Union['IMG4', 'IM4P', 'IM4M']:
         self.decoder.start(self._data)
 
-        try:
-            if self.decoder.peek().nr != asn1.Numbers.Sequence:
-                raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
+        if self.decoder.peek().nr != asn1.Numbers.Sequence:
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
 
-            self.decoder.enter()
+        self.decoder.enter()
 
-            fourcc = self._verify_fourcc(self.decoder.read()[1])
-            if fourcc == 'IMG4':
-                return IMG4(self._data)
-            elif fourcc == 'IM4P':
-                return IM4P(self._data)
-            elif fourcc == 'IM4M':
-                return IM4M(self._data)
+        fourcc = self._verify_fourcc(self.decoder.read()[1])
+        if fourcc == 'IMG4':
+            return IMG4
+        elif fourcc == 'IM4P':
+            return IM4P
+        elif fourcc == 'IM4M':
+            return IM4M
 
-        except:
-            raise TypeError(
-                'Provided data is not of a known PyIMG4 format (IM4M, IM4P, IMG4)'
-            )
+    def output(self) -> bytes:
+        return self._data
 
 
 class ManifestProperty(PyIMG4Data):
@@ -78,7 +75,7 @@ class ManifestImageData(PyIMG4Data):
         super().__init__(data)
 
         self.fourcc = fourcc
-        self.properties: list[ManifestProperty] = list()
+        self.properties: list[ManifestProperty] = []
         self._parse()
 
     def __repr__(self) -> str:
@@ -98,8 +95,8 @@ class IM4M(PyIMG4Data):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
-        self.properties: list[ManifestProperty] = list()
-        self.images: list[ManifestImageData] = list()
+        self.properties: list[ManifestProperty] = []
+        self.images: list[ManifestImageData] = []
         self._parse()
 
     def __repr__(self) -> str:
@@ -114,7 +111,7 @@ class IM4M(PyIMG4Data):
 
         return rep[:-2] + ')'
 
-    def __add__(self, obj: Any) -> Any:
+    def __add__(self, obj: 'IM4P') -> 'IMG4':
         if isinstance(obj, IM4P):
             return obj.create_img4(self)
         else:
@@ -194,34 +191,31 @@ class IM4M(PyIMG4Data):
 
     @property
     def apnonce(self) -> Optional[str]:
-        try:
-            prop = next(prop for prop in self.properties if prop.name == 'BNCH')
-        except StopIteration:
-            return None
-
-        return prop.value.hex().removeprefix('0x')
-
-    @property
-    def data(self) -> bytes:
-        return self._data
+        return next(
+            (
+                prop.value.hex()
+                for prop in self.properties
+                if prop.name == 'BNCH'
+            ),
+            None,
+        )
 
     @property
     def sepnonce(self) -> Optional[str]:
-        try:
-            prop = next(prop for prop in self.properties if prop.name == 'snon')
-        except StopIteration:
-            return None
-
-        return prop.value.hex().removeprefix('0x')
+        return next(
+            (
+                prop.value.hex()
+                for prop in self.properties
+                if prop.name == 'snon'
+            ),
+            None,
+        )
 
     @property
     def ecid(self) -> Optional[int]:
-        try:
-            prop = next(prop for prop in self.properties if prop.name == 'ECID')
-        except StopIteration:
-            return None
-
-        return prop.value
+        return next(
+            (prop.value for prop in self.properties if prop.name == 'ECID'), None
+        )
 
 
 class IMG4(PyIMG4Data):
@@ -270,7 +264,7 @@ class IMG4(PyIMG4Data):
         )
 
         self.encoder.write(
-            self.im4m.data,
+            self.im4m.output(),
             0,
             asn1.Types.Constructed,
             asn1.Classes.Context,
@@ -284,12 +278,12 @@ class IM4P(PyIMG4Data):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
-        self.keybags: list[Keybag] = list()
+        self.keybags: list[Keybag] = []
 
         if self._data:  # Parse provided data
             self._parse()
 
-    def __add__(self, obj) -> Optional[IMG4]:
+    def __add__(self, obj: IM4M) -> IMG4:
         if isinstance(obj, IM4M):
             return self.create_img4(obj)
         else:
@@ -369,7 +363,7 @@ class IM4P(PyIMG4Data):
         )
 
         encoder.write(
-            im4m.data,
+            im4m.output(),
             0,
             asn1.Types.Constructed,
             asn1.Classes.Context,
@@ -409,7 +403,7 @@ class IM4P(PyIMG4Data):
         )
 
         self.encoder.write(
-            self.payload.data,
+            self.payload.output(),
             asn1.Numbers.OctetString,
             asn1.Types.Primitive,
             asn1.Classes.Universal,
@@ -430,7 +424,7 @@ class IM4P(PyIMG4Data):
 
             self.payload.decompress()
             self.encoder.write(
-                len(self.payload.data),
+                len(self.payload.output()),
                 asn1.Numbers.Integer,
                 asn1.Types.Primitive,
                 asn1.Classes.Universal,
@@ -477,6 +471,7 @@ class Keybag(PyIMG4Data):
 
         elif data:
             super().__init__(data)
+            self._parse()
 
         else:
             raise AESError('No data or IV/Key provided.')
@@ -484,7 +479,9 @@ class Keybag(PyIMG4Data):
         self.type = type_
 
     def __repr__(self) -> str:
-        return f"KeyBag(iv={self.iv.hex().removeprefix('0x')}, key={self.key.hex().removeprefix('0x')}, type={self.type.name})"
+        return (
+            f"Keybag(iv={self.iv.hex()}, key={self.key.hex()}, type={self.type.name})"
+        )
 
     def _parse(self) -> None:
         self.decoder.start(self._data)
@@ -510,7 +507,7 @@ class IM4PData(PyIMG4Data):
         self.keybags = keybags
 
     def __repr__(self) -> str:
-        return f'IM4PData(payload length={len(self._data)}, compression={next(c.name for c in Compression if c.value == self.compression)})'
+        return f'IM4PData(payload length={len(self._data)}, compression={self.compression.name})'
 
     @property
     def compression(self) -> Compression:
@@ -525,19 +522,24 @@ class IM4PData(PyIMG4Data):
         elif b'bvx$' in self._data:
             return Compression.LZFSE
 
-        return Compression.NONE
-
-    @property
-    def data(self) -> bytes:
-        return self._data
+        else:
+            return Compression.NONE
 
     @property
     def encrypted(self) -> bool:
         return len(self.keybags) > 0
 
     def compress(self, compression: Compression) -> None:
-        if self.compression != Compression.NONE:
+        if compression == Compression.NONE:
+            raise CompressionError('A valid compression type must be specified.')
+
+        elif self.compression == compression:
             raise CompressionError(f'Payload is already {compression.name}-compressed.')
+
+        if self.compression == Compression.LZSS:
+            self._data = lzss.decompress(self._data)
+        elif self.compression == Compression.LZFSE:
+            self._data = liblzfse.decompress(self._data)
 
         if compression == Compression.LZSS:
             self._data = lzss.compress(self._data)
@@ -604,6 +606,6 @@ class IM4PData(PyIMG4Data):
     def decrypt(self, kbag: Keybag) -> None:
         try:
             self._data = AES.new(kbag.key, AES.MODE_CBC, kbag.iv).decrypt(self._data)
-            self.keybags = list()
+            self.keybags = []
         except:
             raise AESError('Failed to decrypt payload.')

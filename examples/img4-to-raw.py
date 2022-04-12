@@ -27,12 +27,12 @@ def main() -> None:
 
         elif img4.im4p.payload.compression != pyimg4.Compression.NONE:
             print(
-                f'Raw data is {next(c.name for c in pyimg4.Compression if c.value == img4.im4p.payload.compression)} compressed, decompressing.'
+                f'Raw data is {img4.im4p.payload.compression.name} compressed, decompressing.'
             )
 
             img4.im4p.payload.decompress()
 
-        f.write(img4.im4p.payload.data)
+        f.write(img4.im4p.payload.output())
 
     print(f'Raw data outputted to: {raw_data}.')
 

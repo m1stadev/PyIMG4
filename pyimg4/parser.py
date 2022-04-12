@@ -472,6 +472,7 @@ class Keybag(PyIMG4Data):
 
         elif data:
             super().__init__(data)
+            self._parse()
 
         else:
             raise AESError('No data or IV/Key provided.')

@@ -46,6 +46,9 @@ class PyIMG4Data:
         elif fourcc == 'IM4M':
             return IM4M
 
+    def output(self) -> bytes:
+        return self._data
+
 
 class ManifestProperty(PyIMG4Data):
     def __init__(self, data: bytes) -> None:
@@ -196,10 +199,6 @@ class IM4M(PyIMG4Data):
             ),
             None,
         )
-
-    @property
-    def data(self) -> bytes:
-        return self._data
 
     @property
     def sepnonce(self) -> Optional[str]:
@@ -525,10 +524,6 @@ class IM4PData(PyIMG4Data):
 
         else:
             return Compression.NONE
-
-    @property
-    def data(self) -> bytes:
-        return self._data
 
     @property
     def encrypted(self) -> bool:

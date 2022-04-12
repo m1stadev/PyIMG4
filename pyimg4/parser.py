@@ -264,7 +264,7 @@ class IMG4(PyIMG4Data):
         )
 
         self.encoder.write(
-            self.im4m.data,
+            self.im4m.output(),
             0,
             asn1.Types.Constructed,
             asn1.Classes.Context,
@@ -363,7 +363,7 @@ class IM4P(PyIMG4Data):
         )
 
         encoder.write(
-            im4m.data,
+            im4m.output(),
             0,
             asn1.Types.Constructed,
             asn1.Classes.Context,
@@ -403,7 +403,7 @@ class IM4P(PyIMG4Data):
         )
 
         self.encoder.write(
-            self.payload.data,
+            self.payload.output(),
             asn1.Numbers.OctetString,
             asn1.Types.Primitive,
             asn1.Classes.Universal,
@@ -424,7 +424,7 @@ class IM4P(PyIMG4Data):
 
             self.payload.decompress()
             self.encoder.write(
-                len(self.payload.data),
+                len(self.payload.output()),
                 asn1.Numbers.Integer,
                 asn1.Types.Primitive,
                 asn1.Classes.Universal,

@@ -480,7 +480,9 @@ class Keybag(PyIMG4Data):
         self.type = type_
 
     def __repr__(self) -> str:
-        return f"Keybag(iv={self.iv:x}, key={self.key:x}, type={self.type.name})"
+        return (
+            f"Keybag(iv={self.iv.hex()}, key={self.key.hex()}, type={self.type.name})"
+        )
 
     def _parse(self) -> None:
         self.decoder.start(self._data)

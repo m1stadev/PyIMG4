@@ -188,7 +188,14 @@ class IM4M(PyIMG4Data):
 
     @property
     def apnonce(self) -> Optional[str]:
-        return next((format(prop.value, 'x') for prop in self.properties if prop.name == 'BNCH'), None)
+        return next(
+            (
+                format(prop.value, 'x')
+                for prop in self.properties
+                if prop.name == 'BNCH'
+            ),
+            None,
+        )
 
     @property
     def data(self) -> bytes:
@@ -196,11 +203,20 @@ class IM4M(PyIMG4Data):
 
     @property
     def sepnonce(self) -> Optional[str]:
-        return next((format(prop.value, 'x') for prop in self.properties if prop.name == 'snon'), None)
+        return next(
+            (
+                format(prop.value, 'x')
+                for prop in self.properties
+                if prop.name == 'snon'
+            ),
+            None,
+        )
 
     @property
     def ecid(self) -> Optional[int]:
-        return next((prop.value for prop in self.properties if prop.name == 'ECID'), None)
+        return next(
+            (prop.value for prop in self.properties if prop.name == 'ECID'), None
+        )
 
 
 class IMG4(PyIMG4Data):
@@ -536,18 +552,12 @@ class IM4PData(PyIMG4Data):
 
         self.encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
         self.encoder.write(
-            'IM4P', 
-            asn1.Numbers.IA5String, 
-            asn1.Types.Primitive, 
-            asn1.Classes.Universal
+            'IM4P', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
         )
 
         self._verify_fourcc(fourcc)
         self.encoder.write(
-            fourcc, 
-            asn1.Numbers.IA5String, 
-            asn1.Types.Primitive, 
-            asn1.Classes.Universal
+            fourcc, asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
         )
 
         self.encoder.write(

@@ -126,7 +126,7 @@ class IM4M(PyIMG4Data):
         if self.decoder.read()[0].nr != asn1.Numbers.Integer:
             raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Integer)
 
-        elif self.decoder.peek().nr != asn1.Numbers.Set:
+        if self.decoder.peek().nr != asn1.Numbers.Set:
             raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Set)
 
         self.decoder.enter()

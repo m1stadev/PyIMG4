@@ -532,15 +532,16 @@ class IM4PData(PyIMG4Data):
         return len(self.keybags) > 0
 
     def compress(self, compression: Compression) -> None:
-        if self.compression == compression:
-            raise CompressionError(f'Payload is already {compression.name}-compressed.')
-        elif compression == Compression.NONE:
-            raise CompressionError("Payload cannot be compressed with no compression.")
+        if compression == Compression.NONE:
+            raise CompressionError('A valid compression type must be specified.')
 
-        if self.compression == Compression.LZFSE:
-            self._data = liblzfse.decompress(self._data)
-        elif self.compression == Compression.LZSS:
+        elif self.compression == compression:
+            raise CompressionError(f'Payload is already {compression.name}-compressed.')
+
+        if self.compression == Compression.LZSS:
             self._data = lzss.decompress(self._data)
+        elif self.compression == Compression.LZFSE:
+            self._data = liblzfse.decompress(self._data)
 
         if compression == Compression.LZSS:
             self._data = lzss.compress(self._data)

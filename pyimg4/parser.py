@@ -193,7 +193,7 @@ class IM4M(PyIMG4Data):
     def apnonce(self) -> Optional[str]:
         return next(
             (
-                format(prop.value, 'x')
+                prop.value.hex()
                 for prop in self.properties
                 if prop.name == 'BNCH'
             ),
@@ -204,7 +204,7 @@ class IM4M(PyIMG4Data):
     def sepnonce(self) -> Optional[str]:
         return next(
             (
-                format(prop.value, 'x')
+                prop.value.hex()
                 for prop in self.properties
                 if prop.name == 'snon'
             ),

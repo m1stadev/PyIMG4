@@ -16,14 +16,14 @@ class PyIMG4Data:
         self.encoder = asn1.Encoder()
 
     def _verify_fourcc(self, fourcc: str, correct: str = None) -> str:
+        if not isinstance(fourcc, str):
+            raise UnexpectedDataError('string', fourcc)
+
         if correct is not None:
             if fourcc.casefold() != correct.casefold():
                 raise UnexpectedDataError(correct, fourcc)
             else:
                 return fourcc
-
-        if not isinstance(fourcc, str):
-            raise UnexpectedDataError('string', fourcc)
 
         if len(fourcc) != 4:
             raise UnexpectedDataError('string with length of 4', fourcc)

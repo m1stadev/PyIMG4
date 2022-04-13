@@ -100,16 +100,16 @@ class IM4M(PyIMG4Data):
         self._parse()
 
     def __repr__(self) -> str:
-        rep = f'IM4M('
+        repr_ = f'IM4M('
         for p in ('CHIP', 'ECID'):
             try:
                 prop = next(prop for prop in self.properties if prop.name == p)
             except StopIteration:
                 continue
 
-            rep += f'{prop.name}={prop.value}, '
+            repr_ += f'{prop.name}={prop.value}, '
 
-        return rep[:-2] + ')'
+        return repr_[:-2] + ')'
 
     def __add__(self, obj: 'IM4P') -> 'IMG4':
         if isinstance(obj, IM4P):

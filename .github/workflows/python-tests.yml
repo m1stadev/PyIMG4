@@ -1,6 +1,6 @@
 # This workflow will install Python dependencies abnd run tests
 
-name: Run PyTest
+name: Run tests
 
 on:
   push:
@@ -18,13 +18,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python 3
+    - name: Set up Python 3.9
       uses: actions/setup-python@v3
       with:
-        python-version: "3.x"
+        python-version: "3.9"
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip poetry pytest
         python -m poetry install
-    - name: Test with pytest
+    - name: Run tests
       run: python -m poetry run pytest

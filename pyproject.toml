@@ -31,6 +31,8 @@ pyliblzfse = "^0.4.1"
 
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"
+pytest = "^7.1.1"
+remotezip = "^0.9.4"
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/m1stadev/PyIMG4/issues"

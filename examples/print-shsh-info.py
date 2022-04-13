@@ -27,20 +27,18 @@ def main() -> None:
         sys.exit(f'[ERROR] Failed to parse ApTicket: {shsh_path}')
 
     print('SHSH Info:')
-    try:
-        chip_id = next(prop.value for prop in im4m.properties if prop.name == 'CHIP')
-
-        if 0x8720 <= chip_id <= 0x8960:
-            soc = f'S5L{chip_id:02x}'
-        elif chip_id in range(0x7002, 0x8003):
-            soc = f'S{chip_id:02x}'
+    if im4m.chip_id is not None:
+        if 0x8720 <= im4m.chip_id <= 0x8960:
+            soc = f'S5L{im4m.chip_id:02x}'
+        elif im4m.chip_id in range(0x7002, 0x8003):
+            soc = f'S{im4m.chip_id:02x}'
         else:
-            soc = f'T{chip_id:02x}'
+            soc = f'T{im4m.chip_id:02x}'
 
         print(f'  Device Processor: {soc}')
-    except:
+    else:
         print(
-            '  Warning: ChipID not found in ApTicket, unable to find Device Processor'
+            '  Warning: Chip ID not found in ApTicket, unable to find Device Processor'
         )
 
     print(f"  ECID (hex): {hex(im4m.ecid).removeprefix('0x')}")

@@ -2,9 +2,9 @@ from enum import IntEnum
 
 
 class Compression(IntEnum):
-    NONE = 0
-    LZSS = 1
-    LZFSE = 2
+    NONE = 0x0
+    LZSS = 0x1
+    LZFSE = 0x2
 
 
 class KeybagType(IntEnum):

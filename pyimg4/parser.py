@@ -241,7 +241,7 @@ class IM4R(PyIMG4Data):
         self.decoder.enter()
         self._verify_fourcc(
             self.decoder.read()[1], 'BNCN'
-        )  # Verify BNCN (Boot Nonce Hash) FourCC
+        )  # Verify BNCN (Boot Nonce) FourCC
 
         self.generator = self.decoder.read()[1]
 

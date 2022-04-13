@@ -117,11 +117,18 @@ python-versions = "*"
 
 [[package]]
 name = "lzss"
-version = "0.3"
+version = "0.3.1"
 description = "LZSS compression algorithm"
 category = "main"
 optional = false
 python-versions = "*"
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/m1stadev/pylzss.git"
+reference = "v0.3.1"
+resolved_reference = "fa5501b98daa70d34145840b1e14f6a7affc7bf0"
 
 [[package]]
 name = "mypy-extensions"
@@ -303,7 +310,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "c4ce12efd2fa2b2cf3bacaa614c46a2c8076a87b2b9d9ce1c2452c9ce4ae8d7c"
+content-hash = "a7683aad97dd8aa2110600133c58e204545182a0075eee1c3b0703192b089502"
 
 [metadata.files]
 asn1 = [
@@ -371,10 +378,7 @@ iniconfig = [
     {file = "iniconfig-1.1.1-py2.py3-none-any.whl", hash = "sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3"},
     {file = "iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
 ]
-lzss = [
-    {file = "lzss-0.3-cp37-cp37m-macosx_10_15_x86_64.whl", hash = "sha256:799c7b0de950351df342d395280374afd8506f98fa3a578885edff244ad3d0ab"},
-    {file = "lzss-0.3.tar.gz", hash = "sha256:62436b70b5f6bf816385ccf522fa17a6880e19e11782f8f19ce85a300e2b3107"},
-]
+lzss = []
 mypy-extensions = [
     {file = "mypy_extensions-0.4.3-py2.py3-none-any.whl", hash = "sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d"},
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},

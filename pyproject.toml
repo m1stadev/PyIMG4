@@ -25,7 +25,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.9"
 asn1 = "^2.5.0"
-lzss = "^0.3"
+lzss = {git = "https://github.com/m1stadev/pylzss.git", rev = "v0.3.1"}
 pycryptodome = "^3.14.1"
 pyliblzfse = "^0.4.1"
 
@@ -35,7 +35,6 @@ pytest = "^7.1.1"
 remotezip = "^0.9.4"
 
 [tool.pytest.ini_options]
-filterwarnings = ["ignore::DeprecationWarning"]
 testpaths = ["tests"]
 
 [tool.poetry.urls]

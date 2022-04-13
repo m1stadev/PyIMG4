@@ -204,6 +204,12 @@ class IM4M(PyIMG4Data):
         )
 
     @property
+    def chip_id(self) -> Optional[int]:
+        return next(
+            (prop.value for prop in self.properties if prop.name == 'CHIP'), None
+        )
+
+    @property
     def ecid(self) -> Optional[int]:
         return next(
             (prop.value for prop in self.properties if prop.name == 'ECID'), None

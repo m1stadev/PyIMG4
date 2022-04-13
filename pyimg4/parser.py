@@ -192,22 +192,14 @@ class IM4M(PyIMG4Data):
     @property
     def apnonce(self) -> Optional[str]:
         return next(
-            (
-                prop.value.hex()
-                for prop in self.properties
-                if prop.name == 'BNCH'
-            ),
+            (prop.value.hex() for prop in self.properties if prop.name == 'BNCH'),
             None,
         )
 
     @property
     def sepnonce(self) -> Optional[str]:
         return next(
-            (
-                prop.value.hex()
-                for prop in self.properties
-                if prop.name == 'snon'
-            ),
+            (prop.value.hex() for prop in self.properties if prop.name == 'snon'),
             None,
         )
 

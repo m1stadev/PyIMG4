@@ -218,6 +218,42 @@ class IM4M(PyIMG4Data):
         )
 
 
+class IM4R(PyIMG4Data):
+    def __init__(self, data: bytes) -> None:
+        super().__init__(data)
+
+        self._parse()
+
+    def _parse(self) -> None:
+        self.decoder.start(self._data)
+
+        if self.decoder.peek().nr != asn1.Numbers.Sequence:
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
+
+        self.decoder.enter()
+        self._verify_fourcc(self.decoder.read()[1], 'IM4R')  # Verify IM4R FourCC
+
+        if self.decoder.peek().nr != asn1.Numbers.Set:
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Set)
+
+        self.decoder.enter()
+
+        if self.decoder.peek().cls != asn1.Classes.Private:
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Classes.Private)
+
+        self.decoder.enter()
+
+        if self.decoder.peek().nr != asn1.Numbers.Sequence:
+            raise UnexpectedTagError(self.decoder.peek(), asn1.Numbers.Sequence)
+
+        self.decoder.enter()
+        self._verify_fourcc(
+            self.decoder.read()[1], 'BNCN'
+        )  # Verify BNCN (Boot Nonce Hash) FourCC
+
+        self.generator = self.decoder.read()[1]
+
+
 class IMG4(PyIMG4Data):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
@@ -252,6 +288,15 @@ class IMG4(PyIMG4Data):
             raise UnexpectedTagError(self.decoder.peek(), asn1.Classes.Context)
 
         self.im4m = IM4M(self.decoder.read()[1])  # IM4M
+
+        if self.decoder.eof():
+            self.im4r = None
+
+        else:
+            if self.decoder.peek().cls != asn1.Classes.Context:
+                raise UnexpectedTagError(self.decoder.peek(), asn1.Classes.Context)
+
+            self.im4r = IM4R(self.decoder.read()[1])  # IM4R
 
     def output(self) -> bytes:
         self.encoder.start()

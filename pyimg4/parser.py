@@ -556,7 +556,11 @@ class IM4PData(PyIMG4Data):
         self.keybags = keybags
 
     def __repr__(self) -> str:
-        return f'IM4PData(payload length={len(self._data)}, compression={self.compression.name})'
+        repr_ = f'IM4PData(payload length={len(self._data)}, encrypted={self.encrypted}'
+        if self.encrypted == False and self.compression != Compression.NONE:
+            repr_ += f', compression={self.compression.name}'
+
+        return repr_ + ')'
 
     @property
     def compression(self) -> Compression:
@@ -629,12 +633,14 @@ class IM4PData(PyIMG4Data):
                 1, asn1.Numbers.Integer, asn1.Types.Primitive, asn1.Classes.Universal
             )
 
+            self.decompress()
             self.encoder.write(
-                len(self.decompress()),
+                len(self._data),
                 asn1.Numbers.Integer,
                 asn1.Types.Primitive,
                 asn1.Classes.Universal,
             )
+            self.compress(Compression.LZFSE)
 
             self.encoder.leave()
 

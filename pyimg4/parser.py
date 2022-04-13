@@ -568,7 +568,7 @@ class IM4PData(PyIMG4Data):
         if b'complzss' in self._data:
             return Compression.LZSS
 
-        elif self._data.startswith(b'bvx2'):
+        elif self._data.startswith(b'bvx'):
             return Compression.LZFSE
 
         else:

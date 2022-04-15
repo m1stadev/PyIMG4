@@ -627,6 +627,9 @@ class IM4PData(PyIMG4Data):
         elif compression == Compression.LZFSE:
             self._data = liblzfse.compress(self._data)
 
+            if self.compression != Compression.LZFSE:  # If bvx2 header isn't present
+                raise CompressionError('Failed to LZFSE-compress payload.')
+
     def create_im4p(self, fourcc: str, description: str = '') -> IM4P:
         self.encoder.start()
 

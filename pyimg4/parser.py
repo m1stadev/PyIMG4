@@ -586,7 +586,7 @@ class IM4PData(PyIMG4Data):
         header += int(1).to_bytes(4, 'big')
         header += bytearray(0x168)
 
-        return header
+        return bytes(header)
 
     @property
     def compression(self) -> Compression:

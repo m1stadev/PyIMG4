@@ -2,6 +2,7 @@ from .errors import AESError, CompressionError, UnexpectedDataError, UnexpectedT
 from .types import *
 from Crypto.Cipher import AES
 from typing import Optional, Union
+from zlib import adler32
 
 import asn1
 import liblzfse
@@ -562,6 +563,31 @@ class IM4PData(PyIMG4Data):
 
         return repr_ + ')'
 
+    def _parse_complzss_header(self) -> None:
+        cmp_len = int(self._data[0x10:0x14].hex(), 16)
+
+        if (
+            cmp_len < len(self._data) - 0x180
+        ):  # iOS 9+ A7-A9 kernelcache, so KPP is appended to the LZSS-compressed data
+            extra_len = len(self._data) - cmp_len - 0x180
+            self.extra = self._data[-extra_len:]
+
+            self._data = self._data[:-extra_len]
+        else:
+            self.extra = None
+
+        self._data = self._data[0x180:]
+
+    def _create_complzss_header(self) -> bytes:
+        header = bytearray(b'complzss')
+        header += adler32(self._data).to_bytes(4, 'big')
+        header += len(self._data).to_bytes(4, 'big')
+        header += len(lzss.compress(self._data)).to_bytes(4, 'big')
+        header += int(1).to_bytes(4, 'big')
+        header += bytearray(0x168)
+
+        return header
+
     @property
     def compression(self) -> Compression:
         if self.encrypted:
@@ -569,7 +595,7 @@ class IM4PData(PyIMG4Data):
                 'Cannot check compression type of encrypted payload.'
             )
 
-        if b'complzss' in self._data:
+        if self._data.startswith(b'complzss'):
             return Compression.LZSS
 
         elif self._data.startswith(b'bvx2'):
@@ -589,13 +615,15 @@ class IM4PData(PyIMG4Data):
         elif self.compression == compression:
             raise CompressionError(f'Payload is already {compression.name}-compressed.')
 
-        if self.compression == Compression.LZSS:
-            self._data = lzss.decompress(self._data)
-        elif self.compression == Compression.LZFSE:
-            self._data = liblzfse.decompress(self._data)
+        if self.compression != Compression.NONE:
+            self.decompress()
 
         if compression == Compression.LZSS:
-            self._data = lzss.compress(self._data)
+            self._data = self._create_complzss_header() + lzss.compress(self._data)
+
+            if self.extra is not None:
+                self._data += self.extra
+
         elif compression == Compression.LZFSE:
             self._data = liblzfse.compress(self._data)
 
@@ -652,6 +680,7 @@ class IM4PData(PyIMG4Data):
             raise CompressionError('Cannot decompress encrypted payload.')
 
         if self.compression == Compression.LZSS:
+            self._parse_complzss_header()
             self._data = lzss.decompress(self._data)
         elif self.compression == Compression.LZFSE:
             self._data = liblzfse.decompress(self._data)

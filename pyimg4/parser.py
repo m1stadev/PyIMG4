@@ -393,6 +393,14 @@ class IM4P(PyIMG4Data):
 
         self.payload = IM4PData(payload_data, self.keybags)
 
+    @property
+    def fourcc(self) -> str:
+        return self._fourcc
+
+    @fourcc.setter
+    def fourcc(self, fourcc: str) -> None:
+        self._fourcc = self._verify_fourcc(fourcc)
+
     def create_img4(self, im4m: IM4M) -> IMG4:
         # Don't use self.encoder as it will be used by IM4P.output()
         encoder = asn1.Encoder()
@@ -420,7 +428,7 @@ class IM4P(PyIMG4Data):
         encoder.leave()
         return IMG4(encoder.output())
 
-    def output(self, fourcc: str = None, description: Optional[str] = None) -> bytes:
+    def output(self) -> bytes:
         self.encoder.start()
 
         self.encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
@@ -428,23 +436,15 @@ class IM4P(PyIMG4Data):
             'IM4P', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
         )
 
-        if fourcc is None:
-            fourcc = self.fourcc
-        else:
-            self._verify_fourcc(fourcc)
-
         self.encoder.write(
-            fourcc,
+            self.fourcc,
             asn1.Numbers.IA5String,
             asn1.Types.Primitive,
             asn1.Classes.Universal,
         )
 
-        if description is None:
-            description = self.description
-
         self.encoder.write(
-            description,
+            self.description,
             asn1.Numbers.IA5String,
             asn1.Types.Primitive,
             asn1.Classes.Universal,

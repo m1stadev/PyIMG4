@@ -6,19 +6,19 @@ LZSS_IPSW = 'https://updates.cdn-apple.com/2021FallFCS/fullrestores/002-03194/8E
 LZFSE_IPSW = 'https://updates.cdn-apple.com/2021FallFCS/fullrestores/002-02910/AF984499-D03A-43E7-9472-6D16BA756E5E/iPhone10,3,iPhone10,6_15.0_19A346_Restore.ipsw'
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(name='dec_lzss', scope='session')
 def fetch_dec_lzss_im4p():
     with RemoteZip(LZSS_IPSW) as ipsw:
         return ipsw.read('kernelcache.release.n66')
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(name='dec_lzfse', scope='session')
 def fetch_dec_lzfse_im4p():
     with RemoteZip(LZFSE_IPSW) as ipsw:
         return ipsw.read('kernelcache.release.iphone10b')
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(name='enc_lzfse', scope='session')
 def fetch_enc_lzfse_im4p():
     with RemoteZip(LZFSE_IPSW) as ipsw:
         return ipsw.read('Firmware/dfu/iBSS.d22.RELEASE.im4p')

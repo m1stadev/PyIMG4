@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pyimg4
 
 
@@ -42,9 +40,8 @@ def test_input_lzfse_enc(enc_lzfse) -> None:
     assert im4p.payload.compression == pyimg4.Compression.NONE
 
 
-def test_create_lzss() -> None:
-    with (Path(__file__).parent / 'bin' / 'test_payload').open('rb') as f:
-        payload = pyimg4.IM4PData(f.read())
+def test_create_lzss(test_data) -> None:
+    payload = pyimg4.IM4PData(test_data)
 
     assert payload.compression == pyimg4.Compression.NONE
     assert payload.encrypted == False
@@ -60,9 +57,8 @@ def test_create_lzss() -> None:
     assert im4p.payload.encrypted == False
 
 
-def test_create_lzfse() -> None:
-    with (Path(__file__).parent / 'bin' / 'test_payload').open('rb') as f:
-        payload = pyimg4.IM4PData(f.read())
+def test_create_lzfse(test_data) -> None:
+    payload = pyimg4.IM4PData(test_data)
 
     assert payload.compression == pyimg4.Compression.NONE
     assert payload.encrypted == False

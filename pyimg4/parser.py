@@ -554,6 +554,8 @@ class IM4PData(PyIMG4Data):
     def __init__(self, data: bytes, keybags: list[Keybag] = []) -> None:
         super().__init__(data)
 
+        self.extra: Optional[bytes] = None
+
         self.keybags = keybags
 
     def __repr__(self) -> str:
@@ -573,8 +575,6 @@ class IM4PData(PyIMG4Data):
             self.extra = self._data[-extra_len:]
 
             self._data = self._data[:-extra_len]
-        else:
-            self.extra = None
 
         self._data = self._data[0x180:]
 

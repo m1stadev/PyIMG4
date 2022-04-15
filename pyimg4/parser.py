@@ -257,6 +257,7 @@ class IMG4(PyIMG4Data):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
+        self.im4r: Optional[IM4R] = None
         self._parse()
 
     def __repr__(self) -> str:
@@ -288,10 +289,7 @@ class IMG4(PyIMG4Data):
 
         self.im4m = IM4M(self.decoder.read()[1])  # IM4M
 
-        if self.decoder.eof():
-            self.im4r = None
-
-        else:
+        if not self.decoder.eof():
             if self.decoder.peek().cls != asn1.Classes.Context:
                 raise UnexpectedTagError(self.decoder.peek(), asn1.Classes.Context)
 

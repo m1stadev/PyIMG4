@@ -1,4 +1,5 @@
 from pathlib import Path
+from random import randbytes
 from remotezip import RemoteZip
 
 import pytest
@@ -29,3 +30,26 @@ def fetch_enc_lzfse_im4p() -> bytes:
 def fetch_test_payload() -> bytes:
     with (Path(__file__).parent / 'bin' / 'test_payload').open('rb') as f:
         return f.read()
+
+
+@pytest.fixture(name='IM4M', scope='session')
+def read_im4m() -> bytes:
+    with (Path(__file__).parent / 'bin' / 'IM4M').open('rb') as f:
+        return f.read()
+
+
+@pytest.fixture(name='IM4P', scope='session')
+def read_im4p() -> bytes:
+    with (Path(__file__).parent / 'bin' / 'IM4P').open('rb') as f:
+        return f.read()
+
+
+@pytest.fixture(name='IM4R', scope='session')
+def read_im4r() -> bytes:
+    with (Path(__file__).parent / 'bin' / 'IM4R').open('rb') as f:
+        return f.read()
+
+
+@pytest.fixture(name='generator', scope='session')
+def random_generator() -> bytes:
+    return randbytes(8)

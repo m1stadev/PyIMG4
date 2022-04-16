@@ -1,7 +1,7 @@
 import pyimg4
 
 
-def test_input_lzss(dec_lzss) -> None:
+def test_input_lzss(dec_lzss: bytes) -> None:
     im4p = pyimg4.IM4P(dec_lzss)
 
     assert im4p.payload.compression == pyimg4.Compression.LZSS
@@ -11,7 +11,7 @@ def test_input_lzss(dec_lzss) -> None:
     assert im4p.payload.compression == pyimg4.Compression.NONE
 
 
-def test_input_lzfse_dec(dec_lzfse) -> None:
+def test_input_lzfse_dec(dec_lzfse: bytes) -> None:
     im4p = pyimg4.IM4P(dec_lzfse)
 
     assert im4p.payload.compression == pyimg4.Compression.LZFSE
@@ -21,7 +21,7 @@ def test_input_lzfse_dec(dec_lzfse) -> None:
     assert im4p.payload.compression == pyimg4.Compression.NONE
 
 
-def test_input_lzfse_enc(enc_lzfse) -> None:
+def test_input_lzfse_enc(enc_lzfse: bytes) -> None:
     im4p = pyimg4.IM4P(enc_lzfse)
 
     assert im4p.payload.encrypted == True
@@ -40,7 +40,7 @@ def test_input_lzfse_enc(enc_lzfse) -> None:
     assert im4p.payload.compression == pyimg4.Compression.NONE
 
 
-def test_create_lzss(test_data) -> None:
+def test_create_lzss(test_data: bytes) -> None:
     payload = pyimg4.IM4PData(test_data)
 
     assert payload.compression == pyimg4.Compression.NONE
@@ -56,8 +56,10 @@ def test_create_lzss(test_data) -> None:
     assert im4p.payload.compression == pyimg4.Compression.LZSS
     assert im4p.payload.encrypted == False
 
+    im4p.output()
 
-def test_create_lzfse(test_data) -> None:
+
+def test_create_lzfse(test_data: bytes) -> None:
     payload = pyimg4.IM4PData(test_data)
 
     assert payload.compression == pyimg4.Compression.NONE
@@ -72,3 +74,5 @@ def test_create_lzfse(test_data) -> None:
 
     assert im4p.payload.compression == pyimg4.Compression.LZFSE
     assert im4p.payload.encrypted == False
+
+    im4p.output()

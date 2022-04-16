@@ -219,11 +219,31 @@ class IM4M(_PyIMG4):
         )
 
 
-class IM4R(PyIMG4Data):
-    def __init__(self, data: bytes) -> None:
-        super().__init__(data)
+class IM4R(_PyIMG4):
+    def __init__(self, *, generator: bytes = None, data: bytes = None) -> None:
+        if generator:
+            self.generator = generator
 
-        self._parse()
+        elif data:
+            super().__init__(data)
+            self._parse()
+
+        else:
+            raise TypeError('No data or generator provided.')
+
+    @property
+    def generator(self) -> bytes:
+        return self._generator
+
+    @generator.setter
+    def generator(self, generator: bytes) -> None:
+        if not isinstance(generator, bytes):
+            raise UnexpectedDataError('bytes', generator)
+
+        if len(generator) != 8:
+            raise UnexpectedDataError('bytes with length of 8', generator)
+
+        self._generator = generator
 
     def _parse(self) -> None:
         self.decoder.start(self._data)
@@ -254,6 +274,35 @@ class IM4R(PyIMG4Data):
 
         self.generator = self.decoder.read()[1]
 
+    def output(self) -> bytes:
+        self.encoder.start()
+
+        self.encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+        self.encoder.write(
+            'IM4R', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
+        )
+
+        self.encoder.enter(
+            asn1.Numbers.Set, asn1.Types.Constructed, asn1.Classes.Universal
+        )
+        self.encoder.enter(
+            asn1.Numbers.Sequence, asn1.Types.Constructed, asn1.Classes.Private
+        )
+
+        self.encoder.write(
+            'BNCN', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
+        )
+        self.encoder.write(
+            self.generator,
+            asn1.Numbers.OctetString,
+            asn1.Types.Primitive,
+            asn1.Classes.Universal,
+        )
+
+        for _ in range(3):
+            self.encoder.leave()
+
+        return self.encoder.output()
 
 
 class IMG4(_PyIMG4):

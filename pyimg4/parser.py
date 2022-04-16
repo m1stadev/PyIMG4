@@ -1,4 +1,9 @@
-from .errors import AESError, CompressionError, UnexpectedDataError, UnexpectedTagError
+from .errors import (
+    AESError,
+    CompressionError,
+    UnexpectedDataError,
+    UnexpectedTagError,
+)
 from .types import *
 from Crypto.Cipher import AES
 from typing import Optional, Union
@@ -9,7 +14,7 @@ import liblzfse
 import lzss
 
 
-class PyIMG4Data:
+class _PyIMG4:
     def __init__(self, data: bytes) -> None:
         self._data = data
 
@@ -31,6 +36,11 @@ class PyIMG4Data:
 
         return fourcc
 
+    def output(self) -> bytes:
+        return self._data
+
+
+class PyIMG4Data(_PyIMG4):
     def get_type(self) -> Union['IMG4', 'IM4P', 'IM4M']:
         self.decoder.start(self._data)
 
@@ -47,11 +57,8 @@ class PyIMG4Data:
         elif fourcc == 'IM4M':
             return IM4M
 
-    def output(self) -> bytes:
-        return self._data
 
-
-class ManifestProperty(PyIMG4Data):
+class ManifestProperty(_PyIMG4):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
@@ -71,7 +78,7 @@ class ManifestProperty(PyIMG4Data):
         self.value = self.decoder.read()[1]
 
 
-class ManifestImageData(PyIMG4Data):
+class ManifestImageData(_PyIMG4):
     def __init__(self, fourcc: str, data: bytes) -> None:
         super().__init__(data)
 
@@ -92,7 +99,7 @@ class ManifestImageData(PyIMG4Data):
             self.properties.append(ManifestProperty(self.decoder.read()[1]))
 
 
-class IM4M(PyIMG4Data):
+class IM4M(_PyIMG4):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
@@ -253,7 +260,8 @@ class IM4R(PyIMG4Data):
         self.generator = self.decoder.read()[1]
 
 
-class IMG4(PyIMG4Data):
+
+class IMG4(_PyIMG4):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
@@ -316,7 +324,7 @@ class IMG4(PyIMG4Data):
         return self.encoder.output()
 
 
-class IM4P(PyIMG4Data):
+class IM4P(_PyIMG4):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
@@ -479,7 +487,7 @@ class IM4P(PyIMG4Data):
         return self.encoder.output()
 
 
-class Keybag(PyIMG4Data):
+class Keybag(_PyIMG4):
     def __init__(
         self,
         type_: KeybagType = KeybagType.RELEASE,  # Assume RELEASE if not provided
@@ -516,7 +524,7 @@ class Keybag(PyIMG4Data):
             self._parse()
 
         else:
-            raise AESError('No data or IV/Key provided.')
+            raise TypeError('No data or IV/Key provided.')
 
         self.type = type_
 
@@ -542,7 +550,7 @@ class Keybag(PyIMG4Data):
         self.key = self.decoder.read()[1]
 
 
-class IM4PData(PyIMG4Data):
+class IM4PData(_PyIMG4):
     def __init__(self, data: bytes, keybags: list[Keybag] = []) -> None:
         super().__init__(data)
 

@@ -1,9 +1,4 @@
-from .errors import (
-    AESError,
-    CompressionError,
-    UnexpectedDataError,
-    UnexpectedTagError,
-)
+from .errors import *
 from .types import *
 from Crypto.Cipher import AES
 from typing import Optional, Union

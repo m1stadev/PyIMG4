@@ -221,11 +221,12 @@ class IM4M(_PyIMG4):
 
 class IM4R(_PyIMG4):
     def __init__(self, *, generator: bytes = None, data: bytes = None) -> None:
+        super().__init__(data)
+
         if generator:
             self.generator = generator
 
         elif data:
-            super().__init__(data)
             self._parse()
 
         else:
@@ -282,12 +283,9 @@ class IM4R(_PyIMG4):
             'IM4R', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
         )
 
-        self.encoder.enter(
-            asn1.Numbers.Set, asn1.Types.Constructed, asn1.Classes.Universal
-        )
-        self.encoder.enter(
-            asn1.Numbers.Sequence, asn1.Types.Constructed, asn1.Classes.Private
-        )
+        self.encoder.enter(asn1.Numbers.Set, asn1.Classes.Universal)
+        self.encoder.enter(0x424E434E, asn1.Classes.Private)
+        self.encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
 
         self.encoder.write(
             'BNCN', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
@@ -299,7 +297,7 @@ class IM4R(_PyIMG4):
             asn1.Classes.Universal,
         )
 
-        for _ in range(3):
+        for _ in range(4):
             self.encoder.leave()
 
         return self.encoder.output()

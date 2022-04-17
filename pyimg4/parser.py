@@ -434,6 +434,17 @@ class IM4P(_PyIMG4):
         self.payload = IM4PData(payload_data, self.keybags)
 
     @property
+    def description(self) -> str:
+        return self._description
+
+    @description.setter
+    def description(self, description: str) -> None:
+        if not isinstance(description, str):
+            raise UnexpectedDataError('string', description)
+
+        self._description = description
+
+    @property
     def fourcc(self) -> str:
         return self._fourcc
 
@@ -497,10 +508,7 @@ class IM4P(_PyIMG4):
             asn1.Classes.Universal,
         )
 
-        if (
-            self.payload.encrypted == False
-            and self.payload.compression == Compression.LZFSE
-        ):
+        if self.payload.compression == Compression.LZFSE:
             self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
 
             self._encoder.write(
@@ -629,11 +637,9 @@ class IM4PData(_PyIMG4):
     @property
     def compression(self) -> Compression:
         if self.encrypted:
-            raise CompressionError(
-                'Cannot check compression type of encrypted payload.'
-            )
+            return Compression.UNKNOWN
 
-        if self._data.startswith(b'complzss'):
+        elif self._data.startswith(b'complzss'):
             return Compression.LZSS
 
         elif self._data.startswith(b'bvx2') and self._data.endswith(b'bvx$'):
@@ -647,7 +653,7 @@ class IM4PData(_PyIMG4):
         return len(self.keybags) > 0
 
     def compress(self, compression: Compression) -> None:
-        if compression == Compression.NONE:
+        if compression in (Compression.UNKNOWN, Compression.NONE):
             raise CompressionError('A valid compression type must be specified.')
 
         elif self.compression == compression:
@@ -695,7 +701,7 @@ class IM4PData(_PyIMG4):
             asn1.Classes.Universal,
         )
 
-        if self.encrypted == False and self.compression == Compression.LZFSE:
+        if self.compression == Compression.LZFSE:
             self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
 
             self._encoder.write(
@@ -717,7 +723,7 @@ class IM4PData(_PyIMG4):
         return IM4P(self._encoder.output())
 
     def decompress(self) -> None:
-        if self.encrypted:
+        if self.compression == Compression.UNKNOWN:
             raise CompressionError('Cannot decompress encrypted payload.')
 
         if self.compression == Compression.LZSS:

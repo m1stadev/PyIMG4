@@ -377,10 +377,7 @@ class IM4P(_PyIMG4):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
-        self.keybags: list[Keybag] = []
-
-        if self._data:  # Parse provided data
-            self._parse()
+        self._parse()
 
     def __add__(self, obj: IM4M) -> IMG4:
         if isinstance(obj, IM4M):
@@ -436,13 +433,17 @@ class IM4P(_PyIMG4):
 
             kbag_decoder.enter()
 
+            keybags = []
             for kt in KeybagType:
                 if kbag_decoder.peek().nr != asn1.Numbers.Sequence:
                     raise UnexpectedTagError(kbag_decoder.peek(), asn1.Numbers.Sequence)
 
-                self.keybags.append(Keybag(kt, data=kbag_decoder.read()[1]))
+                keybags.append(Keybag(kt, data=kbag_decoder.read()[1]))
 
-        self.payload = IM4PData(payload_data, self.keybags)
+            self.payload = IM4PData(payload_data, keybags=keybags)
+
+        else:
+            self.payload = IM4PData(payload_data)
 
     @property
     def description(self) -> str:
@@ -611,12 +612,11 @@ class Keybag(_PyIMG4):
 
 
 class IM4PData(_PyIMG4):
-    def __init__(self, data: bytes, keybags: list[Keybag] = []) -> None:
+    def __init__(self, data: bytes, *, keybags: list[Keybag] = []) -> None:
         super().__init__(data)
 
-        self.extra: Optional[bytes] = None
-
         self.keybags = keybags
+        self.extra: Optional[bytes] = None
 
     def __repr__(self) -> str:
         repr_ = f'IM4PData(payload length={len(self._data)}, encrypted={self.encrypted}'

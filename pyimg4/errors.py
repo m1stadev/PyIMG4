@@ -14,7 +14,7 @@ class CompressionError(_PyIMG4Error):
     pass
 
 
-class UnexpectedDataError(_PyIMG4Error):
+class UnexpectedDataError(_PyIMG4Error, ValueError):
     def __init__(self, expect: str, real: Any) -> NoReturn:
         if not isinstance(real, (float, int)) and len(real) > 15:
             real = f'{type(real).__name__} with len of {len(real)}'
@@ -22,7 +22,7 @@ class UnexpectedDataError(_PyIMG4Error):
         super().__init__(f"Expected data: {expect}, got: {real}")
 
 
-class UnexpectedTagError(_PyIMG4Error):
+class UnexpectedTagError(_PyIMG4Error, ValueError):
     def __init__(self, tag: Tag, valid: Union[Classes, Numbers]) -> NoReturn:
         try:
             tag_type = next(t.name for t in Numbers if t.value == tag.nr)

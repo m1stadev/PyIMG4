@@ -675,7 +675,7 @@ class IM4PData(_PyIMG4):
         if extra is not None and not isinstance(extra, bytes):
             raise UnexpectedDataError('bytes', extra)
 
-        self._im4r = extra
+        self._extra = extra
 
     def compress(self, compression: Compression) -> None:
         if compression in (Compression.UNKNOWN, Compression.NONE):

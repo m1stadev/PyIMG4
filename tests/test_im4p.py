@@ -2,7 +2,7 @@ import pyimg4
 import pytest
 
 
-def test_input_lzss_dec(dec_lzss: bytes) -> None:
+def test_read_lzss_dec(dec_lzss: bytes) -> None:
     im4p = pyimg4.IM4P(dec_lzss)
 
     assert im4p.fourcc == 'krnl'
@@ -17,8 +17,10 @@ def test_input_lzss_dec(dec_lzss: bytes) -> None:
     assert im4p.payload.compression == pyimg4.Compression.NONE
     assert im4p.payload.extra is not None and len(im4p.payload.extra) == 0xC000
 
+    im4p.output()
 
-def test_input_lzfse_dec(dec_lzfse: bytes) -> None:
+
+def test_read_lzfse_dec(dec_lzfse: bytes) -> None:
     im4p = pyimg4.IM4P(dec_lzfse)
 
     assert im4p.fourcc == 'krnl'
@@ -30,8 +32,10 @@ def test_input_lzfse_dec(dec_lzfse: bytes) -> None:
 
     assert im4p.payload.compression == pyimg4.Compression.NONE
 
+    im4p.output()
 
-def test_input_lzss_enc(enc_lzss: bytes) -> None:
+
+def test_read_lzss_enc(enc_lzss: bytes) -> None:
     im4p = pyimg4.IM4P(enc_lzss)
 
     assert im4p.fourcc == 'krnl'
@@ -56,8 +60,10 @@ def test_input_lzss_enc(enc_lzss: bytes) -> None:
     assert im4p.payload.compression == pyimg4.Compression.NONE
     assert im4p.payload.extra is not None and len(im4p.payload.extra) == 0xC008
 
+    im4p.output()
 
-def test_input_lzfse_enc(enc_lzfse: bytes) -> None:
+
+def test_read_lzfse_enc(enc_lzfse: bytes) -> None:
     im4p = pyimg4.IM4P(enc_lzfse)
 
     assert im4p.fourcc == 'ibss'
@@ -81,6 +87,8 @@ def test_input_lzfse_enc(enc_lzfse: bytes) -> None:
 
     assert im4p.payload.compression == pyimg4.Compression.NONE
 
+    im4p.output()
+
 
 def test_modify(IM4P: bytes) -> None:
     im4p = pyimg4.IM4P(IM4P)
@@ -102,3 +110,5 @@ def test_modify(IM4P: bytes) -> None:
 
     with pytest.raises(pyimg4.UnexpectedDataError):
         im4p.payload.extra = 'Invalid extra data.'
+
+    im4p.output()

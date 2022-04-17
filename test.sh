@@ -11,8 +11,8 @@ if ! which poetry > /dev/null; then
 	exit 1
 fi
 
-# Build package
-poetry build
+# Make sure dependencies are installed
+poetry install > /dev/null
 
-# Install package
-python3 -m pip install $(ls dist/*.tar.gz)
+# Run tests
+poetry run pytest

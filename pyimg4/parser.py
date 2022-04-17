@@ -104,13 +104,9 @@ class IM4M(_PyIMG4):
 
     def __repr__(self) -> str:
         repr_ = f'IM4M('
-        for p in ('CHIP', 'ECID'):
-            try:
-                prop = next(prop for prop in self.properties if prop.name == p)
-            except StopIteration:
-                continue
-
-            repr_ += f'{prop.name}={prop.value}, '
+        for prop in (self.chip_id, self.ecid):
+            if prop is not None:
+                repr_ += f'{prop.name}={prop.value}, '
 
         return repr_[:-2] + ')'
 

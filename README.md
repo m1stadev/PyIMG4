@@ -16,7 +16,7 @@ PyIMG4
     <image src="https://img.shields.io/tokei/lines/github/m1stadev/PyIMG4">
   </a>
   <a href="https://github.com/m1stadev/PyIMG4">
-    <image src="https://github.com/m1stadev/PyIMG4/actions/workflows/python-tests.yml/badge.svg?branch=master">
+    <image src="https://img.shields.io/github/workflow/status/m1stadev/PyIMG4/Run%20tests?logo=github">
   </a>
     <br>
 </p>

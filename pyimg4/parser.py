@@ -196,13 +196,6 @@ class IM4M(_PyIMG4):
         )
 
     @property
-    def sepnonce(self) -> Optional[str]:
-        return next(
-            (prop.value.hex() for prop in self.properties if prop.name == 'snon'),
-            None,
-        )
-
-    @property
     def chip_id(self) -> Optional[int]:
         return next(
             (prop.value for prop in self.properties if prop.name == 'CHIP'), None
@@ -212,6 +205,13 @@ class IM4M(_PyIMG4):
     def ecid(self) -> Optional[int]:
         return next(
             (prop.value for prop in self.properties if prop.name == 'ECID'), None
+        )
+
+    @property
+    def sepnonce(self) -> Optional[str]:
+        return next(
+            (prop.value.hex() for prop in self.properties if prop.name == 'snon'),
+            None,
         )
 
 
@@ -227,20 +227,6 @@ class IM4R(_PyIMG4):
 
         else:
             raise TypeError('No data or generator provided.')
-
-    @property
-    def generator(self) -> bytes:
-        return self._generator
-
-    @generator.setter
-    def generator(self, generator: bytes) -> None:
-        if not isinstance(generator, bytes):
-            raise UnexpectedDataError('bytes', generator)
-
-        if len(generator) != 8:
-            raise UnexpectedDataError('bytes with length of 8', generator)
-
-        self._generator = generator
 
     def _parse(self) -> None:
         self._decoder.start(self._data)
@@ -270,6 +256,20 @@ class IM4R(_PyIMG4):
         )  # Verify BNCN (Boot Nonce) FourCC
 
         self.generator = self._decoder.read()[1]
+
+    @property
+    def generator(self) -> bytes:
+        return self._generator
+
+    @generator.setter
+    def generator(self, generator: bytes) -> None:
+        if not isinstance(generator, bytes):
+            raise UnexpectedDataError('bytes', generator)
+
+        if len(generator) != 8:
+            raise UnexpectedDataError('bytes with length of 8', generator)
+
+        self._generator = generator
 
     def output(self) -> bytes:
         self._encoder.start()

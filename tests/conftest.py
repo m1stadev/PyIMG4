@@ -39,6 +39,12 @@ def fetch_test_payload() -> bytes:
         return f.read()
 
 
+@pytest.fixture(name='IMG4', scope='session')
+def read_img4() -> bytes:
+    with (Path(__file__).parent / 'bin' / 'IMG4').open('rb') as f:
+        return f.read()
+
+
 @pytest.fixture(name='IM4M', scope='session')
 def read_im4m() -> bytes:
     with (Path(__file__).parent / 'bin' / 'IM4M').open('rb') as f:

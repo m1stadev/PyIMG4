@@ -666,6 +666,17 @@ class IM4PData(_PyIMG4):
     def encrypted(self) -> bool:
         return len(self.keybags) > 0
 
+    @property
+    def extra(self) -> Optional[bytes]:
+        return self._extra
+
+    @extra.setter
+    def extra(self, extra: Optional[bytes]) -> None:
+        if extra is not None and not isinstance(extra, bytes):
+            raise UnexpectedDataError('bytes', extra)
+
+        self._im4r = extra
+
     def compress(self, compression: Compression) -> None:
         if compression in (Compression.UNKNOWN, Compression.NONE):
             raise CompressionError('A valid compression type must be specified.')

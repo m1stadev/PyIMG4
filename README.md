@@ -15,6 +15,9 @@ PyIMG4
   <a href="https://github.com/m1stadev/PyIMG4">
     <image src="https://img.shields.io/tokei/lines/github/m1stadev/PyIMG4">
   </a>
+  <a href="https://github.com/m1stadev/PyIMG4">
+    <image src="https://img.shields.io/github/checks-status/m1stadev/PyIMG4/master">
+  </a>
     <br>
 </p>
 

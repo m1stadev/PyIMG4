@@ -15,16 +15,16 @@ def fetch_dec_lzss_im4p() -> bytes:
         return ipsw.read('kernelcache.release.n66')
 
 
-@pytest.fixture(name='enc_lzss', scope='session')
-def fetch_enc_lzss_im4p() -> bytes:
-    with RemoteZip(LZSS_ENC_IPSW) as ipsw:
-        return ipsw.read('kernelcache.release.n66')
-
-
 @pytest.fixture(name='dec_lzfse', scope='session')
 def fetch_dec_lzfse_im4p() -> bytes:
     with RemoteZip(LZFSE_IPSW) as ipsw:
         return ipsw.read('kernelcache.release.iphone10b')
+
+
+@pytest.fixture(name='enc_lzss', scope='session')
+def fetch_enc_lzss_im4p() -> bytes:
+    with RemoteZip(LZSS_ENC_IPSW) as ipsw:
+        return ipsw.read('kernelcache.release.n66')
 
 
 @pytest.fixture(name='enc_lzfse', scope='session')

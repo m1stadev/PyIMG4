@@ -369,6 +369,14 @@ class IMG4(_PyIMG4):
             asn1.Classes.Context,
         )
 
+        if self.im4r is not None:
+            self._encoder.write(
+                self.im4r.output(),
+                1,
+                asn1.Types.Constructed,
+                asn1.Classes.Context,
+            )
+
         self._encoder.leave()
         return self._encoder.output()
 

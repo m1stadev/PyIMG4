@@ -461,7 +461,7 @@ class IM4P(_PyIMG4):
 
     @fourcc.setter
     def fourcc(self, fourcc: str) -> None:
-        self._fourcc = self._verify_fourcc(fourcc)
+        self._fourcc = self._verify_fourcc(fourcc.lower())
 
     def create_img4(self, im4m: IM4M) -> IMG4:
         # Don't use self._encoder as it will be used by IM4P.output()

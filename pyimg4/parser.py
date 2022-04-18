@@ -304,7 +304,10 @@ class IMG4(_PyIMG4):
             self.im4r = im4r
 
     def __repr__(self) -> str:
-        return f'IMG4(fourcc={self.im4p.fourcc}, description={self.im4p.description})'
+        if self.im4p is not None:
+            return f'IMG4(fourcc="{self.im4p.fourcc}", description="{self.im4p.description}")'
+        else:
+            return 'IMG4()'
 
     def _parse(self) -> None:
         self._decoder.start(self._data)

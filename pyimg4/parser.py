@@ -751,54 +751,6 @@ class IM4PData(_PyIMG4):
                 self._data = liblzfse.decompress(self._data)
                 raise CompressionError('Failed to LZFSE-compress payload.')
 
-    def create_im4p(self, fourcc: str, description: str = '') -> IM4P:
-        self._encoder.start()
-
-        self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
-        self._encoder.write(
-            'IM4P', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
-        )
-
-        self._verify_fourcc(fourcc)
-        self._encoder.write(
-            fourcc, asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
-        )
-
-        self._encoder.write(
-            description,
-            asn1.Numbers.IA5String,
-            asn1.Types.Primitive,
-            asn1.Classes.Universal,
-        )
-
-        self._encoder.write(
-            self._data,
-            asn1.Numbers.OctetString,
-            asn1.Types.Primitive,
-            asn1.Classes.Universal,
-        )
-
-        if self.compression == Compression.LZFSE:
-            self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
-
-            self._encoder.write(
-                1, asn1.Numbers.Integer, asn1.Types.Primitive, asn1.Classes.Universal
-            )
-
-            self.decompress()
-            self._encoder.write(
-                len(self._data),
-                asn1.Numbers.Integer,
-                asn1.Types.Primitive,
-                asn1.Classes.Universal,
-            )
-            self.compress(Compression.LZFSE)
-
-            self._encoder.leave()
-
-        self._encoder.leave()
-        return IM4P(self._encoder.output())
-
     def decompress(self) -> None:
         if self.compression == Compression.UNKNOWN:
             raise CompressionError('Cannot decompress encrypted payload.')

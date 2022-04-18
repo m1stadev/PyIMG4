@@ -322,7 +322,13 @@ class IMG4(_PyIMG4):
         if self._decoder.peek().nr != asn1.Numbers.Sequence:
             raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
 
-        self.im4p = IM4P(self._decoder.read()[1])  # IM4P
+        self._encoder.write(
+            self._decoder.read()[1],
+            asn1.Numbers.Sequence,
+            asn1.Types.Constructed,
+            asn1.Classes.Universal,
+        )
+        self.im4p = IM4P(self._encoder.output())  # IM4P
 
         if self._decoder.peek().cls != asn1.Classes.Context:
             raise UnexpectedTagError(self._decoder.peek(), asn1.Classes.Context)

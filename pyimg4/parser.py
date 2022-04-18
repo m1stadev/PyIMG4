@@ -290,9 +290,9 @@ class IMG4(_PyIMG4):
         self,
         data: Optional[bytes] = None,
         *,
-        im4p: Optional['IM4P'] = None,
-        im4m: Optional[IM4M] = None,
-        im4r: Optional[IM4R] = None,
+        im4p: Optional[Union['IM4P', bytes]] = None,
+        im4m: Optional[Union[IM4M, bytes]] = None,
+        im4r: Optional[Union[IM4R, bytes]] = None,
     ) -> None:
         super().__init__(data)
 
@@ -342,33 +342,33 @@ class IMG4(_PyIMG4):
         return self._im4m
 
     @im4m.setter
-    def im4m(self, im4m: Optional['IM4M']) -> None:
-        if im4m is not None and not isinstance(im4m, IM4M):
-            raise UnexpectedDataError('IM4M', im4m)
+    def im4m(self, im4m: Optional[Union[IM4M, bytes]]) -> None:
+        if im4m is not None and not isinstance(im4m, (IM4M, bytes)):
+            raise UnexpectedDataError('IM4M or bytes', im4m)
 
-        self._im4m = im4m
+        self._im4m = IM4M(im4m) if isinstance(im4m, bytes) else im4m
 
     @property
     def im4p(self) -> Optional['IM4P']:
         return self._im4p
 
     @im4p.setter
-    def im4p(self, im4p: Optional['IM4P']) -> None:
-        if im4p is not None and not isinstance(im4p, IM4P):
-            raise UnexpectedDataError('IM4P', im4p)
+    def im4p(self, im4p: Optional[Union['IM4P', bytes]]) -> None:
+        if im4p is not None and not isinstance(im4p, (IM4P, bytes)):
+            raise UnexpectedDataError('IM4P or bytes', im4p)
 
-        self._im4p = im4p
+        self._im4p = IM4P(im4p) if isinstance(im4p, bytes) else im4p
 
     @property
     def im4r(self) -> Optional[IM4R]:
         return self._im4r
 
     @im4r.setter
-    def im4r(self, im4r: Optional[IM4R]) -> None:
-        if im4r is not None and not isinstance(im4r, IM4R):
-            raise UnexpectedDataError('IM4R', im4r)
+    def im4r(self, im4r: Optional[Union[IM4R, bytes]]) -> None:
+        if im4r is not None and not isinstance(im4r, (IM4R, bytes)):
+            raise UnexpectedDataError('IM4R or bytes', im4r)
 
-        self._im4r = im4r
+        self._im4r = IM4R(im4r) if isinstance(im4r, bytes) else im4r
 
     def output(self) -> bytes:
         self._encoder.start()
@@ -418,7 +418,7 @@ class IM4P(_PyIMG4):
         *,
         fourcc: Optional[str] = None,
         description: Optional[str] = None,
-        payload: Optional['IM4PData'] = None,
+        payload: Optional[Union['IM4PData', bytes]] = None,
     ) -> None:
         super().__init__(data)
 

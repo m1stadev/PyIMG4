@@ -412,10 +412,22 @@ class IMG4(_PyIMG4):
 
 
 class IM4P(_PyIMG4):
-    def __init__(self, data: bytes) -> None:
+    def __init__(
+        self,
+        data: Optional[bytes] = None,
+        *,
+        fourcc: Optional[str] = None,
+        description: Optional[str] = None,
+        payload: Optional['IM4PData'] = None,
+    ) -> None:
         super().__init__(data)
 
-        self._parse()
+        if data:
+            self._parse()
+        else:
+            self.fourcc = fourcc
+            self.description = description
+            self.payload = payload
 
     def __add__(self, im4m: IM4M) -> IMG4:
         if isinstance(im4m, IM4M):
@@ -428,7 +440,7 @@ class IM4P(_PyIMG4):
     __radd__ = __add__
 
     def __repr__(self) -> str:
-        return f'IM4P(fourcc={self.fourcc}, description={self.description})'
+        return f'IM4P(fourcc={self.fourcc}, description="{self.description}")'
 
     def _parse(self) -> None:
         self._decoder.start(self._data)
@@ -492,49 +504,39 @@ class IM4P(_PyIMG4):
         return self._description
 
     @description.setter
-    def description(self, description: str) -> None:
-        if not isinstance(description, str):
+    def description(self, description: Optional[str]) -> None:
+        if description is not None and not isinstance(description, str):
             raise UnexpectedDataError('string', description)
 
-        self._description = description
+        self._description = description or ''
 
     @property
-    def fourcc(self) -> str:
+    def fourcc(self) -> Optional[str]:
         return self._fourcc
 
     @fourcc.setter
-    def fourcc(self, fourcc: str) -> None:
-        if not fourcc.islower():
-            raise UnexpectedDataError('lowercase string', fourcc)
+    def fourcc(self, fourcc: Optional[str]) -> None:
+        if fourcc is None:
+            self._fourcc = fourcc
 
-        self._fourcc = self._verify_fourcc(fourcc)
+        elif isinstance(fourcc, str):
+            if not fourcc.islower():
+                raise UnexpectedDataError('lowercase string', fourcc)
 
-    def create_img4(self, im4m: IM4M) -> IMG4:
-        # Don't use self._encoder as it will be used by IM4P.output()
-        encoder = asn1.Encoder()
-        encoder.start()
+            self._fourcc = self._verify_fourcc(fourcc)
+        else:
+            raise UnexpectedDataError('string', fourcc)
 
-        encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
-        encoder.write(
-            'IMG4', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
-        )
+    @property
+    def payload(self) -> Optional['IM4PData']:
+        return self._payload
 
-        encoder.write(
-            self.output(),
-            asn1.Numbers.Sequence,
-            asn1.Types.Constructed,
-            asn1.Classes.Universal,
-        )
+    @payload.setter
+    def payload(self, payload: Optional['IM4PData']) -> None:
+        if payload is not None and not isinstance(payload, IM4PData):
+            raise UnexpectedDataError('IM4PData', payload)
 
-        encoder.write(
-            im4m.output(),
-            0,
-            asn1.Types.Constructed,
-            asn1.Classes.Context,
-        )
-
-        encoder.leave()
-        return IMG4(encoder.output())
+        self._payload = payload
 
     def output(self) -> bytes:
         self._encoder.start()
@@ -543,6 +545,9 @@ class IM4P(_PyIMG4):
         self._encoder.write(
             'IM4P', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
         )
+
+        if self.fourcc is None:
+            raise ValueError('No FourCC is set.')
 
         self._encoder.write(
             self.fourcc,
@@ -557,6 +562,9 @@ class IM4P(_PyIMG4):
             asn1.Types.Primitive,
             asn1.Classes.Universal,
         )
+
+        if self.payload is None:
+            raise ValueError('No payload is set.')
 
         self._encoder.write(
             self.payload.output(),

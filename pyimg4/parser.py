@@ -292,11 +292,22 @@ class IM4R(_PyIMG4):
 
 
 class IMG4(_PyIMG4):
-    def __init__(self, data: bytes) -> None:
+    def __init__(
+        self,
+        data: Optional[bytes] = None,
+        *,
+        im4p: Optional['IM4P'] = None,
+        im4m: Optional[IM4M] = None,
+        im4r: Optional[IM4R] = None,
+    ) -> None:
         super().__init__(data)
 
-        self.im4r = None
-        self._parse()
+        if data:
+            self._parse()
+        else:
+            self.im4p = im4p
+            self.im4m = im4m
+            self.im4r = im4r
 
     def __repr__(self) -> str:
         return f'IMG4(fourcc={self.im4p.fourcc}, description={self.im4p.description})'
@@ -326,6 +337,30 @@ class IMG4(_PyIMG4):
                 raise UnexpectedTagError(self._decoder.peek(), asn1.Classes.Context)
 
             self.im4r = IM4R(self._decoder.read()[1])  # IM4R
+        else:
+            self.im4r = None
+
+    @property
+    def im4m(self) -> IM4M:
+        return self._im4m
+
+    @im4m.setter
+    def im4m(self, im4m: Optional['IM4M']) -> None:
+        if im4m is not None and not isinstance(im4m, IM4M):
+            raise UnexpectedDataError('IM4M', im4m)
+
+        self._im4m = im4m
+
+    @property
+    def im4p(self) -> Optional['IM4P']:
+        return self._im4p
+
+    @im4p.setter
+    def im4p(self, im4p: Optional['IM4P']) -> None:
+        if im4p is not None and not isinstance(im4p, IM4P):
+            raise UnexpectedDataError('IM4P', im4p)
+
+        self._im4p = im4p
 
     @property
     def im4r(self) -> Optional[IM4R]:
@@ -346,6 +381,9 @@ class IMG4(_PyIMG4):
             'IMG4', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
         )
 
+        if self.im4p is None:
+            raise ValueError('No IM4P is set.')
+
         self._decoder.start(self.im4p.output())
         self._encoder.write(
             self._decoder.read()[1],
@@ -353,6 +391,9 @@ class IMG4(_PyIMG4):
             asn1.Types.Constructed,
             asn1.Classes.Universal,
         )
+
+        if self.im4m is None:
+            raise ValueError('No IM4M is set.')
 
         self._encoder.write(
             self.im4m.output(),

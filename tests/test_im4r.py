@@ -2,14 +2,6 @@ import pyimg4
 import pytest
 
 
-def test_read(IM4R: bytes) -> None:
-    im4r = pyimg4.IM4R(data=IM4R)
-
-    assert im4r.generator.hex() == '7cd2c2e8aebb565f'
-
-    im4r.output()
-
-
 def test_create(generator: bytes) -> None:
     im4r = pyimg4.IM4R(generator=generator)
 
@@ -17,5 +9,12 @@ def test_create(generator: bytes) -> None:
 
     with pytest.raises(pyimg4.UnexpectedDataError):
         im4r.generator = 'Invalid generator.'
+
+    im4r.output()
+
+def test_read(IM4R: bytes) -> None:
+    im4r = pyimg4.IM4R(IM4R)
+
+    assert im4r.generator.hex() == '7cd2c2e8aebb565f'
 
     im4r.output()

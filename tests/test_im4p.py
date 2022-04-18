@@ -2,6 +2,24 @@ import pyimg4
 import pytest
 
 
+def test_create(test_data: bytes, IM4P: bytes) -> None:
+    im4p = pyimg4.IM4P()
+
+    im4p.payload = test_data
+
+    im4p.fourcc = 'test'
+
+    with pytest.raises(pyimg4.UnexpectedDataError):
+        im4p.fourcc = 'TEST'
+
+    im4p.description = 'Test IM4P file.'
+
+    with pytest.raises(pyimg4.UnexpectedDataError):
+        im4p.description = 0
+
+    assert im4p.output() == IM4P
+
+
 def test_read_lzss_dec(dec_lzss: bytes) -> None:
     im4p = pyimg4.IM4P(dec_lzss)
 
@@ -86,29 +104,5 @@ def test_read_lzfse_enc(enc_lzfse: bytes) -> None:
     im4p.payload.decompress()
 
     assert im4p.payload.compression == pyimg4.Compression.NONE
-
-    im4p.output()
-
-
-def test_modify(IM4P: bytes) -> None:
-    im4p = pyimg4.IM4P(IM4P)
-
-    im4p.fourcc = 'im4p'
-
-    with pytest.raises(pyimg4.UnexpectedDataError):
-        im4p.fourcc = 'IM4P'
-
-    with pytest.raises(pyimg4.UnexpectedDataError):
-        im4p.fourcc = 'Invalid fourcc.'
-
-    im4p.description = 'New description.'
-
-    with pytest.raises(pyimg4.UnexpectedDataError):
-        im4p.description = 0
-
-    im4p.payload.extra = b'Extra data.'
-
-    with pytest.raises(pyimg4.UnexpectedDataError):
-        im4p.payload.extra = 'Invalid extra data.'
 
     im4p.output()

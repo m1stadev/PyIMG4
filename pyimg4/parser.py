@@ -35,8 +35,8 @@ class _PyIMG4:
         return self._data
 
 
-class PyIMG4Data(_PyIMG4):
-    def get_type(self) -> Union['IMG4', 'IM4P', 'IM4M']:
+class Data(_PyIMG4):
+    def get_type(self) -> Optional[Union['IMG4', 'IM4P', 'IM4M', 'IM4R']]:
         self._decoder.start(self._data)
 
         if self._decoder.peek().nr != asn1.Numbers.Sequence:
@@ -51,6 +51,8 @@ class PyIMG4Data(_PyIMG4):
             return IM4P
         elif fourcc == 'IM4M':
             return IM4M
+        elif fourcc == 'IM4R':
+            return IM4R
 
 
 class ManifestProperty(_PyIMG4):

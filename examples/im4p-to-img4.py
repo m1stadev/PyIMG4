@@ -36,9 +36,11 @@ def main() -> None:
     except:
         sys.exit(f'[ERROR] Failed to parse SHSH blob: {shsh_path}')
 
+    img4 = pyimg4.IMG4(im4m=im4m, im4p=im4p)
+
     img4_path = im4p_path.with_suffix('.img4')
     with img4_path.open('wb') as f:
-        f.write((im4m + im4p).output())
+        f.write(img4.output())
 
     print(f'IMG4 outputted to: {img4_path}.')
 

@@ -208,7 +208,7 @@ class IM4M(_PyIMG4):
 
 
 class IM4R(_PyIMG4):
-    def __init__(self, *, generator: bytes = None, data: bytes = None) -> None:
+    def __init__(self, data: bytes = None, *, generator: bytes = None) -> None:
         super().__init__(data)
 
         if generator:

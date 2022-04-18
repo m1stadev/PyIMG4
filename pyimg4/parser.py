@@ -532,11 +532,11 @@ class IM4P(_PyIMG4):
         return self._payload
 
     @payload.setter
-    def payload(self, payload: Optional['IM4PData']) -> None:
-        if payload is not None and not isinstance(payload, IM4PData):
-            raise UnexpectedDataError('IM4PData', payload)
+    def payload(self, payload: Optional[Union['IM4PData', bytes]]) -> None:
+        if payload is not None and not isinstance(payload, (IM4PData, bytes)):
+            raise UnexpectedDataError('IM4PData or bytes', payload)
 
-        self._payload = payload
+        self._payload = IM4PData(payload) if isinstance(payload, bytes) else payload
 
     def output(self) -> bytes:
         self._encoder.start()

@@ -305,7 +305,7 @@ class IMG4(_PyIMG4):
 
     def __repr__(self) -> str:
         if self.im4p is not None:
-            return f'IMG4(fourcc="{self.im4p.fourcc}", description="{self.im4p.description}")'
+            return f'IMG4(fourcc={self.im4p.fourcc}, description="{self.im4p.description}")'
         else:
             return 'IMG4()'
 
@@ -607,6 +607,8 @@ class Keybag(_PyIMG4):
         key: Union[bytes, str] = None,
         data: bytes = None,
     ) -> None:
+        super().__init__(data)
+
         if iv and key:
             if isinstance(iv, str):
                 try:
@@ -631,7 +633,6 @@ class Keybag(_PyIMG4):
                 raise AESError('Invalid key length.')
 
         elif data:
-            super().__init__(data)
             self._parse()
 
         else:

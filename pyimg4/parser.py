@@ -76,11 +76,11 @@ class ManifestProperty(_PyIMG4):
 
 
 class ManifestImageData(_PyIMG4):
-    def __init__(self, fourcc: str, data: bytes) -> None:
+    def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
-        self.fourcc = fourcc
         self.properties: list[ManifestProperty] = []
+
         self._parse()
 
     def __repr__(self) -> str:
@@ -89,8 +89,17 @@ class ManifestImageData(_PyIMG4):
     def _parse(self) -> None:
         self._decoder.start(self._data)
 
-        if self._decoder.peek().cls != asn1.Classes.Private:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Classes.Private)
+        if self._decoder.peek().nr != asn1.Numbers.Sequence:
+            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
+
+        self._decoder.enter()
+
+        self.fourcc = self._verify_fourcc(self._decoder.read()[1])
+
+        if self._decoder.peek().nr != asn1.Numbers.Set:
+            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Set)
+
+        self._decoder.enter()
 
         while not self._decoder.eof():
             self.properties.append(ManifestProperty(self._decoder.read()[1]))
@@ -100,17 +109,20 @@ class IM4M(_PyIMG4):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
-        self.properties: list[ManifestProperty] = []
         self.images: list[ManifestImageData] = []
+        self.properties: list[ManifestProperty] = []
+
         self._parse()
 
     def __repr__(self) -> str:
         repr_ = f'IM4M('
-        for prop in (self.chip_id, self.ecid):
+        for p in ('CHIP', 'ECID'):
+            prop = next((prop for prop in self.properties if prop.name == p), None)
+
             if prop is not None:
                 repr_ += f'{prop.name}={prop.value}, '
 
-        return repr_[:-2] + ')'
+        return repr_[:-2] + ')' if ',' in repr_ else repr_ + ')'
 
     def __add__(self, obj: 'IM4P') -> 'IMG4':
         if isinstance(obj, IM4P):
@@ -156,33 +168,11 @@ class IM4M(_PyIMG4):
             if self._decoder.eof():
                 break
 
-            if self._decoder.peek().cls != asn1.Classes.Private:
-                raise UnexpectedTagError(self._decoder.peek(), asn1.Classes.Private)
-
-            self._decoder.enter()
-
-            if self._decoder.peek().nr != asn1.Numbers.Sequence:
-                raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
-
-            self._decoder.enter()
-            fourcc = self._verify_fourcc(self._decoder.read()[1])
-
-            if self._decoder.peek().nr != asn1.Numbers.Set:
-                raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Set)
-
-            if fourcc == 'MANP':
-                self._decoder.enter()
-
-                while not self._decoder.eof():
-                    self.properties.append(ManifestProperty(self._decoder.read()[1]))
-
-                self._decoder.leave()
-
+            data = ManifestImageData(self._decoder.read()[1])
+            if data.fourcc == 'MANP':
+                self.properties = data.properties
             else:
-                self.images.append(ManifestImageData(fourcc, self._decoder.read()[1]))
-
-            for _ in range(2):
-                self._decoder.leave()
+                self.images.append(data)
 
         for _ in range(4):
             self._decoder.leave()

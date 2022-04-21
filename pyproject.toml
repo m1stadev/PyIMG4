@@ -12,7 +12,7 @@ classifiers = [
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
     "Topic :: Utilities"
 ]
 packages = [
@@ -23,7 +23,7 @@ packages = [
 #pyimg4 = "pyimg4.__main__:main"
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.7"
 asn1 = "^2.5.0"
 lzss = {git = "https://github.com/m1stadev/pylzss.git", rev = "v0.3.1"}
 pycryptodome = "^3.14.1"

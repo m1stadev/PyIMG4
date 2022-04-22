@@ -23,16 +23,16 @@ packages = [
 #pyimg4 = "pyimg4.__main__:main"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.6"
 asn1 = "^2.5.0"
 lzss = {git = "https://github.com/m1stadev/pylzss.git", rev = "v0.3.1"}
 pycryptodome = "^3.14.1"
 pyliblzfse = "^0.4.1"
 
 [tool.poetry.dev-dependencies]
-black = "^22.1.0"
-isort = "^5.10.1"
-pytest = "^7.1.1"
+black = {version = "^22.1.0", python = "^3.7"}
+isort = {version = "^5.10.1", python = "^3.7"}
+pytest = {version = "^7.1.1", python = "^3.7"}
 remotezip = "^0.9.4"
 
 [tool.black]

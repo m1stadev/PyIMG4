@@ -35,6 +35,9 @@ isort = "^5.10.1"
 pytest = "^7.1.1"
 remotezip = "^0.9.4"
 
+[tool.black]
+skip-string-normalization = true
+
 [tool.isort]
 profile = "black"
 src_paths = ["examples", "pyimg4", "tests"]

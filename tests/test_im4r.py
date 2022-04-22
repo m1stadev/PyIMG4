@@ -13,6 +13,7 @@ def test_create(generator: bytes) -> None:
 
     im4r.output()
 
+
 def test_read(IM4R: bytes) -> None:
     im4r = pyimg4.IM4R(IM4R)
 

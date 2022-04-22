@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-from .errors import *
-from .types import *
-from Crypto.Cipher import AES
 from typing import Optional, Union
 from zlib import adler32
 
 import asn1
 import liblzfse
 import lzss
+from Crypto.Cipher import AES
+
+from .errors import *
+from .types import *
 
 
 class _PyIMG4:

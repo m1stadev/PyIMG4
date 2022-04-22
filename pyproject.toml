@@ -31,8 +31,13 @@ pyliblzfse = "^0.4.1"
 
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"
+isort = "^5.10.1"
 pytest = "^7.1.1"
 remotezip = "^0.9.4"
+
+[tool.isort]
+profile = "black"
+src_paths = ["examples", "pyimg4", "tests"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
+import plistlib
+import sys
 from pathlib import Path
 
-import plistlib
 import pyimg4
-import sys
 
 
 def main() -> None:

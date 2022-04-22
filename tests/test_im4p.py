@@ -1,5 +1,6 @@
-import pyimg4
 import pytest
+
+import pyimg4
 
 
 def test_create(test_data: bytes, IM4P: bytes) -> None:

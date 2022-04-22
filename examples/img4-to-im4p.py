@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
+import sys
 from pathlib import Path
 
 import pyimg4
-import sys
 
 
 def main() -> None:

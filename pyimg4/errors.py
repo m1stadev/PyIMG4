@@ -1,5 +1,6 @@
-from asn1 import Classes, Numbers, Tag
 from typing import Any, NoReturn, Union
+
+from asn1 import Classes, Numbers, Tag
 
 
 class _PyIMG4Error(Exception):

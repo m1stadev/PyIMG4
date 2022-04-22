@@ -1,8 +1,8 @@
 from pathlib import Path
 from random import getrandbits
-from remotezip import RemoteZip
 
 import pytest
+from remotezip import RemoteZip
 
 LZSS_DEC_IPSW = 'https://updates.cdn-apple.com/2021FallFCS/fullrestores/002-03194/8EC63AF9-19BE-4829-B389-27AECB41DD6A/iPhone_5.5_15.0_19A346_Restore.ipsw'
 LZSS_ENC_IPSW = 'http://appldnld.apple.com/iOS9.3.5/031-73130-20160825-6A2C2FD4-6711-11E6-B3F4-173834D2D062/iPhone8,2_9.3.5_13G36_Restore.ipsw'

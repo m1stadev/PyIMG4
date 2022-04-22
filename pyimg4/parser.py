@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from .errors import *
 from .types import *
 from Crypto.Cipher import AES
-from typing import List, Optional, Union
+from typing import Optional, Union
 from zlib import adler32
 
 import asn1
@@ -79,7 +81,7 @@ class ManifestImageData(_PyIMG4):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
-        self.properties: List[ManifestProperty] = []
+        self.properties: list[ManifestProperty] = []
 
         self._parse()
 
@@ -109,8 +111,8 @@ class IM4M(_PyIMG4):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
-        self.images: List[ManifestImageData] = []
-        self.properties: List[ManifestProperty] = []
+        self.images: list[ManifestImageData] = []
+        self.properties: list[ManifestProperty] = []
 
         self._parse()
 
@@ -669,7 +671,7 @@ class Keybag(_PyIMG4):
 
 
 class IM4PData(_PyIMG4):
-    def __init__(self, data: bytes, *, keybags: List[Keybag] = []) -> None:
+    def __init__(self, data: bytes, *, keybags: list[Keybag] = []) -> None:
         super().__init__(data)
 
         self.keybags = keybags

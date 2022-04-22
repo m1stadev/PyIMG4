@@ -701,7 +701,7 @@ class IM4PData(_PyIMG4):
         header += len(self._data).to_bytes(4, 'big')
         header += len(lzss.compress(self._data)).to_bytes(4, 'big')
         header += int(1).to_bytes(4, 'big')
-        header += bytearray(0x168)
+        header += bytearray(0x180 - len(header))
 
         return bytes(header)
 

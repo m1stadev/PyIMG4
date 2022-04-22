@@ -1,5 +1,5 @@
 from pathlib import Path
-from random import randbytes
+from random import getrandbits
 from remotezip import RemoteZip
 
 import pytest
@@ -65,4 +65,4 @@ def read_im4r() -> bytes:
 
 @pytest.fixture(name='generator', scope='session')
 def random_generator() -> bytes:
-    return randbytes(8)
+    return getrandbits(64).to_bytes(8, 'big')

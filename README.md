@@ -26,7 +26,7 @@ A Python library/CLI tool for parsing Apple's <a href="https://www.theiphonewiki
 </p>
 
 ## Requirements
-- Python 3.6 (Python 3.7+ is recommended) or higher
+- Python 3.6 or higher (Python 3.7+ is recommended)
 
 ## Installation
 - Install from [PyPI](https://pypi.org/project/pyimg4/):

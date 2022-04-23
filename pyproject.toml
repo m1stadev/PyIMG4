@@ -33,7 +33,7 @@ pyliblzfse = "^0.4.1"
 black = {version = "^22.1.0", python = "^3.7"}
 isort = {version = "^5.10.1", python = "^3.7"}
 pytest = {version = "^7.1.1", python = "^3.7"}
-remotezip = "^0.9.4"
+remotezip = {version = "^0.9.4", python = "^3.7"}
 
 [tool.black]
 skip-string-normalization = true

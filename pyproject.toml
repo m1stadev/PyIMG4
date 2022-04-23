@@ -25,7 +25,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.6"
 asn1 = "^2.5.0"
-lzss = {git = "https://github.com/m1stadev/pylzss.git", rev = "v0.3.1"}
+pylzss = "^0.3.1"
 pycryptodome = "^3.14.1"
 pyliblzfse = "^0.4.1"
 

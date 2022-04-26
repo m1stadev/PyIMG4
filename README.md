@@ -30,14 +30,14 @@ A Python library/CLI tool for parsing Apple's <a href="https://www.theiphonewiki
 
 ## Installation
 - Install from [PyPI](https://pypi.org/project/pyimg4/):
-    - ```python3 -m pip install -U pyimg4```
+    - ```python3 -m pip install pyimg4```
 - Local installation:
     - `./install.sh`
     - Requires [Poetry](https://python-poetry.org)
 
 ## TODO
-- Implement IMG4 creation
 - Write CLI tool
+- Write documentation
 
 ## Support
 

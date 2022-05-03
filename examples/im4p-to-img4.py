@@ -9,11 +9,11 @@ import pyimg4
 
 def main() -> None:
     if len(sys.argv) != 3:
-        sys.exit(f'Usage: {sys.argv[0]} <IM4P file> <SHSH blob>')
+        sys.exit(f'Usage: {sys.argv[0]} <Image4 payload> <SHSH blob>')
 
     im4p_path = Path(sys.argv[1])
     if not im4p_path.is_file():
-        sys.exit(f'[ERROR] IM4P file not found: {im4p_path}')
+        sys.exit(f'[ERROR] Image4 payload not found: {im4p_path}')
 
     shsh_path = Path(sys.argv[2])
     if not shsh_path.is_file():
@@ -23,7 +23,7 @@ def main() -> None:
         try:
             im4p = pyimg4.IM4P(f.read())
         except:
-            sys.exit(f'[ERROR] Failed to parse IM4P file: {im4p_path}')
+            sys.exit(f'[ERROR] Failed to parse Image4 payload: {im4p_path}')
 
     with shsh_path.open('rb') as f:
         try:
@@ -42,7 +42,7 @@ def main() -> None:
     with img4_path.open('wb') as f:
         f.write(img4)
 
-    print(f'IMG4 outputted to: {img4_path}.')
+    print(f'Image4 outputted to: {img4_path}.')
 
 
 if __name__ == '__main__':

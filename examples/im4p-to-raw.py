@@ -8,17 +8,17 @@ import pyimg4
 
 def main() -> None:
     if len(sys.argv) != 2:
-        sys.exit(f'Usage: {sys.argv[0]} <IM4P file>')
+        sys.exit(f'Usage: {sys.argv[0]} <Image4 payload>')
 
     im4p_path = Path(sys.argv[1])
     if not im4p_path.is_file():
-        sys.exit(f'[ERROR] IM4P file not found: {im4p_path}')
+        sys.exit(f'[ERROR] Image4 payload not found: {im4p_path}')
 
     with im4p_path.open('rb') as f:
         try:
             im4p = pyimg4.IM4P(f.read())
         except:
-            sys.exit(f'[ERROR] Failed to parse IM4P file: {im4p_path}')
+            sys.exit(f'[ERROR] Failed to parse Image4 payload: {im4p_path}')
 
     raw_data = im4p_path.with_suffix('.raw')
     with raw_data.open('wb') as f:

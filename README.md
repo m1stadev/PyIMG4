@@ -22,7 +22,7 @@ PyIMG4
 </p>
 
 <p align="center">
-A Python library/CLI tool for parsing Apple's <a href="https://www.theiphonewiki.com/wiki/IMG4_File_Format">IMG4 format</a>.
+A Python library/CLI tool for parsing Apple's <a href="https://www.theiphonewiki.com/wiki/IMG4_File_Format">Image4 format</a>.
 </p>
 
 ## Requirements

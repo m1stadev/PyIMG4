@@ -40,7 +40,7 @@ def main() -> None:
 
     img4_path = im4p_path.with_suffix('.img4')
     with img4_path.open('wb') as f:
-        f.write(img4.output())
+        f.write(img4)
 
     print(f'IMG4 outputted to: {img4_path}.')
 

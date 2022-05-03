@@ -24,7 +24,7 @@ def main() -> None:
     print('  IM4P info:')
     print(f'    IM4P FourCC: {img4.im4p.fourcc}')
     print(f'    IM4P Description: {img4.im4p.description}')
-    print(f'    IM4P Data size: {round(len(img4.im4p.payload.output()) / 1000)}KB')
+    print(f'    IM4P Data size: {round(len(img4.im4p.payload) / 1000)}KB')
     if (
         img4.im4p.payload.encrypted == False
         and img4.im4p.payload.compression != pyimg4.Compression.NONE
@@ -33,7 +33,7 @@ def main() -> None:
 
         img4.im4p.payload.decompress()
         print(
-            f'    IM4P Data size (uncompressed): {round(len(img4.im4p.payload.output()) / 1000)}KB'
+            f'    IM4P Data size (uncompressed): {round(len(img4.im4p.payload) / 1000)}KB'
         )
 
     if img4.im4p.payload.encrypted:

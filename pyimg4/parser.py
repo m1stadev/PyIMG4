@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 from zlib import adler32
 
 import asn1
@@ -16,6 +16,20 @@ class _PyIMG4:
 
         self._decoder = asn1.Decoder()
         self._encoder = asn1.Encoder()
+
+    def __bytes__(self) -> bytes:
+        return self.output()
+
+    def __eq__(self, obj: Any) -> bool:
+        if isinstance(obj, _PyIMG4):
+            return self.output() == obj.output()
+        elif isinstance(obj, bytes):
+            return self.output() == obj
+        else:
+            return False
+
+    def __len__(self) -> int:
+        return len(self.output())
 
     def _verify_fourcc(self, fourcc: str, correct: str = None) -> str:
         if not isinstance(fourcc, str):
@@ -592,7 +606,7 @@ class IM4P(_PyIMG4):
 
             self.payload.decompress()
             self._encoder.write(
-                len(self.payload.output()),
+                len(self.payload),
                 asn1.Numbers.Integer,
                 asn1.Types.Primitive,
                 asn1.Classes.Universal,

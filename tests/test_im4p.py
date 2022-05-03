@@ -18,7 +18,7 @@ def test_create(test_data: bytes, IM4P: bytes) -> None:
     with pytest.raises(pyimg4.UnexpectedDataError):
         im4p.description = 0
 
-    assert im4p.output() == IM4P
+    assert im4p == IM4P
 
 
 def test_read_lzss_dec(dec_lzss: bytes) -> None:

@@ -32,7 +32,7 @@ def main() -> None:
 
             im4p.payload.decompress()
 
-        f.write(im4p.payload.output())
+        f.write(im4p.payload)
 
     print(f'Raw data outputted to: {raw_data}.')
 

@@ -36,10 +36,12 @@ class _PyIMG4:
             raise UnexpectedDataError('string', fourcc)
 
         if correct is not None:
-            if fourcc.casefold() != correct.casefold():
-                raise UnexpectedDataError(correct, fourcc)
-            else:
+            self._verify_fourcc(correct)
+
+            if fourcc.casefold() == correct.casefold():
                 return fourcc
+            else:
+                raise UnexpectedDataError(correct, fourcc)
 
         if len(fourcc) != 4:
             raise UnexpectedDataError('string with length of 4', fourcc)

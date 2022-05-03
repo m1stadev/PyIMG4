@@ -199,6 +199,12 @@ class IM4M(_PyIMG4):
         )
 
     @property
+    def board_id(self) -> Optional[int]:
+        return next(
+            (prop.value for prop in self.properties if prop.name == 'BORD'), None
+        )
+
+    @property
     def chip_id(self) -> Optional[int]:
         return next(
             (prop.value for prop in self.properties if prop.name == 'CHIP'), None

@@ -186,8 +186,8 @@ class IM4M(_PyIMG4):
         for _ in range(4):
             self._decoder.leave()
 
-        self.rsa = self._decoder.read()[1]
-        self.cert = self._decoder.read()[1]
+        self.signature = self._decoder.read()[1]
+        self.certificates = self._decoder.read()[1]
 
     @property
     def apnonce(self) -> Optional[str]:

@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "pyimg4"
 version = "0.5.2"
-description = "A Python library/CLI tool for parsing Apple's IMG4 format."
+description = "A Python library/CLI tool for parsing Apple's Image4 format."
 authors = ["m1stadev <adamhamdi31@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/m1stadev/PyIMG4"
-keywords = ["ios", "jailbreak", "iboot", "img4"]
+keywords = ["ios", "jailbreak", "iboot", "img4", "image4"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",

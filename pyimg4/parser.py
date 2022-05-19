@@ -310,12 +310,12 @@ class IM4R(_PyIMG4):
 
 class IMG4(_PyIMG4):
     def __init__(
-        self,
-        data: Optional[bytes] = None,
-        *,
-        im4p: Optional[Union['IM4P', bytes]] = None,
-        im4m: Optional[Union[IM4M, bytes]] = None,
-        im4r: Optional[Union[IM4R, bytes]] = None,
+            self,
+            data: Optional[bytes] = None,
+            *,
+            im4p: Optional[Union['IM4P', bytes]] = None,
+            im4m: Optional[Union[IM4M, bytes]] = None,
+            im4r: Optional[Union[IM4R, bytes]] = None,
     ) -> None:
         super().__init__(data)
 
@@ -442,12 +442,12 @@ class IMG4(_PyIMG4):
 
 class IM4P(_PyIMG4):
     def __init__(
-        self,
-        data: Optional[bytes] = None,
-        *,
-        fourcc: Optional[str] = None,
-        description: Optional[str] = None,
-        payload: Optional[Union['IM4PData', bytes]] = None,
+            self,
+            data: Optional[bytes] = None,
+            *,
+            fourcc: Optional[str] = None,
+            description: Optional[str] = None,
+            payload: Optional[Union['IM4PData', bytes]] = None,
     ) -> None:
         super().__init__(data)
 
@@ -709,7 +709,7 @@ class IM4PData(_PyIMG4):
         cmp_len = int(self._data[0x10:0x14].hex(), 16)
 
         if (
-            cmp_len < len(self._data) - 0x180
+                cmp_len < len(self._data) - 0x180
         ):  # iOS 9+ A7-A9 kernelcache, so KPP is appended to the LZSS-compressed data
             extra_len = len(self._data) - cmp_len - 0x180
             self.extra = self._data[-extra_len:]

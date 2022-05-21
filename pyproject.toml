@@ -19,8 +19,8 @@ packages = [
     { include = "pyimg4" }
 ]
 
-#[tool.poetry.scripts]
-#pyimg4 = "pyimg4.__main__:main"
+[tool.poetry.scripts]
+pyimg4 = "pyimg4.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.6"

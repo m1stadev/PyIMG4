@@ -631,7 +631,7 @@ class Keybag(_PyIMG4):
     def __init__(
         self,
         data: bytes = None,
-        type_: KeybagType = KeybagType.RELEASE,  # Assume RELEASE if not provided
+        type_: KeybagType = KeybagType.PRODUCTION,  # Assume PRODUCTION if not provided
         *,
         iv: Union[bytes, str] = None,
         key: Union[bytes, str] = None,

@@ -729,10 +729,6 @@ class IM4PData(_PyIMG4):
         return bytes(header)
 
     @property
-    def data(self) -> bytes:
-        return self._data
-
-    @property
     def compression(self) -> Compression:
         if self.encrypted:
             return Compression.UNKNOWN

@@ -9,7 +9,7 @@ def test_create(boot_nonce: bytes) -> None:
     im4r.boot_nonce = bytes.fromhex('1234567890123456')
 
     with pytest.raises(pyimg4.UnexpectedDataError):
-        im4r.boot_nonce = 'Invalid boot_nonce.'
+        im4r.boot_nonce = 'Invalid boot nonce.'
 
     im4r.output()
 

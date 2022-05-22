@@ -67,7 +67,7 @@ def main() -> None:
 
     if img4.im4r:
         print(f'\n  Image4 Restore info:')
-        print(f"    Boot nonce boot_nonce: {'0x' + img4.im4r.boot_nonce.hex()}")
+        print(f"    Boot nonce boot nonce: {'0x' + img4.im4r.boot_nonce.hex()}")
 
 
 if __name__ == '__main__':

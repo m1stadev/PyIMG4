@@ -46,7 +46,7 @@ def im4m_info(input_: BinaryIO) -> None:
 
     click.echo(f'  Device Processor: {soc}')
 
-    click.echo(f"  ECID (hex): {im4m.ecid:02x}")
+    click.echo(f"  ECID (hex): {hex(im4m.ecid)}")
     click.echo(f"  ApNonce: {im4m.apnonce}")
     click.echo(f"  SepNonce: {im4m.sepnonce}")
 
@@ -223,30 +223,88 @@ def im4p_info(input_: BinaryIO) -> None:
     im4p = pyimg4.IM4P(input_.read())
 
     click.echo('  Image4 payload info:')
-    click.echo(f'    Image4 payload FourCC: {im4p.fourcc}')
-    click.echo(f'    Image4 payload description: {im4p.description}')
-    click.echo(f'    Image4 payload data size: {round(len(im4p.payload) / 1000)}KB')
+    click.echo(f'    Payload FourCC: {im4p.fourcc}')
+    click.echo(f'    Payload description: {im4p.description}')
+    click.echo(f'    Payload data size: {round(len(im4p.payload) / 1000)}KB')
 
     if (
         im4p.payload.encrypted == False
         and im4p.payload.compression != pyimg4.Compression.NONE
     ):
         click.echo(
-            f'    Image4 payload data compression type: {im4p.payload.compression.name}'
+            f'    Payload data compression type: {im4p.payload.compression.name}'
         )
 
         im4p.payload.decompress()
         click.echo(
-            f'    Image4 payload data size (uncompressed): {round(len(im4p.payload) / 1000)}KB'
+            f'    Payload data size (uncompressed): {round(len(im4p.payload) / 1000)}KB'
         )
 
+    click.echo(f'    Payload data encrypted: {im4p.payload.encrypted}\n')
     if im4p.payload.encrypted:
-        click.echo(f'    Image4 payload data encrypted: {im4p.payload.encrypted}\n')
         for kb in im4p.payload.keybags:
             click.echo('    Keybag:')
             click.echo(f'      Type: {kb.type.name}')
             click.echo(f'      IV: {kb.iv.hex()}')
             click.echo(f'      Key: {kb.key.hex()}')
+
+
+@cli.group()
+def im4r() -> None:
+    '''Image4 restore info commands'''
+
+    pass
+
+
+@im4r.command('create')
+@click.option(
+    '-g',
+    '--boot-nonce',
+    type=str,
+    required=True,
+    help='The boot nonce used to encrypt the Image4 restore info',
+)
+@click.option(
+    '-o',
+    '--output',
+    type=click.File('wb'),
+    required=True,
+    help='File to output Image4 restore info to',
+)
+def im4r_create(boot_nonce: str, output: BinaryIO) -> None:
+    click.echo(f'Creating Image4 restore info file with boot nonce: {boot_nonce}...')
+
+    try:
+        boot_nonce = bytes.fromhex(boot_nonce.removeprefix('0x'))
+    except TypeError:
+        raise click.BadParameter('Boot nonce must be a hex string')
+
+    if len(boot_nonce) != 8:
+        raise click.BadParameter('Boot nonce must be 8 bytes long')
+
+    im4r = pyimg4.IM4R(boot_nonce=boot_nonce)
+
+    output.write(im4r.output())
+    click.echo(f'Image4 restore info outputted to: {output.name}')
+
+
+@im4r.command('info')
+@click.option(
+    '-i',
+    '--input',
+    'input_',
+    type=click.File('rb'),
+    required=True,
+    help='Input Image4 restore info file',
+)
+def im4r_info(input_: BinaryIO) -> None:
+    '''Print available information on an Image4 restore info file'''
+
+    click.echo('Reading Image4 restore info file...')
+    im4r = pyimg4.IM4R(input_.read())
+
+    click.echo('  Image4 restore info:')
+    click.echo(f'    Boot nonce (hex): 0x{im4r.boot_nonce.hex()}')
 
 
 @cli.group()
@@ -319,7 +377,7 @@ def img4_create(
         if len(boot_nonce) != 8:
             raise click.BadParameter('Boot nonce must be 8 bytes long')
 
-        im4r = pyimg4.IM4R(generator=boot_nonce)
+        im4r = pyimg4.IM4R(boot_nonce=boot_nonce)
 
     click.echo('Creating Image4...')
     img4 = pyimg4.IMG4(im4p=im4p, im4m=im4m, im4r=im4r)

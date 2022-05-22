@@ -63,6 +63,6 @@ def read_im4r() -> bytes:
         return f.read()
 
 
-@pytest.fixture(name='generator', scope='session')
-def random_generator() -> bytes:
+@pytest.fixture(name='boot_nonce', scope='session')
+def random_boot_nonce() -> bytes:
     return getrandbits(64).to_bytes(8, 'big')

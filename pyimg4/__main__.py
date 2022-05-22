@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import BinaryIO, Optional
 
 import click
@@ -22,39 +21,66 @@ def im4p() -> None:
     pass
 
 
-@im4p.command('info')
-@click.argument('im4p', type=click.File('rb'))
-def im4p_info(im4p) -> None:
-    '''Print available information on an Image4 payload'''
+@im4p.command('create')
+@click.option(
+    '-i',
+    '--input',
+    'input_',
+    type=click.File('rb'),
+    required=True,
+    help='Input file',
+)
+@click.option(
+    '-o',
+    '--output',
+    type=click.File('wb'),
+    required=True,
+    help='File to output Image4 payload to',
+)
+@click.option('-f', '--fourcc', type=str, required=True, help='FourCC to set')
+@click.option(
+    '-d',
+    '--description',
+    type=str,
+    help='Description to set',
+)
+@click.option(
+    '--lzss', 'compression_type', flag_value='LZSS', help='LZSS compress the data'
+)
+@click.option(
+    '--lzfse',
+    'compression_type',
+    flag_value='LZFSE',
+    help='LZFSE compress the data',
+)
+def im4p_create(
+    input_: BinaryIO,
+    output: BinaryIO,
+    fourcc: str,
+    description: Optional[str],
+    compression_type: Optional[str],
+) -> None:
+    '''Create an Image4 payload'''
 
-    click.echo('Reading Image4 payload file...')
-    im4p = pyimg4.IM4P(im4p.read())
+    if len(fourcc) != 4:
+        raise click.BadParameter('FourCC must be 4 characters long')
 
-    click.echo('  Image4 payload info:')
-    click.echo(f'    Image4 payload FourCC: {im4p.fourcc}')
-    click.echo(f'    Image4 payload description: {im4p.description}')
-    click.echo(f'    Image4 payload data size: {round(len(im4p.payload) / 1000)}KB')
+    click.echo(f'Reading {input_.name}...')
+    im4p = pyimg4.IM4P(fourcc=fourcc, description=description, payload=input_.read())
 
-    if (
-        im4p.payload.encrypted == False
-        and im4p.payload.compression != pyimg4.Compression.NONE
-    ):
-        click.echo(
-            f'    Image4 payload data compression type: {im4p.payload.compression.name}'
-        )
+    if compression_type is not None:
+        compression_type = getattr(Compression, compression_type)
 
-        im4p.payload.decompress()
-        click.echo(
-            f'    Image4 payload data size (uncompressed): {round(len(im4p.payload) / 1000)}KB'
-        )
+        if im4p.payload.compression not in (Compression.NONE, Compression.UNKNOWN):
+            raise click.BadParameter(
+                f'Payload is already {im4p.payload.compression.name} compressed'
+            )
 
-    if im4p.payload.encrypted:
-        click.echo(f'    Image4 payload data encrypted: {im4p.payload.encrypted}\n')
-        for kb in im4p.payload.keybags:
-            click.echo('    Keybag:')
-            click.echo(f'      Type: {kb.type.name}')
-            click.echo(f'      IV: {kb.iv.hex()}')
-            click.echo(f'      Key: {kb.key.hex()}')
+        click.echo(f'Compressing payload using {compression_type.name}...')
+        im4p.payload.compress(compression_type)
+
+    output.write(im4p.output())
+    click.echo(f'IM4P outputted to: {output.name}')
 
 
 @im4p.command('extract')
@@ -69,7 +95,7 @@ def im4p_info(im4p) -> None:
 @click.option(
     '-o',
     '--output',
-    type=click.Path(dir_okay=False, exists=False, path_type=Path, writable=True),
+    type=click.File('wb'),
     required=True,
     help='File to output Image4 payload data to',
 )
@@ -83,8 +109,8 @@ def im4p_info(im4p) -> None:
 @click.option('--iv', help='The IV used to encrypt the Image4 payload data')
 @click.option('--key', help='The key used to encrypt the Image4 payload data')
 def im4p_extract(
-    input_: Path,
-    output: Path,
+    input_: BinaryIO,
+    output: BinaryIO,
     decompress: bool,
     iv: Optional[str],
     key: Optional[str],
@@ -140,35 +166,133 @@ def im4p_extract(
     click.echo(f'Extracted Image4 payload data to: {output}')
 
 
+@im4p.command('info')
+@click.option(
+    '-i',
+    '--input',
+    'input_',
+    type=click.File('rb'),
+    required=True,
+    help='Input Image4 payload file',
+)
+def im4p_info(input_: BinaryIO) -> None:
+    '''Print available information on an Image4 payload'''
+
+    click.echo(input_.name)
+    click.echo('Reading Image4 payload file...')
+    im4p = pyimg4.IM4P(input_.read())
+
+    click.echo('  Image4 payload info:')
+    click.echo(f'    Image4 payload FourCC: {im4p.fourcc}')
+    click.echo(f'    Image4 payload description: {im4p.description}')
+    click.echo(f'    Image4 payload data size: {round(len(im4p.payload) / 1000)}KB')
+
+    if (
+        im4p.payload.encrypted == False
+        and im4p.payload.compression != pyimg4.Compression.NONE
+    ):
+        click.echo(
+            f'    Image4 payload data compression type: {im4p.payload.compression.name}'
+        )
+
+        im4p.payload.decompress()
+        click.echo(
+            f'    Image4 payload data size (uncompressed): {round(len(im4p.payload) / 1000)}KB'
+        )
+
+    if im4p.payload.encrypted:
+        click.echo(f'    Image4 payload data encrypted: {im4p.payload.encrypted}\n')
+        for kb in im4p.payload.keybags:
+            click.echo('    Keybag:')
+            click.echo(f'      Type: {kb.type.name}')
+            click.echo(f'      IV: {kb.iv.hex()}')
+            click.echo(f'      Key: {kb.key.hex()}')
+
+
+@cli.group()
+def im4m() -> None:
+    '''Image4 manifest commands'''
+
+    pass
+
+
+@im4m.command('info')
+@click.option(
+    '-i',
+    '--input',
+    'input_',
+    type=click.File('rb'),
+    help='Input Image4 manifest file',
+    required=True,
+)
+def im4m_info(input_: BinaryIO) -> None:
+    '''Print available information on an Image4 manifest'''
+
+    click.echo('Reading Image4 manifest file...')
+    im4m = pyimg4.IM4M(input_.read())
+
+    click.echo('Image4 manifest info:')
+    if 0x8720 <= im4m.chip_id <= 0x8960:
+        soc = f'S5L{im4m.chip_id:02x}'
+    elif im4m.chip_id in range(0x7002, 0x8003):
+        soc = f'S{im4m.chip_id:02x}'
+    else:
+        soc = f'T{im4m.chip_id:02x}'
+
+    click.echo(f'  Device Processor: {soc}')
+
+    click.echo(f"  ECID (hex): {im4m.ecid:02x}")
+    click.echo(f"  ApNonce: {im4m.apnonce}")
+    click.echo(f"  SepNonce: {im4m.sepnonce}")
+
+    click.echo(
+        f"  Manifest images ({len(im4m.images)}): {', '.join(i.fourcc for i in im4m.images)}"
+    )
+
+
 @cli.group()
 def img4() -> None:
-    '''Image4 file commands'''
+    '''Image4 commands'''
 
     pass
 
 
 @img4.command('extract')
 @click.option(
-    '-i', '--img4', type=click.File('rb'), help='Input Image4 file', required=True
+    '-i',
+    '--input',
+    'input_',
+    type=click.File('rb'),
+    help='Input Image4 file',
+    required=True,
 )
 @click.option(
-    '-p', '--im4p', type=click.File('wb'), help='File to output Image4 payload to'
+    '-p',
+    '--im4p',
+    type=click.File('wb'),
+    help='File to output Image4 payload to',
 )
 @click.option(
-    '-m', '--im4m', type=click.File('wb'), help='File to output Image4 manifest to'
+    '-m',
+    '--im4m',
+    type=click.File('wb'),
+    help='File to output Image4 manifest to',
 )
 @click.option(
-    '-r', '--im4r', type=click.File('wb'), help='File to output Image4 restore info to'
+    '-r',
+    '--im4r',
+    type=click.File('wb'),
+    help='File to output Image4 restore info to',
 )
 def img4_extract(
-    img4: Optional[BinaryIO],
+    input_: BinaryIO,
     im4p: Optional[BinaryIO],
     im4m: Optional[BinaryIO],
     im4r: Optional[BinaryIO],
 ) -> None:
     '''Extract Image4 manifest/payload/restore info from an Image4 file'''
 
-    img4 = pyimg4.IMG4(img4.read())
+    img4 = pyimg4.IMG4(input_.read())
 
     if not any(i is not None for i in (im4p, im4m, im4r)):
         raise click.BadParameter('You must specify at least one output file')
@@ -178,18 +302,21 @@ def img4_extract(
             raise click.BadParameter('Image4 payload not found in Image4 file')
 
         im4p.write(img4.im4p.output())
+        click.echo(f'Extracted Image4 payload to: {im4p.name}')
 
     if im4m is not None:
         if img4.im4m is None:
             raise click.BadParameter('Image4 manifest not found in Image4 file')
 
         im4m.write(img4.im4m.output())
+        click.echo(f'Extracted Image4 manifest to: {im4m.name}')
 
     if im4r is not None:
         if img4.im4r is None:
             raise click.BadParameter('Image4 restore info not found in Image4 file')
 
         im4r.write(img4.im4r.output())
+        click.echo(f'Extracted Image4 restore info to: {im4r.name}')
 
 
 if __name__ == '__main__':

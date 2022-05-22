@@ -20,7 +20,7 @@ packages = [
 ]
 
 [tool.poetry.scripts]
-pyimg4 = "pyimg4.__main__:main"
+pyimg4 = "pyimg4.__main__:cli"
 
 [tool.poetry.dependencies]
 python = "^3.6"

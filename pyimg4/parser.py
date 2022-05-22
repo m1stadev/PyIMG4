@@ -367,7 +367,7 @@ class IMG4(_PyIMG4):
             self.im4r = None
 
     @property
-    def im4m(self) -> IM4M:
+    def im4m(self) -> Optional[IM4M]:
         return self._im4m
 
     @im4m.setter

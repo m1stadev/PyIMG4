@@ -36,7 +36,6 @@ A Python library/CLI tool for parsing Apple's <a href="https://www.theiphonewiki
     - Requires [Poetry](https://python-poetry.org)
 
 ## TODO
-- Write CLI tool
 - Write documentation
 
 ## Support

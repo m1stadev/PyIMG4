@@ -9,5 +9,5 @@ class Compression(IntEnum):
 
 
 class KeybagType(IntEnum):
-    RELEASE = 0x0
-    INTERNAL = 0x1
+    PRODUCTION = 0x0
+    DEVELOPMENT = 0x1

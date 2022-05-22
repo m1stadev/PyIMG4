@@ -225,17 +225,17 @@ class IM4M(_PyIMG4):
 
 
 class IM4R(_PyIMG4):
-    def __init__(self, data: bytes = None, *, generator: bytes = None) -> None:
+    def __init__(self, data: bytes = None, *, boot_nonce: bytes = None) -> None:
         super().__init__(data)
 
-        if generator:
-            self.generator = generator
+        if boot_nonce:
+            self.boot_nonce = boot_nonce
 
         elif data:
             self._parse()
 
         else:
-            raise TypeError('No data or generator provided.')
+            raise TypeError('No data or boot nonce provided.')
 
     def _parse(self) -> None:
         self._decoder.start(self._data)
@@ -264,21 +264,21 @@ class IM4R(_PyIMG4):
             self._decoder.read()[1], 'BNCN'
         )  # Verify BNCN (Boot Nonce) FourCC
 
-        self.generator = self._decoder.read()[1]
+        self.boot_nonce = self._decoder.read()[1]
 
     @property
-    def generator(self) -> bytes:
-        return self._generator
+    def boot_nonce(self) -> bytes:
+        return self._boot_nonce
 
-    @generator.setter
-    def generator(self, generator: bytes) -> None:
-        if not isinstance(generator, bytes):
-            raise UnexpectedDataError('bytes', generator)
+    @boot_nonce.setter
+    def boot_nonce(self, boot_nonce: bytes) -> None:
+        if not isinstance(boot_nonce, bytes):
+            raise UnexpectedDataError('bytes', boot_nonce)
 
-        if len(generator) != 8:
-            raise UnexpectedDataError('bytes with length of 8', generator)
+        if len(boot_nonce) != 8:
+            raise UnexpectedDataError('bytes with length of 8', boot_nonce)
 
-        self._generator = generator
+        self._boot_nonce = boot_nonce
 
     def output(self) -> bytes:
         self._encoder.start()
@@ -296,7 +296,7 @@ class IM4R(_PyIMG4):
             'BNCN', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
         )
         self._encoder.write(
-            self.generator,
+            self.boot_nonce,
             asn1.Numbers.OctetString,
             asn1.Types.Primitive,
             asn1.Classes.Universal,

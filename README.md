@@ -25,6 +25,23 @@ PyIMG4
 A Python library/CLI tool for parsing Apple's <a href="https://www.theiphonewiki.com/wiki/IMG4_File_Format">Image4 format</a>.
 </p>
 
+## Usage
+```
+Usage: pyimg4 [OPTIONS] COMMAND [ARGS]...
+
+  A Python CLI tool for parsing Apple's Image4 format.
+
+Options:
+  --version  Show the version and exit.
+  --help     Show this message and exit.
+
+Commands:
+  im4m  Image4 manifest commands
+  im4p  Image4 payload commands
+  im4r  Image4 restore info commands
+  img4  Image4 commands
+```
+
 ## Requirements
 - Python 3.6 or higher (Python 3.7+ is recommended)
 

@@ -11,7 +11,7 @@ from pyimg4 import Compression, Keybag
 def cli():
     '''A Python CLI tool for parsing Apple's Image4 format.'''
 
-    click.echo(f'PyIMG4 {pyimg4.__version__}')
+    pass
 
 
 @cli.group()

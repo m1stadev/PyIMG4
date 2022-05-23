@@ -11,6 +11,10 @@ if ! which poetry > /dev/null; then
 	exit 1
 fi
 
+if [ -d "dist/" ]; then
+	rm -rf dist/
+fi
+
 # Build package
 poetry build
 

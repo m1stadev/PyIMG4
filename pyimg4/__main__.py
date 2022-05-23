@@ -1,3 +1,4 @@
+import sys
 from typing import BinaryIO, Optional
 
 import click
@@ -11,7 +12,7 @@ from pyimg4 import Compression, Keybag
 def cli():
     '''A Python CLI tool for parsing Apple's Image4 format.'''
 
-    pass
+    sys.tracebacklimit = 0
 
 
 @cli.group()
@@ -27,13 +28,13 @@ def im4m() -> None:
     '--input',
     'input_',
     type=click.File('rb'),
-    help='Input Image4 manifest file',
+    help='Input Image4 manifest file.',
     required=True,
 )
 def im4m_info(input_: BinaryIO) -> None:
-    '''Print available information on an Image4 manifest'''
+    '''Print available information on an Image4 manifest.'''
 
-    click.echo('Reading Image4 manifest file...')
+    click.echo(f'Reading {input_.name}...')
     im4m = pyimg4.IM4M(input_.read())
 
     click.echo('Image4 manifest info:')
@@ -57,7 +58,7 @@ def im4m_info(input_: BinaryIO) -> None:
 
 @cli.group()
 def im4p() -> None:
-    '''Image4 payload commands'''
+    '''Image4 payload commands.'''
 
     pass
 
@@ -69,30 +70,30 @@ def im4p() -> None:
     'input_',
     type=click.File('rb'),
     required=True,
-    help='Input file',
+    help='Input file.',
 )
 @click.option(
     '-o',
     '--output',
     type=click.File('wb'),
     required=True,
-    help='Output file',
+    help='Output file.',
 )
-@click.option('-f', '--fourcc', type=str, required=True, help='FourCC to set')
+@click.option('-f', '--fourcc', type=str, required=True, help='FourCC to set.')
 @click.option(
     '-d',
     '--description',
     type=str,
-    help='Description to set',
+    help='Description to set.',
 )
 @click.option(
-    '--lzss', 'compression_type', flag_value='LZSS', help='LZSS compress the data'
+    '--lzss', 'compression_type', flag_value='LZSS', help='LZSS compress the data.'
 )
 @click.option(
     '--lzfse',
     'compression_type',
     flag_value='LZFSE',
-    help='LZFSE compress the data',
+    help='LZFSE compress the data.',
 )
 def im4p_create(
     input_: BinaryIO,
@@ -101,7 +102,7 @@ def im4p_create(
     description: Optional[str],
     compression_type: Optional[str],
 ) -> None:
-    '''Create an Image4 payload file'''
+    '''Create an Image4 payload file.'''
 
     if len(fourcc) != 4:
         raise click.BadParameter('FourCC must be 4 characters long')
@@ -131,24 +132,24 @@ def im4p_create(
     'input_',
     type=click.File('rb'),
     required=True,
-    help='Input Image4 payload file',
+    help='Input Image4 payload file.',
 )
 @click.option(
     '-o',
     '--output',
     type=click.File('wb'),
     required=True,
-    help='File to output Image4 payload data to',
+    help='File to output Image4 payload data to.',
 )
 @click.option(
     '--no-decompress',
     'decompress',
     default=True,
     is_flag=True,
-    help="Don't decompress the Image4 payload data",
+    help="Don't decompress the Image4 payload data.",
 )
-@click.option('--iv', help='The IV used to encrypt the Image4 payload data')
-@click.option('--key', help='The key used to encrypt the Image4 payload data')
+@click.option('--iv', help='The IV used to encrypt the Image4 payload data.')
+@click.option('--key', help='The key used to encrypt the Image4 payload data.')
 def im4p_extract(
     input_: BinaryIO,
     output: BinaryIO,
@@ -156,9 +157,9 @@ def im4p_extract(
     iv: Optional[str],
     key: Optional[str],
 ) -> None:
-    '''Extract data from an Image4 payload'''
+    '''Extract data from an Image4 payload.'''
 
-    click.echo('Reading Image4 payload file...')
+    click.echo(f'Reading {input_.name}...')
     im4p = pyimg4.IM4P(input_.read())
 
     if im4p.payload.encrypted == True:
@@ -214,33 +215,29 @@ def im4p_extract(
     'input_',
     type=click.File('rb'),
     required=True,
-    help='Input Image4 payload file',
+    help='Input Image4 payload file.',
 )
 def im4p_info(input_: BinaryIO) -> None:
-    '''Print available information on an Image4 payload'''
+    '''Print available information on an Image4 payload.'''
 
-    click.echo('Reading Image4 payload file...')
+    click.echo(f'Reading {input_.name}...')
     im4p = pyimg4.IM4P(input_.read())
 
     click.echo('  Image4 payload info:')
-    click.echo(f'    Payload FourCC: {im4p.fourcc}')
-    click.echo(f'    Payload description: {im4p.description}')
-    click.echo(f'    Payload data size: {round(len(im4p.payload) / 1000)}KB')
+    click.echo(f'    FourCC: {im4p.fourcc}')
+    click.echo(f'    Description: {im4p.description}')
+    click.echo(f'    Data size: {round(len(im4p.payload) / 1000)}KB')
 
     if (
         im4p.payload.encrypted == False
         and im4p.payload.compression != pyimg4.Compression.NONE
     ):
-        click.echo(
-            f'    Payload data compression type: {im4p.payload.compression.name}'
-        )
+        click.echo(f'    Data compression type: {im4p.payload.compression.name}')
 
         im4p.payload.decompress()
-        click.echo(
-            f'    Payload data size (uncompressed): {round(len(im4p.payload) / 1000)}KB'
-        )
+        click.echo(f'    Data size (uncompressed): {round(len(im4p.payload) / 1000)}KB')
 
-    click.echo(f'    Payload data encrypted: {im4p.payload.encrypted}\n')
+    click.echo(f'    Encrypted: {im4p.payload.encrypted}\n')
     if im4p.payload.encrypted:
         for kb in im4p.payload.keybags:
             click.echo('    Keybag:')
@@ -262,16 +259,18 @@ def im4r() -> None:
     '--boot-nonce',
     type=str,
     required=True,
-    help='The boot nonce used to encrypt the Image4 restore info',
+    help='The boot nonce used to encrypt the Image4 restore info.',
 )
 @click.option(
     '-o',
     '--output',
     type=click.File('wb'),
     required=True,
-    help='File to output Image4 restore info to',
+    help='File to output Image4 restore info to.',
 )
 def im4r_create(boot_nonce: str, output: BinaryIO) -> None:
+    '''Create an Image4 restore info file.'''
+
     click.echo(f'Creating Image4 restore info file with boot nonce: {boot_nonce}...')
 
     try:
@@ -295,12 +294,12 @@ def im4r_create(boot_nonce: str, output: BinaryIO) -> None:
     'input_',
     type=click.File('rb'),
     required=True,
-    help='Input Image4 restore info file',
+    help='Input Image4 restore info file.',
 )
 def im4r_info(input_: BinaryIO) -> None:
-    '''Print available information on an Image4 restore info file'''
+    '''Print available information on an Image4 restore info file.'''
 
-    click.echo('Reading Image4 restore info file...')
+    click.echo(f'Reading {input_.name}...')
     im4r = pyimg4.IM4R(input_.read())
 
     click.echo('  Image4 restore info:')
@@ -320,30 +319,30 @@ def img4() -> None:
     '--im4p',
     type=click.File('rb'),
     required=True,
-    help='Input Image4 payload file',
+    help='Input Image4 payload file.',
 )
 @click.option(
     '-m',
     '--im4m',
     type=click.File('rb'),
     required=True,
-    help='Input Image4 manifest file',
+    help='Input Image4 manifest file.',
 )
 @click.option(
     '-r',
     '--im4r',
     type=click.File('rb'),
-    help='Input Image4 restore info file',
+    help='Input Image4 restore info file.',
 )
 @click.option(
     '-g',
     '--boot-nonce',
     'boot_nonce',
     type=str,
-    help='Boot nonce to set in Image4 restore info',
+    help='Boot nonce to set in Image4 restore info.',
 )
 @click.option(
-    '-o', '--output', type=click.File('wb'), required=True, help='Output file'
+    '-o', '--output', type=click.File('wb'), required=True, help='Output file.'
 )
 def img4_create(
     im4p: BinaryIO,
@@ -352,16 +351,16 @@ def img4_create(
     boot_nonce: Optional[str],
     output: BinaryIO,
 ):
-    '''Create an Image4 file'''
+    '''Create an Image4 file.'''
 
-    click.echo('Reading Image4 payload file...')
+    click.echo(f'Reading {im4p.name}...')
     im4p = pyimg4.IM4P(im4p.read())
 
-    click.echo('Reading Image4 manifest file...')
+    click.echo(f'Reading {im4m.name}...')
     im4m = pyimg4.IM4M(im4m.read())
 
     if im4r is not None:
-        click.echo('Reading Image4 restore info file...')
+        click.echo(f'Reading {im4r.name}...')
         im4r = pyimg4.IM4R(im4r.read())
 
     elif boot_nonce is not None:
@@ -392,26 +391,26 @@ def img4_create(
     '--input',
     'input_',
     type=click.File('rb'),
-    help='Input Image4 file',
+    help='Input Image4 file.',
     required=True,
 )
 @click.option(
     '-p',
     '--im4p',
     type=click.File('wb'),
-    help='File to output Image4 payload to',
+    help='File to output Image4 payload to.',
 )
 @click.option(
     '-m',
     '--im4m',
     type=click.File('wb'),
-    help='File to output Image4 manifest to',
+    help='File to output Image4 manifest to.',
 )
 @click.option(
     '-r',
     '--im4r',
     type=click.File('wb'),
-    help='File to output Image4 restore info to',
+    help='File to output Image4 restore info to.',
 )
 def img4_extract(
     input_: BinaryIO,
@@ -419,8 +418,9 @@ def img4_extract(
     im4m: Optional[BinaryIO],
     im4r: Optional[BinaryIO],
 ) -> None:
-    '''Extract Image4 manifest/payload/restore info from an Image4 file'''
+    '''Extract Image4 manifest/payload/restore info from an Image4 file.'''
 
+    click.echo(f'Reading {input_.name}...')
     img4 = pyimg4.IMG4(input_.read())
 
     if not any(i is not None for i in (im4p, im4m, im4r)):

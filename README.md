@@ -44,6 +44,7 @@ Commands:
 
 ## Requirements
 - Python 3.6 or higher (Python 3.7+ is recommended)
+- Python development headers (`python3-dev` on Debian-based OSes)
 
 ## Installation
 - Install from [PyPI](https://pypi.org/project/pyimg4/):

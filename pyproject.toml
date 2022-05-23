@@ -19,15 +19,16 @@ packages = [
     { include = "pyimg4" }
 ]
 
-#[tool.poetry.scripts]
-#pyimg4 = "pyimg4.__main__:main"
+[tool.poetry.scripts]
+pyimg4 = "pyimg4.__main__:cli"
 
 [tool.poetry.dependencies]
 python = "^3.6"
 asn1 = "^2.5.0"
-pylzss = "^0.3.1"
+click = "^8.0.0"
 pycryptodome = "^3.14.1"
 pyliblzfse = "^0.4.1"
+pylzss = "^0.3.1"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^22.1.0", python = "^3.7"}

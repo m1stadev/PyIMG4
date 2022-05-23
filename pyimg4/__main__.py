@@ -17,7 +17,7 @@ def cli():
 
 @cli.group()
 def im4m() -> None:
-    '''Image4 manifest commands'''
+    '''Image4 manifest commands.'''
 
     pass
 
@@ -248,7 +248,7 @@ def im4p_info(input_: BinaryIO) -> None:
 
 @cli.group()
 def im4r() -> None:
-    '''Image4 restore info commands'''
+    '''Image4 restore info commands.'''
 
     pass
 
@@ -308,7 +308,7 @@ def im4r_info(input_: BinaryIO) -> None:
 
 @cli.group()
 def img4() -> None:
-    '''Image4 commands'''
+    '''Image4 commands.'''
 
     pass
 

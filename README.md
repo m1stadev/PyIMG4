@@ -36,10 +36,10 @@ Options:
   --help     Show this message and exit.
 
 Commands:
-  im4m  Image4 manifest commands
-  im4p  Image4 payload commands
-  im4r  Image4 restore info commands
-  img4  Image4 commands
+  im4m  Image4 manifest commands.
+  im4p  Image4 payload commands.
+  im4r  Image4 restore info commands.
+  img4  Image4 commands.
 ```
 
 ## Requirements

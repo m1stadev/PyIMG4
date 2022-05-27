@@ -61,7 +61,7 @@ def main() -> None:
             '    Warning: Chip ID not found in ApTicket, unable to find Device Processor'
         )
 
-    print(f"    ECID (hex): {hex(img4.im4m.ecid).removeprefix('0x')}")
+    print(f"    ECID (hex): {img4.im4m.ecid:X}")
     print(f'    ApNonce: {img4.im4m.apnonce}')
     print(f'    SepNonce: {img4.im4m.sepnonce}')
 

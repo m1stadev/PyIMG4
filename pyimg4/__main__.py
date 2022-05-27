@@ -172,13 +172,19 @@ def im4p_extract(
             raise click.BadParameter('You must specify both the IV and the key')
 
         else:
+            if iv.lower().startswith('0x'):
+                iv = iv[2:]
+
+            if key.lower().startswith('0x'):
+                key = key[2:]
+
             try:
-                iv = bytes.fromhex(iv.removeprefix('0x'))
+                iv = bytes.fromhex(iv)
             except TypeError:
                 raise click.BadParameter('Decryption IV must be a hex string')
 
             try:
-                key = bytes.fromhex(key.removeprefix('0x'))
+                key = bytes.fromhex(key)
             except TypeError:
                 raise click.BadParameter('Decryption key must be a hex string')
 
@@ -273,8 +279,11 @@ def im4r_create(boot_nonce: str, output: BinaryIO) -> None:
 
     click.echo(f'Creating Image4 restore info file with boot nonce: {boot_nonce}...')
 
+    if boot_nonce.lower().startswith('0x'):
+        boot_nonce = boot_nonce[2:]
+
     try:
-        boot_nonce = bytes.fromhex(boot_nonce.removeprefix('0x'))
+        boot_nonce = bytes.fromhex(boot_nonce)
     except TypeError:
         raise click.BadParameter('Boot nonce must be a hex string')
 
@@ -368,8 +377,11 @@ def img4_create(
             f'Creating Image4 restore info file with boot nonce: {boot_nonce}...'
         )
 
+        if boot_nonce.lower().startswith('0x'):
+            boot_nonce = boot_nonce[2:]
+
         try:
-            boot_nonce = bytes.fromhex(boot_nonce.removeprefix('0x'))
+            boot_nonce = bytes.fromhex(boot_nonce)
         except TypeError:
             raise click.BadParameter('Boot nonce must be a hex string')
 

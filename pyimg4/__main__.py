@@ -87,6 +87,11 @@ def im4p() -> None:
     help='Description to set.',
 )
 @click.option(
+    '--extra',
+    type=click.File('rb'),
+    help='Extra IM4P payload data to set (requires --lzss).',
+)
+@click.option(
     '--lzss', 'compression_type', flag_value='LZSS', help='LZSS compress the data.'
 )
 @click.option(
@@ -100,6 +105,7 @@ def im4p_create(
     output: BinaryIO,
     fourcc: str,
     description: Optional[str],
+    extra: Optional[BinaryIO],
     compression_type: Optional[str],
 ) -> None:
     '''Create an Image4 payload file.'''
@@ -109,6 +115,12 @@ def im4p_create(
 
     click.echo(f'Reading {input_.name}...')
     im4p = pyimg4.IM4P(fourcc=fourcc, description=description, payload=input_.read())
+
+    if extra is not None:
+        if compression_type != 'LZSS':
+            raise click.BadParameter('--extra requires --lzss flag to be set')
+
+        im4p.payload.extra = extra.read()
 
     if compression_type is not None:
         compression_type = getattr(Compression, compression_type)
@@ -142,6 +154,11 @@ def im4p_create(
     help='File to output Image4 payload data to.',
 )
 @click.option(
+    '--extra',
+    type=click.File('wb'),
+    help='File to output extra Image4 payload data to.',
+)
+@click.option(
     '--no-decompress',
     'decompress',
     default=True,
@@ -153,6 +170,7 @@ def im4p_create(
 def im4p_extract(
     input_: BinaryIO,
     output: BinaryIO,
+    extra: Optional[BinaryIO],
     decompress: bool,
     iv: Optional[str],
     key: Optional[str],
@@ -207,6 +225,12 @@ def im4p_extract(
             click.echo(
                 f'[NOTE] Image4 payload data is {im4p.payload.compression.name} compressed, skipping decompression'
             )
+
+    if extra is not None:
+        if im4p.payload.extra is None:
+            click.echo('[WARN] No extra Image4 payload data found')
+        else:
+            extra.write(im4p.payload.extra)
 
     output.write(im4p.payload.output())
 

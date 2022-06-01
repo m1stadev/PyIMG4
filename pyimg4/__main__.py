@@ -208,10 +208,9 @@ def im4p_extract(
                 f'[NOTE] Image4 payload data is {im4p.payload.compression.name} compressed, skipping decompression'
             )
 
-    with output.open('wb') as f:
-        f.write(im4p.payload.output())
+    output.write(im4p.payload.output())
 
-    click.echo(f'Extracted Image4 payload data to: {output}')
+    click.echo(f'Extracted Image4 payload data to: {output.name}')
 
 
 @im4p.command('info')

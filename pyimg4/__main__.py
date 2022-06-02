@@ -232,7 +232,7 @@ def im4p_extract(
         else:
             extra.write(im4p.payload.extra)
 
-    output.write(im4p.payload.output())
+    output.write(im4p.payload.output()[0])
 
     click.echo(f'Extracted Image4 payload data to: {output.name}')
 

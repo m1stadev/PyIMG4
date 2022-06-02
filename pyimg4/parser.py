@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Tuple, Union
 from zlib import adler32
 
 import asn1
@@ -595,12 +595,16 @@ class IM4P(_PyIMG4):
         if self.payload is None:
             raise ValueError('No payload is set.')
 
-        self._encoder.write(
-            self.payload.output(),
-            asn1.Numbers.OctetString,
-            asn1.Types.Primitive,
-            asn1.Classes.Universal,
-        )
+        for i in self.payload.output():
+            if i is None:
+                continue
+
+            self._encoder.write(
+                i,
+                asn1.Numbers.OctetString,
+                asn1.Types.Primitive,
+                asn1.Classes.Universal,
+            )
 
         if self.payload.compression == Compression.LZFSE:
             self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
@@ -798,3 +802,35 @@ class IM4PData(_PyIMG4):
             self.keybags = []
         except:
             raise AESError('Failed to decrypt payload.')
+
+    def output(self) -> Tuple[bytes, Optional[bytes]]:
+        if self.encrypted:
+            self._encoder.start()
+            self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+
+            for kbag in self.keybags:
+                self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+                self._encoder.write(
+                    self.keybags.index(kbag) + 1,
+                    asn1.Numbers.Integer,
+                    asn1.Types.Primitive,
+                    asn1.Classes.Universal,
+                )
+                self._encoder.write(
+                    kbag.iv,
+                    asn1.Numbers.OctetString,
+                    asn1.Types.Primitive,
+                    asn1.Classes.Universal,
+                )
+                self._encoder.write(
+                    kbag.key,
+                    asn1.Numbers.OctetString,
+                    asn1.Types.Primitive,
+                    asn1.Classes.Universal,
+                )
+                self._encoder.leave()
+
+            self._encoder.leave()
+            return (self._data, self._encoder.output())
+        else:
+            return (self._data, None)

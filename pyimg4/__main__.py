@@ -183,13 +183,13 @@ def im4p_extract(
     if im4p.payload.encrypted == True:
         if iv is None and key is None:
             click.echo('[NOTE] Image4 payload data is encrypted')
-        else:
-            click.echo('[NOTE] Image4 payload data is encrypted, decrypting...')
 
-        if (iv is None and key is not None) or (key is None and iv is not None):
+        elif (iv is None and key is not None) or (key is None and iv is not None):
             raise click.BadParameter('You must specify both the IV and the key')
 
         else:
+            click.echo('[NOTE] Image4 payload data is encrypted, decrypting...')
+
             if iv.lower().startswith('0x'):
                 iv = iv[2:]
 

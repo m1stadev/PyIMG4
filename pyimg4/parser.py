@@ -192,9 +192,9 @@ class IM4M(_PyIMG4):
         self.certificates = self._decoder.read()[1]
 
     @property
-    def apnonce(self) -> Optional[str]:
+    def apnonce(self) -> Optional[bytes]:
         return next(
-            (prop.value.hex() for prop in self.properties if prop.name == 'BNCH'),
+            (prop.value for prop in self.properties if prop.name == 'BNCH'),
             None,
         )
 
@@ -217,9 +217,9 @@ class IM4M(_PyIMG4):
         )
 
     @property
-    def sepnonce(self) -> Optional[str]:
+    def sepnonce(self) -> Optional[bytes]:
         return next(
-            (prop.value.hex() for prop in self.properties if prop.name == 'snon'),
+            (prop.value for prop in self.properties if prop.name == 'snon'),
             None,
         )
 

@@ -48,8 +48,8 @@ def im4m_info(input_: BinaryIO) -> None:
     click.echo(f'  Device Processor: {soc}')
 
     click.echo(f"  ECID (hex): {hex(im4m.ecid)}")
-    click.echo(f"  ApNonce: {im4m.apnonce}")
-    click.echo(f"  SepNonce: {im4m.sepnonce}")
+    click.echo(f"  ApNonce: {im4m.apnonce.hex()}")
+    click.echo(f"  SepNonce: {im4m.sepnonce.hex()}")
 
     click.echo(
         f"  Manifest images ({len(im4m.images)}): {', '.join(i.fourcc for i in im4m.images)}"

@@ -62,8 +62,8 @@ def main() -> None:
         )
 
     print(f"    ECID (hex): {img4.im4m.ecid:X}")
-    print(f'    ApNonce: {img4.im4m.apnonce}')
-    print(f'    SepNonce: {img4.im4m.sepnonce}')
+    print(f'    ApNonce: {img4.im4m.apnonce.hex()}')
+    print(f'    SepNonce: {img4.im4m.sepnonce.hex()}')
 
     if img4.im4r:
         print(f'\n  Image4 Restore info:')

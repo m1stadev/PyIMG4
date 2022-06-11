@@ -120,6 +120,7 @@ def im4p_create(
         if compression_type != 'LZSS':
             raise click.BadParameter('--extra requires --lzss flag to be set')
 
+        click.echo(f'Reading extra: {extra.name}...')
         im4p.payload.extra = extra.read()
 
     if compression_type is not None:
@@ -230,6 +231,7 @@ def im4p_extract(
         if im4p.payload.extra is None:
             click.echo('[WARN] No extra Image4 payload data found')
         else:
+            click.echo(f'Extracted extra Image4 payload data: to {extra.name}.')
             extra.write(im4p.payload.extra)
 
     output.write(im4p.payload.output()[0])
@@ -396,9 +398,7 @@ def img4_create(
         im4r = pyimg4.IM4R(im4r.read())
 
     elif boot_nonce is not None:
-        click.echo(
-            f'Creating Image4 restore info file with boot nonce: {boot_nonce}...'
-        )
+        click.echo(f'Creating Image4 restore info with boot nonce: {boot_nonce}...')
 
         if boot_nonce.lower().startswith('0x'):
             boot_nonce = boot_nonce[2:]

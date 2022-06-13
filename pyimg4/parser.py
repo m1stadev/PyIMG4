@@ -706,7 +706,7 @@ class IM4PData(_PyIMG4):
         return len(self.output().data)
 
     def __repr__(self) -> str:
-        repr_ = f'IM4PData(payload length={len(self._data)}, encrypted={self.encrypted}'
+        repr_ = f'IM4PData(payload length={hex(len(self))}, encrypted={self.encrypted}'
         if self.compression not in (Compression.UNKNOWN, Compression.NONE):
             repr_ += f', compression={self.compression.name}'
 

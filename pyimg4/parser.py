@@ -703,7 +703,7 @@ class IM4PData(_PyIMG4):
         self.extra: Optional[bytes] = None
 
     def __len__(self) -> int:
-        return len(self.output()[0])
+        return len(self.output().data)
 
     def __repr__(self) -> str:
         repr_ = f'IM4PData(payload length={len(self._data)}, encrypted={self.encrypted}'

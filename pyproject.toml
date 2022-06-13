@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyimg4"
-version = "0.6.1"
+version = "0.6.2"
 description = "A Python library/CLI tool for parsing Apple's Image4 format."
 authors = ["m1stadev <adamhamdi31@gmail.com>"]
 license = "MIT"

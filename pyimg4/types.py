@@ -1,4 +1,5 @@
 from enum import IntEnum
+from typing import NamedTuple, Optional
 
 
 class Compression(IntEnum):
@@ -6,6 +7,11 @@ class Compression(IntEnum):
     NONE = 0x0
     LZSS = 0x1
     LZFSE = 0x2
+
+
+class Payload(NamedTuple):
+    data: bytes
+    keybags: Optional[bytes]
 
 
 class KeybagType(IntEnum):

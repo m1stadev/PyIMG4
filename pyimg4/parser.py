@@ -806,7 +806,7 @@ class IM4PData(_PyIMG4):
         except:
             raise AESError('Failed to decrypt payload.')
 
-    def output(self) -> Tuple[bytes, Optional[bytes]]:
+    def output(self) -> Payload:
         if self.encrypted:
             self._encoder.start()
             self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
@@ -834,6 +834,6 @@ class IM4PData(_PyIMG4):
                 self._encoder.leave()
 
             self._encoder.leave()
-            return (self._data, self._encoder.output())
+            return Payload(self._data, self._encoder.output())
         else:
-            return (self._data, None)
+            return Payload(self._data, None)

@@ -248,7 +248,7 @@ def im4p_extract(
             click.echo(f'Extracted extra Image4 payload data: to {extra.name}.')
             extra.write(im4p.payload.extra)
 
-    output.write(im4p.payload.output()[0])
+    output.write(im4p.payload.output().data)
 
     click.echo(f'Extracted Image4 payload data to: {output.name}')
 

@@ -35,7 +35,11 @@ def im4m_info(input_: BinaryIO) -> None:
     '''Print available information on an Image4 manifest.'''
 
     click.echo(f'Reading {input_.name}...')
-    im4m = pyimg4.IM4M(input_.read())
+
+    try:
+        im4m = pyimg4.IM4M(input_.read())
+    except:
+        raise click.BadParameter(f'Failed to parse Image4 manifest file: {input_.name}')
 
     click.echo('Image4 manifest info:')
     if 0x8720 <= im4m.chip_id <= 0x8960:
@@ -114,7 +118,13 @@ def im4p_create(
         raise click.BadParameter('FourCC must be 4 characters long')
 
     click.echo(f'Reading {input_.name}...')
-    im4p = pyimg4.IM4P(fourcc=fourcc, description=description, payload=input_.read())
+
+    try:
+        im4p = pyimg4.IM4P(
+            fourcc=fourcc, description=description, payload=input_.read()
+        )
+    except:
+        raise click.BadParameter(f'Failed to parse Image4 payload file: {input_.name}')
 
     if extra is not None:
         if compression_type != 'LZSS':
@@ -179,7 +189,11 @@ def im4p_extract(
     '''Extract data from an Image4 payload.'''
 
     click.echo(f'Reading {input_.name}...')
-    im4p = pyimg4.IM4P(input_.read())
+
+    try:
+        im4p = pyimg4.IM4P(input_.read())
+    except:
+        raise click.BadParameter(f'Failed to parse Image4 payload file: {input_.name}')
 
     if im4p.payload.encrypted == True:
         if iv is None and key is None:
@@ -252,7 +266,11 @@ def im4p_info(input_: BinaryIO) -> None:
     '''Print available information on an Image4 payload.'''
 
     click.echo(f'Reading {input_.name}...')
-    im4p = pyimg4.IM4P(input_.read())
+
+    try:
+        im4p = pyimg4.IM4P(input_.read())
+    except:
+        raise click.BadParameter(f'Failed to parse Image4 payload file: {input_.name}')
 
     click.echo('  Image4 payload info:')
     click.echo(f'    FourCC: {im4p.fourcc}')
@@ -334,7 +352,13 @@ def im4r_info(input_: BinaryIO) -> None:
     '''Print available information on an Image4 restore info file.'''
 
     click.echo(f'Reading {input_.name}...')
-    im4r = pyimg4.IM4R(input_.read())
+
+    try:
+        im4r = pyimg4.IM4R(input_.read())
+    except:
+        raise click.BadParameter(
+            f'Failed to parse Image4 restore info file: {input_.name}'
+        )
 
     click.echo('  Image4 restore info:')
     click.echo(f'    Boot nonce (hex): 0x{im4r.boot_nonce.hex()}')
@@ -388,14 +412,28 @@ def img4_create(
     '''Create an Image4 file.'''
 
     click.echo(f'Reading {im4p.name}...')
-    im4p = pyimg4.IM4P(im4p.read())
+
+    try:
+        im4p = pyimg4.IM4P(im4p.read())
+    except:
+        raise click.BadParameter(f'Failed to parse Image4 payload file: {im4p.name}')
 
     click.echo(f'Reading {im4m.name}...')
-    im4m = pyimg4.IM4M(im4m.read())
+
+    try:
+        im4m = pyimg4.IM4M(im4m.read())
+    except:
+        raise click.BadParameter(f'Failed to parse Image4 manifest file: {im4m.name}')
 
     if im4r is not None:
         click.echo(f'Reading {im4r.name}...')
-        im4r = pyimg4.IM4R(im4r.read())
+
+        try:
+            im4r = pyimg4.IM4R(im4r.read())
+        except:
+            raise click.BadParameter(
+                f'Failed to parse Image4 restore info file: {im4r.name}'
+            )
 
     elif boot_nonce is not None:
         click.echo(f'Creating Image4 restore info with boot nonce: {boot_nonce}...')
@@ -456,7 +494,11 @@ def img4_extract(
     '''Extract Image4 manifest/payload/restore info from an Image4 file.'''
 
     click.echo(f'Reading {input_.name}...')
-    img4 = pyimg4.IMG4(input_.read())
+
+    try:
+        img4 = pyimg4.IMG4(input_.read())
+    except:
+        raise click.BadParameter(f'Failed to parse Image4 file: {input_.name}')
 
     if not any(i is not None for i in (im4p, im4m, im4r)):
         raise click.BadParameter('You must specify at least one output file')

@@ -606,26 +606,29 @@ class IM4P(_PyIMG4):
                 asn1.Classes.Universal,
             )
 
-        if self.payload.compression == Compression.LZFSE:
-            self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+        compressed = self.payload.compression == Compression.LZFSE
 
-            self._encoder.write(
-                1,
-                asn1.Numbers.Integer,
-                asn1.Types.Primitive,
-                asn1.Classes.Universal,
-            )
+        self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
 
+        self._encoder.write(
+            1,
+            asn1.Numbers.Integer,
+            asn1.Types.Primitive,
+            asn1.Classes.Universal,
+        )
+
+        if compressed:
             self.payload.decompress()
-            self._encoder.write(
-                len(self.payload),
-                asn1.Numbers.Integer,
-                asn1.Types.Primitive,
-                asn1.Classes.Universal,
-            )
-            self.payload.compress(Compression.LZFSE)
 
-            self._encoder.leave()
+        self._encoder.write(
+            len(self.payload),
+            asn1.Numbers.Integer,
+            asn1.Types.Primitive,
+            asn1.Classes.Universal,
+        )
+
+        if compressed:
+            self.payload.compress(Compression.LZFSE)
 
         self._encoder.leave()
         return self._encoder.output()

@@ -712,6 +712,16 @@ class IM4PData(_PyIMG4):
 
         return repr_ + ')'
 
+    def _create_complzss_header(self) -> bytes:
+        header = bytearray(b'complzss')
+        header += adler32(self._data).to_bytes(4, 'big')
+        header += len(self._data).to_bytes(4, 'big')
+        header += len(lzss.compress(self._data)).to_bytes(4, 'big')
+        header += int(1).to_bytes(4, 'big')
+        header += bytearray(0x180 - len(header))
+
+        return bytes(header)
+
     def _parse_complzss_header(self) -> None:
         cmp_len = int(self._data[0x10:0x14].hex(), 16)
 
@@ -724,16 +734,6 @@ class IM4PData(_PyIMG4):
             self._data = self._data[:-extra_len]
 
         self._data = self._data[0x180:]
-
-    def _create_complzss_header(self) -> bytes:
-        header = bytearray(b'complzss')
-        header += adler32(self._data).to_bytes(4, 'big')
-        header += len(self._data).to_bytes(4, 'big')
-        header += len(lzss.compress(self._data)).to_bytes(4, 'big')
-        header += int(1).to_bytes(4, 'big')
-        header += bytearray(0x180 - len(header))
-
-        return bytes(header)
 
     @property
     def compression(self) -> Compression:

@@ -499,17 +499,12 @@ class IM4P(_PyIMG4):
 
         payload_data = self._decoder.read()[1]
 
-        kbag_data = None
-        while not self._decoder.eof():
-            if self._decoder.peek().nr == asn1.Numbers.OctetString:
-                kbag_data = self._decoder.read()[1]
-                break
-
-            self._decoder.read()
-
-        if kbag_data is not None:
+        if (
+            not self._decoder.eof()
+            and self._decoder.peek().nr == asn1.Numbers.OctetString
+        ):
             kbag_decoder = asn1.Decoder()
-            kbag_decoder.start(kbag_data)
+            kbag_decoder.start(self._decoder.read()[1])
 
             if kbag_decoder.peek().nr != asn1.Numbers.Sequence:
                 raise UnexpectedTagError(kbag_decoder.peek(), asn1.Numbers.Sequence)

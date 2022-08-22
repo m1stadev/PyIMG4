@@ -528,7 +528,7 @@ class IM4P(_PyIMG4):
         else:
             self.payload = IM4PData(payload_data)
 
-        if self._decoder.peek().nr == asn1.Numbers.Sequence:
+        if not self._decoder.eof() and self._decoder.peek().nr == asn1.Numbers.Sequence:
             self._decoder.enter()
 
             if (

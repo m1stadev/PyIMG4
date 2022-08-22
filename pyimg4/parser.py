@@ -282,8 +282,8 @@ class IM4R(_PyIMG4):
 
     def output(self) -> bytes:
         self._encoder.start()
-
         self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+
         self._encoder.write(
             'IM4R', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
         )
@@ -528,6 +528,17 @@ class IM4P(_PyIMG4):
         else:
             self.payload = IM4PData(payload_data)
 
+        if self._decoder.peek().nr == asn1.Numbers.Sequence:
+            self._decoder.enter()
+
+            if (
+                self._decoder.peek().nr == asn1.Numbers.Integer
+                and self._decoder.read()[1] == 1
+            ):
+                pass  # TODO: Store uncompressed payload size in IM4PData
+
+            self._decoder.leave()
+
     @property
     def description(self) -> str:
         return self._description
@@ -696,7 +707,7 @@ class Keybag(_PyIMG4):
 
 
 class IM4PData(_PyIMG4):
-    def __init__(self, data: bytes, *, keybags: List[Keybag] = []) -> None:
+    def __init__(self, data: bytes, *, keybags: Optional[List[Keybag]] = []) -> None:
         super().__init__(data)
 
         self.keybags = keybags
@@ -807,6 +818,7 @@ class IM4PData(_PyIMG4):
             raise AESError('Failed to decrypt payload.')
 
     def output(self) -> Payload:
+        kbag_data = None
         if self.encrypted:
             self._encoder.start()
             self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
@@ -834,6 +846,26 @@ class IM4PData(_PyIMG4):
                 self._encoder.leave()
 
             self._encoder.leave()
-            return Payload(self._data, self._encoder.output())
-        else:
-            return Payload(self._data, None)
+            kbag_data = self._encoder.output()
+
+        length_seq = None
+        if self.compression in (Compression.LZFSE, Compression.LZFSE_ENCRYPTED):
+            self._encoder.start()
+
+            self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+            self._encoder.write(
+                1,
+                asn1.Numbers.Integer,
+                asn1.Types.Primitive,
+                asn1.Classes.Universal,
+            )
+            self._encoder.write(
+                0,  # TODO: Write stored decompressed payload size
+                asn1.Numbers.Integer,
+                asn1.Types.Primitive,
+                asn1.Classes.Universal,
+            )
+
+            length_seq = self._encoder.output()
+
+        return Payload(self._data, kbag_data, length_seq)

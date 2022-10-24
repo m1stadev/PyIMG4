@@ -809,17 +809,19 @@ class IM4PData(_PyIMG4):
             self._lzfse_payload_size = None
 
     def decompress(self) -> None:
-        if self.compression == Compression.UNKNOWN:
+        if self.compression == Compression.NONE:
+            raise CompressionError('Payload is not compressed.')
+
+        if self.compression in (Compression.UNKNOWN, Compression.LZFSE_ENCRYPTED):
             raise CompressionError('Cannot decompress encrypted payload.')
 
-        if self.compression == Compression.LZSS:
+        elif self.compression == Compression.LZSS:
             self._parse_complzss_header()
             self._data = lzss.decompress(self._data)
+
         elif self.compression == Compression.LZFSE:
+            self._lzfse_payload_size = None
             self._data = liblzfse.decompress(self._data)
-            self._lzfse_payload_size: int = len(self._data)
-        else:
-            raise CompressionError('Payload is not compressed.')
 
     def decrypt(self, kbag: Keybag) -> None:
         try:
@@ -835,13 +837,13 @@ class IM4PData(_PyIMG4):
                 self.set_lzfse_payload_size(len(self._data))
                 self.compress(Compression.LZFSE)
 
-            elif self.encrypted == True:
+            elif self.compression == Compression.LZFSE:
                 raise AttributeError(
                     'Cannot get LZFSE payload size of encrypted payload.'
                 )
             else:
                 raise CompressionError(
-                    'Invalid compression type.'
+                    'Cannot get LZFSE payload size of non-LZFSE-compressed payload.'
                 )  # TODO: Better error message
 
         return self._lzfse_payload_size
@@ -856,7 +858,7 @@ class IM4PData(_PyIMG4):
         # If the compression is LZFSE_ENCRYPTED, the payload size is already set. If it's anything other than LZFSE/UNKNOWN, the attribute shouldn't be set.
         if self.compression not in (Compression.LZFSE, Compression.UNKNOWN):
             raise CompressionError(
-                'Invalid compression type.'
+                'Cannot set LZFSE payload size of non-LZFSE-compressed payload.'
             )  # TODO: Better error message
 
         self._lzfse_payload_size = size

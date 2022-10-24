@@ -817,15 +817,19 @@ class IM4PData(_PyIMG4):
 
     def get_lzfse_payload_size(self) -> int:
         if self._lzfse_payload_size is None:
-            raise AttributeError('No LZFSE payload size is set.')
+            if self.compression == Compression.LZFSE:
+                self.decompress()
+                self.set_lzfse_payload_size(len(self._data))
+                self.compress(Compression.LZFSE)
 
-        elif self.encrypted == True:
-            raise AttributeError('Cannot get LZFSE payload size of encrypted payload.')
-
-        elif self.compression == Compression.LZFSE:
-            self.decompress()
-            self.set_lzfse_payload_size(len(self._data))
-            self.compress(Compression.LZFSE)
+            elif self.encrypted == True:
+                raise AttributeError(
+                    'Cannot get LZFSE payload size of encrypted payload.'
+                )
+            else:
+                raise CompressionError(
+                    'Invalid compression type.'
+                )  # TODO: Better error message
 
         return self._lzfse_payload_size
 

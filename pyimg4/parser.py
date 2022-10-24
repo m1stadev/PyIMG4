@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Union
 from zlib import adler32
 
 import asn1

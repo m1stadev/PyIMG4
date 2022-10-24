@@ -63,7 +63,7 @@ def test_read_lzss_enc(enc_lzss: bytes) -> None:
     assert im4p.payload.encrypted == True
     assert len(im4p.payload.keybags) == 2
 
-    assert im4p.payload.compression == pyimg4.Compression.UNKNOWN
+    assert im4p.payload.compression == pyimg4.Compression.NONE
 
     dec_kbag = pyimg4.Keybag(
         iv='6a6a294d029536665fc51b7bd493e2df',

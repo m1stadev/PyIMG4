@@ -612,10 +612,7 @@ class IM4P(_PyIMG4):
                 asn1.Classes.Universal,
             )
 
-        if (
-            self.payload.compression == Compression.LZFSE
-            and self.payload.lzfse_payload_size is not None
-        ):
+        if self.payload.compression in (Compression.LZFSE, Compression.LZFSE_ENCRYPTED):
             self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
 
             self._encoder.write(

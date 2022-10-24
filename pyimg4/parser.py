@@ -773,14 +773,21 @@ class IM4PData(_PyIMG4):
         self._extra = extra
 
     def compress(self, compression: Compression) -> None:
-        if compression in (Compression.UNKNOWN, Compression.NONE):
+        if compression in (
+            Compression.UNKNOWN,
+            Compression.NONE,
+            Compression.LZFSE_ENCRYPTED,
+        ):
             raise CompressionError('A valid compression type must be specified.')
 
-        elif self.compression == compression:
-            raise CompressionError(f'Payload is already {compression.name}-compressed.')
-
-        if self.compression != Compression.NONE:
-            self.decompress()
+        elif self.compression in (
+            Compression.LZSS,
+            Compression.LZFSE,
+            Compression.LZFSE_ENCRYPTED,
+        ):
+            raise CompressionError(
+                f"Payload is already {compression.name.replace('_ENCRYPTED', '')}-compressed."
+            )
 
         if compression == Compression.LZSS:
             self._data = self._create_complzss_header() + lzss.compress(self._data)
@@ -789,11 +796,17 @@ class IM4PData(_PyIMG4):
                 self._data += self.extra
 
         elif compression == Compression.LZFSE:
+            self.set_lzfse_payload_size(len(self._data))
             self._data = liblzfse.compress(self._data)
 
             if self.compression != Compression.LZFSE:  # If bvx2 header isn't present
+                self._lzfse_payload_size = None
                 self._data = liblzfse.decompress(self._data)
+
                 raise CompressionError('Failed to LZFSE-compress payload.')
+
+        if self.compression != Compression.LZFSE:
+            self._lzfse_payload_size = None
 
     def decompress(self) -> None:
         if self.compression == Compression.UNKNOWN:

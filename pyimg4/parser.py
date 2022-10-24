@@ -530,7 +530,7 @@ class IM4P(_PyIMG4):
                 self._decoder.peek().nr == asn1.Numbers.Integer
                 and self._decoder.read()[1] == 1
             ):
-                self.payload.lzfse_payload_size = self._decoder.read()[1]
+                self.payload.set_lzfse_payload_size(self._decoder.read()[1])
 
             self._decoder.leave()
 
@@ -623,7 +623,7 @@ class IM4P(_PyIMG4):
             )
 
             self._encoder.write(
-                self.payload.lzfse_payload_size,
+                self.payload.get_lzfse_payload_size(),
                 asn1.Numbers.Integer,
                 asn1.Types.Primitive,
                 asn1.Classes.Universal,
@@ -743,12 +743,12 @@ class IM4PData(_PyIMG4):
     @property
     def compression(self) -> Compression:
         if self.encrypted:
-            if self.lzfse_payload_size is not None:
+            if self._lzfse_payload_size is not None:
                 return Compression.LZFSE_ENCRYPTED
             else:
                 return Compression.UNKNOWN
 
-        elif self._data.startswith(b'complzss'):
+        if self._data.startswith(b'complzss'):
             return Compression.LZSS
 
         elif self._data.startswith(b'bvx2') and b'bvx$' in self._data:
@@ -771,34 +771,6 @@ class IM4PData(_PyIMG4):
             raise UnexpectedDataError('bytes', extra)
 
         self._extra = extra
-
-    @property
-    def lzfse_payload_size(self) -> Optional[int]:
-        if self._lzfse_payload_size is not None:
-            return self._lzfse_payload_size
-
-        elif self.encrypted == True:
-            raise AttributeError('No LZFSE payload size is set.')
-
-        elif self.compression == Compression.LZFSE:
-            self.decompress()
-            self._lzfse_payload_size = len(self._data)
-            self.compress(Compression.LZFSE)
-
-            return self._lzfse_payload_size
-
-        else:
-            raise CompressionError('Payload is not LZFSE-compressed.')
-
-    @lzfse_payload_size.setter
-    def lzfse_payload_size(self, size: int) -> None:
-        if size is not None and not isinstance(size, int):
-            raise UnexpectedDataError('int', size)
-
-        if getattr(self, '_lzfse_payload_size', None) is None:
-            self._lzfse_payload_size = size
-        else:
-            raise AttributeError('Unable to set LZFSE payload size more than once.')
 
     def compress(self, compression: Compression) -> None:
         if compression in (Compression.UNKNOWN, Compression.NONE):
@@ -842,6 +814,35 @@ class IM4PData(_PyIMG4):
             self.keybags = []
         except:
             raise AESError('Failed to decrypt payload.')
+
+    def get_lzfse_payload_size(self) -> int:
+        if self._lzfse_payload_size is None:
+            raise AttributeError('No LZFSE payload size is set.')
+
+        elif self.encrypted == True:
+            raise AttributeError('Cannot get LZFSE payload size of encrypted payload.')
+
+        elif self.compression == Compression.LZFSE:
+            self.decompress()
+            self.set_lzfse_payload_size(len(self._data))
+            self.compress(Compression.LZFSE)
+
+        return self._lzfse_payload_size
+
+    def set_lzfse_payload_size(self, size: int) -> None:
+        if self._lzfse_payload_size is not None:
+            raise AttributeError('Unable to set LZFSE payload size more than once.')
+
+        if size is not None and not isinstance(size, int):
+            raise UnexpectedDataError('int', size)
+
+        # If the compression is LZFSE_ENCRYPTED, the payload size is already set. If it's anything other than LZFSE/UNKNOWN, the attribute shouldn't be set.
+        if self.compression not in (Compression.LZFSE, Compression.UNKNOWN):
+            raise CompressionError(
+                'Invalid compression type.'
+            )  # TODO: Better error message
+
+        self._lzfse_payload_size = size
 
     def output(self) -> Payload:
         kbag_data = None

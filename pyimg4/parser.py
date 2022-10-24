@@ -730,6 +730,51 @@ class IM4PData(_PyIMG4):
 
         return bytes(header)
 
+    def _parse_complzss_header(self) -> None:
+        cmp_len = int(self._data[0x10:0x14].hex(), 16)
+
+        if (
+            cmp_len < len(self._data) - 0x180
+        ):  # iOS 9+ A7-A9 kernelcache, so KPP is appended to the LZSS-compressed data
+            extra_len = len(self._data) - cmp_len - 0x180
+            self.extra = self._data[-extra_len:]
+
+            self._data = self._data[:-extra_len]
+
+        self._data = self._data[0x180:]
+
+    @property
+    def compression(self) -> Compression:
+        if self.encrypted:
+            if self.lzfse_payload_size is not None:
+                return Compression.LZFSE_ENCRYPTED
+            else:
+                return Compression.UNKNOWN
+
+        elif self._data.startswith(b'complzss'):
+            return Compression.LZSS
+
+        elif self._data.startswith(b'bvx2') and b'bvx$' in self._data:
+            return Compression.LZFSE
+
+        else:
+            return Compression.NONE
+
+    @property
+    def encrypted(self) -> bool:
+        return len(self.keybags) > 0
+
+    @property
+    def extra(self) -> Optional[bytes]:
+        return self._extra
+
+    @extra.setter
+    def extra(self, extra: Optional[bytes]) -> None:
+        if extra is not None and not isinstance(extra, bytes):
+            raise UnexpectedDataError('bytes', extra)
+
+        self._extra = extra
+
     @property
     def lzfse_payload_size(self) -> Optional[int]:
         if self._lzfse_payload_size is not None:
@@ -757,48 +802,6 @@ class IM4PData(_PyIMG4):
             self._lzfse_payload_size = size
         else:
             raise AttributeError('Unable to set LZFSE payload size more than once.')
-
-    def _parse_complzss_header(self) -> None:
-        cmp_len = int(self._data[0x10:0x14].hex(), 16)
-
-        if (
-            cmp_len < len(self._data) - 0x180
-        ):  # iOS 9+ A7-A9 kernelcache, so KPP is appended to the LZSS-compressed data
-            extra_len = len(self._data) - cmp_len - 0x180
-            self.extra = self._data[-extra_len:]
-
-            self._data = self._data[:-extra_len]
-
-        self._data = self._data[0x180:]
-
-    @property
-    def compression(self) -> Compression:
-        if self.encrypted:
-            return Compression.UNKNOWN
-
-        elif self._data.startswith(b'complzss'):
-            return Compression.LZSS
-
-        elif self._data.startswith(b'bvx2') and b'bvx$' in self._data:
-            return Compression.LZFSE
-
-        else:
-            return Compression.NONE
-
-    @property
-    def encrypted(self) -> bool:
-        return len(self.keybags) > 0
-
-    @property
-    def extra(self) -> Optional[bytes]:
-        return self._extra
-
-    @extra.setter
-    def extra(self, extra: Optional[bytes]) -> None:
-        if extra is not None and not isinstance(extra, bytes):
-            raise UnexpectedDataError('bytes', extra)
-
-        self._extra = extra
 
     def compress(self, compression: Compression) -> None:
         if compression in (Compression.UNKNOWN, Compression.NONE):

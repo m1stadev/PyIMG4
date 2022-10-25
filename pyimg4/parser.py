@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Union
 from zlib import adler32
 
 import asn1
@@ -282,8 +282,8 @@ class IM4R(_PyIMG4):
 
     def output(self) -> bytes:
         self._encoder.start()
-
         self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+
         self._encoder.write(
             'IM4R', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
         )
@@ -499,17 +499,12 @@ class IM4P(_PyIMG4):
 
         payload_data = self._decoder.read()[1]
 
-        kbag_data = None
-        while not self._decoder.eof():
-            if self._decoder.peek().nr == asn1.Numbers.OctetString:
-                kbag_data = self._decoder.read()[1]
-                break
-
-            self._decoder.read()
-
-        if kbag_data is not None:
+        if (
+            not self._decoder.eof()
+            and self._decoder.peek().nr == asn1.Numbers.OctetString
+        ):
             kbag_decoder = asn1.Decoder()
-            kbag_decoder.start(kbag_data)
+            kbag_decoder.start(self._decoder.read()[1])
 
             if kbag_decoder.peek().nr != asn1.Numbers.Sequence:
                 raise UnexpectedTagError(kbag_decoder.peek(), asn1.Numbers.Sequence)
@@ -527,6 +522,17 @@ class IM4P(_PyIMG4):
 
         else:
             self.payload = IM4PData(payload_data)
+
+        if not self._decoder.eof() and self._decoder.peek().nr == asn1.Numbers.Sequence:
+            self._decoder.enter()
+
+            if (
+                self._decoder.peek().nr == asn1.Numbers.Integer
+                and self._decoder.read()[1] == 1
+            ):
+                self.payload.set_lzfse_payload_size(self._decoder.read()[1])
+
+            self._decoder.leave()
 
     @property
     def description(self) -> str:
@@ -606,7 +612,7 @@ class IM4P(_PyIMG4):
                 asn1.Classes.Universal,
             )
 
-        if self.payload.compression == Compression.LZFSE:
+        if self.payload.compression in (Compression.LZFSE, Compression.LZFSE_ENCRYPTED):
             self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
 
             self._encoder.write(
@@ -616,14 +622,12 @@ class IM4P(_PyIMG4):
                 asn1.Classes.Universal,
             )
 
-            self.payload.decompress()
             self._encoder.write(
-                len(self.payload),
+                self.payload.get_lzfse_payload_size(),
                 asn1.Numbers.Integer,
                 asn1.Types.Primitive,
                 asn1.Classes.Universal,
             )
-            self.payload.compress(Compression.LZFSE)
 
             self._encoder.leave()
 
@@ -696,21 +700,32 @@ class Keybag(_PyIMG4):
 
 
 class IM4PData(_PyIMG4):
-    def __init__(self, data: bytes, *, keybags: List[Keybag] = []) -> None:
+    def __init__(self, data: bytes, *, keybags: Optional[List[Keybag]] = []) -> None:
         super().__init__(data)
 
         self.keybags = keybags
         self.extra: Optional[bytes] = None
+        self._lzfse_payload_size: Optional[int] = None
 
     def __len__(self) -> int:
         return len(self.output().data)
 
     def __repr__(self) -> str:
         repr_ = f'IM4PData(payload length={hex(len(self))}, encrypted={self.encrypted}'
-        if self.compression not in (Compression.UNKNOWN, Compression.NONE):
+        if self.compression != Compression.NONE:
             repr_ += f', compression={self.compression.name}'
 
         return repr_ + ')'
+
+    def _create_complzss_header(self) -> bytes:
+        header = bytearray(b'complzss')
+        header += adler32(self._data).to_bytes(4, 'big')
+        header += len(self._data).to_bytes(4, 'big')
+        header += len(lzss.compress(self._data)).to_bytes(4, 'big')
+        header += int(1).to_bytes(4, 'big')
+        header += bytearray(0x180 - len(header))
+
+        return bytes(header)
 
     def _parse_complzss_header(self) -> None:
         cmp_len = int(self._data[0x10:0x14].hex(), 16)
@@ -725,22 +740,12 @@ class IM4PData(_PyIMG4):
 
         self._data = self._data[0x180:]
 
-    def _create_complzss_header(self) -> bytes:
-        header = bytearray(b'complzss')
-        header += adler32(self._data).to_bytes(4, 'big')
-        header += len(self._data).to_bytes(4, 'big')
-        header += len(lzss.compress(self._data)).to_bytes(4, 'big')
-        header += int(1).to_bytes(4, 'big')
-        header += bytearray(0x180 - len(header))
-
-        return bytes(header)
-
     @property
     def compression(self) -> Compression:
-        if self.encrypted:
-            return Compression.UNKNOWN
+        if self.encrypted and self._lzfse_payload_size is not None:
+            return Compression.LZFSE_ENCRYPTED
 
-        elif self._data.startswith(b'complzss'):
+        if self._data.startswith(b'complzss'):
             return Compression.LZSS
 
         elif self._data.startswith(b'bvx2') and b'bvx$' in self._data:
@@ -765,14 +770,20 @@ class IM4PData(_PyIMG4):
         self._extra = extra
 
     def compress(self, compression: Compression) -> None:
-        if compression in (Compression.UNKNOWN, Compression.NONE):
+        if compression in (
+            Compression.NONE,
+            Compression.LZFSE_ENCRYPTED,
+        ):
             raise CompressionError('A valid compression type must be specified.')
 
-        elif self.compression == compression:
-            raise CompressionError(f'Payload is already {compression.name}-compressed.')
-
-        if self.compression != Compression.NONE:
-            self.decompress()
+        elif self.compression in (
+            Compression.LZSS,
+            Compression.LZFSE,
+            Compression.LZFSE_ENCRYPTED,
+        ):
+            raise CompressionError(
+                f"Payload is already {compression.name.replace('_ENCRYPTED', '')}-compressed."
+            )
 
         if compression == Compression.LZSS:
             self._data = self._create_complzss_header() + lzss.compress(self._data)
@@ -781,23 +792,32 @@ class IM4PData(_PyIMG4):
                 self._data += self.extra
 
         elif compression == Compression.LZFSE:
+            self.set_lzfse_payload_size(len(self._data))
             self._data = liblzfse.compress(self._data)
 
             if self.compression != Compression.LZFSE:  # If bvx2 header isn't present
+                self._lzfse_payload_size = None
                 self._data = liblzfse.decompress(self._data)
+
                 raise CompressionError('Failed to LZFSE-compress payload.')
 
+        if self.compression != Compression.LZFSE:
+            self._lzfse_payload_size = None
+
     def decompress(self) -> None:
-        if self.compression == Compression.UNKNOWN:
+        if self.compression == Compression.NONE:
+            raise CompressionError('Payload is not compressed.')
+
+        if self.encrypted == True:
             raise CompressionError('Cannot decompress encrypted payload.')
 
-        if self.compression == Compression.LZSS:
+        elif self.compression == Compression.LZSS:
             self._parse_complzss_header()
             self._data = lzss.decompress(self._data)
+
         elif self.compression == Compression.LZFSE:
+            self._lzfse_payload_size = None
             self._data = liblzfse.decompress(self._data)
-        else:
-            raise CompressionError('Payload is not compressed.')
 
     def decrypt(self, kbag: Keybag) -> None:
         try:
@@ -806,7 +826,43 @@ class IM4PData(_PyIMG4):
         except:
             raise AESError('Failed to decrypt payload.')
 
+    def get_lzfse_payload_size(self) -> int:
+        if self._lzfse_payload_size is None:
+            if self.compression == Compression.LZFSE:
+                self.decompress()
+                self.set_lzfse_payload_size(len(self._data))
+                self.compress(Compression.LZFSE)
+
+            elif self.encrypted:
+                raise AttributeError(
+                    'Cannot get LZFSE payload size of encrypted payload.'
+                )
+
+            else:
+                raise CompressionError(
+                    'Cannot get LZFSE payload size of non-LZFSE-compressed payload.'
+                )
+
+        return self._lzfse_payload_size
+
+    def set_lzfse_payload_size(self, size: int) -> None:
+        # If the compression is LZFSE_ENCRYPTED, the payload size is already set.
+        if self._lzfse_payload_size is not None:
+            raise AttributeError('Unable to set LZFSE payload size more than once.')
+
+        if size is not None and not isinstance(size, int):
+            raise UnexpectedDataError('int', size)
+
+        # If the payload isn't LZFSE-compressed nor encrypted, the payload size can't be set.
+        if self.compression != Compression.LZFSE and self.encrypted == False:
+            raise CompressionError(
+                'Cannot set LZFSE payload size of non-LZFSE-compressed payload.'
+            )
+
+        self._lzfse_payload_size = size
+
     def output(self) -> Payload:
+        kbag_data = None
         if self.encrypted:
             self._encoder.start()
             self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
@@ -834,6 +890,6 @@ class IM4PData(_PyIMG4):
                 self._encoder.leave()
 
             self._encoder.leave()
-            return Payload(self._data, self._encoder.output())
-        else:
-            return Payload(self._data, None)
+            kbag_data = self._encoder.output()
+
+        return Payload(self._data, kbag_data)

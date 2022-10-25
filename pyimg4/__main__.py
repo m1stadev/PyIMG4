@@ -136,7 +136,7 @@ def im4p_create(
     if compression_type is not None:
         compression_type = getattr(Compression, compression_type)
 
-        if im4p.payload.compression not in (Compression.NONE, Compression.UNKNOWN):
+        if im4p.payload.compression != Compression.NONE:
             raise click.BadParameter(
                 f'Payload is already {im4p.payload.compression.name} compressed'
             )
@@ -229,7 +229,7 @@ def im4p_extract(
 
             im4p.payload.decrypt(Keybag(key=key, iv=iv))
 
-    if im4p.payload.compression not in (Compression.NONE, Compression.UNKNOWN):
+    if im4p.payload.compression != Compression.NONE:
         if decompress == True:
             click.echo(
                 f'[NOTE] Image4 payload data is {im4p.payload.compression.name} compressed, decompressing...'

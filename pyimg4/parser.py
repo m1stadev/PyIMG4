@@ -192,7 +192,7 @@ class IM4M(_PyIMG4):
         self.certificates = self._decoder.read()[1]
 
         if not self._decoder.eof():
-            raise AESError(
+            raise ValueError(
                 f'Unexpected data found at end of Image4 manifest: {self._decoder.peek().nr.name.upper()}'
             )
 
@@ -272,7 +272,7 @@ class IM4R(_PyIMG4):
         self.boot_nonce = self._decoder.read()[1]
 
         if not self._decoder.eof():
-            raise AESError(
+            raise ValueError(
                 f'Unexpected data found at end of Image4 restore info: {self._decoder.peek().nr.name.upper()}'
             )
 
@@ -377,7 +377,7 @@ class IMG4(_PyIMG4):
             self.im4r = None
 
         if not self._decoder.eof():
-            raise AESError(
+            raise ValueError(
                 f'Unexpected data found at end of Image4: {self._decoder.peek().nr.name.upper()}'
             )
 
@@ -550,7 +550,7 @@ class IM4P(_PyIMG4):
             self._decoder.leave()
 
         if not self._decoder.eof():
-            raise AESError(
+            raise ValueError(
                 f'Unexpected data found at end of Image4 payload: {self._decoder.peek().nr.name.upper()}'
             )
 
@@ -700,7 +700,7 @@ class Keybag(_PyIMG4):
         self.key = self._decoder.read()[1]
 
         if not self._decoder.eof():
-            raise AESError(
+            raise ValueError(
                 f'Unexpected data found at end of keybag: {self._decoder.peek().nr.name.upper()}'
             )
 

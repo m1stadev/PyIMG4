@@ -547,7 +547,7 @@ class IM4PProperties(_PyIMG4):
 
     @property
     def restore_digest(self) -> bytes:
-        return self.restore_digest
+        return self._restore_digest
 
     @restore_digest.setter
     def restore_digest(self, restore_digest: bytes) -> None:
@@ -557,7 +557,7 @@ class IM4PProperties(_PyIMG4):
         if len(restore_digest) != 48:
             raise UnexpectedDataError('bytes with length of 48', restore_digest)
 
-        self.restore_digest = restore_digest
+        self._restore_digest = restore_digest
 
     def output(self) -> bytes:
         self._encoder.start()

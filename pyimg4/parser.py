@@ -191,6 +191,11 @@ class IM4M(_PyIMG4):
         self.signature = self._decoder.read()[1]
         self.certificates = self._decoder.read()[1]
 
+        if not self._decoder.eof():
+            raise AESError(
+                f'Unexpected data found at end of Image4 manifest: {self._decoder.peek().nr.name.upper()}'
+            )
+
     @property
     def apnonce(self) -> Optional[bytes]:
         return next(
@@ -265,6 +270,11 @@ class IM4R(_PyIMG4):
         )  # Verify BNCN (Boot Nonce) FourCC
 
         self.boot_nonce = self._decoder.read()[1]
+
+        if not self._decoder.eof():
+            raise AESError(
+                f'Unexpected data found at end of Image4 restore info: {self._decoder.peek().nr.name.upper()}'
+            )
 
     @property
     def boot_nonce(self) -> bytes:
@@ -365,6 +375,11 @@ class IMG4(_PyIMG4):
             self.im4r = IM4R(self._decoder.read()[1])  # IM4R
         else:
             self.im4r = None
+
+        if not self._decoder.eof():
+            raise AESError(
+                f'Unexpected data found at end of Image4: {self._decoder.peek().nr.name.upper()}'
+            )
 
     @property
     def im4m(self) -> Optional[IM4M]:
@@ -534,6 +549,11 @@ class IM4P(_PyIMG4):
 
             self._decoder.leave()
 
+        if not self._decoder.eof():
+            raise AESError(
+                f'Unexpected data found at end of Image4 payload: {self._decoder.peek().nr.name.upper()}'
+            )
+
     @property
     def description(self) -> str:
         return self._description
@@ -697,6 +717,11 @@ class Keybag(_PyIMG4):
             raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.OctetString)
 
         self.key = self._decoder.read()[1]
+
+        if not self._decoder.eof():
+            raise AESError(
+                f'Unexpected data found at end of keybag: {self._decoder.peek().nr.name.upper()}'
+            )
 
 
 class IM4PData(_PyIMG4):

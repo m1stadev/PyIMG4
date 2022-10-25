@@ -661,41 +661,22 @@ class Keybag(_PyIMG4):
         data: bytes = None,
         type_: KeybagType = KeybagType.PRODUCTION,  # Assume PRODUCTION if not provided
         *,
-        iv: Union[bytes, str] = None,
-        key: Union[bytes, str] = None,
+        iv: bytes = None,
+        key: bytes = None,
     ) -> None:
         super().__init__(data)
 
+        self.type = type_
+
         if iv and key:
-            if isinstance(iv, str):
-                try:
-                    iv = bytes.fromhex(iv)
-                except ValueError:
-                    raise AESError('Invalid IV provided.')
-
-            if len(iv) == 16:
-                self.iv = iv
-            else:
-                raise AESError('Invalid IV length.')
-
-            if isinstance(key, str):
-                try:
-                    key = bytes.fromhex(key)
-                except ValueError:
-                    raise AESError('Invalid key provided.')
-
-            if len(key) == 32:
-                self.key = key
-            else:
-                raise AESError('Invalid key length.')
+            self.iv = iv
+            self.key = key
 
         elif data:
             self._parse()
 
         else:
             raise TypeError('No data or IV/Key provided.')
-
-        self.type = type_
 
     def __repr__(self) -> str:
         return (
@@ -722,6 +703,34 @@ class Keybag(_PyIMG4):
             raise AESError(
                 f'Unexpected data found at end of keybag: {self._decoder.peek().nr.name.upper()}'
             )
+
+    @property
+    def iv(self) -> bytes:
+        return self._iv
+
+    @iv.setter
+    def iv(self, iv: bytes) -> None:
+        if not isinstance(iv, bytes):
+            raise UnexpectedDataError('bytes', iv)
+
+        if len(iv) != 16:
+            raise UnexpectedDataError('bytes with len of 16', iv)
+
+        self._iv = iv
+
+    @property
+    def key(self) -> bytes:
+        return self._key
+
+    @key.setter
+    def key(self, key: bytes) -> None:
+        if not isinstance(key, bytes):
+            raise UnexpectedDataError('bytes', key)
+
+        if len(key) != 32:
+            raise UnexpectedDataError('bytes with len of 32', key)
+
+        self._key = key
 
 
 class IM4PData(_PyIMG4):

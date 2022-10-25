@@ -817,8 +817,10 @@ class IM4PData(_PyIMG4):
                 self._data += self.extra
 
         elif compression == Compression.LZFSE:
-            self.set_lzfse_payload_size(len(self._data))
+            payload_size = len(self._data)
             self._data = liblzfse.compress(self._data)
+            # Cannot set LZFSE payload size until after compression
+            self.set_lzfse_payload_size(payload_size)
 
             if self.compression != Compression.LZFSE:  # If bvx2 header isn't present
                 self._lzfse_payload_size = None

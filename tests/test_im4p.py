@@ -66,8 +66,10 @@ def test_read_lzss_enc(enc_lzss: bytes) -> None:
     assert im4p.payload.compression == pyimg4.Compression.NONE
 
     dec_kbag = pyimg4.Keybag(
-        iv='6a6a294d029536665fc51b7bd493e2df',
-        key='ba2bdd5485677d9b40465dd0e332b419f759cffcd57be73468afc61050d42091',
+        iv=bytes.fromhex('6a6a294d029536665fc51b7bd493e2df'),
+        key=bytes.fromhex(
+            'ba2bdd5485677d9b40465dd0e332b419f759cffcd57be73468afc61050d42091',
+        ),
     )
 
     im4p.payload.decrypt(dec_kbag)
@@ -94,11 +96,19 @@ def test_read_lzfse_enc(enc_lzfse: bytes) -> None:
     assert im4p.payload.compression == pyimg4.Compression.LZFSE_ENCRYPTED
 
     dec_kbag = pyimg4.Keybag(
-        iv='0d0a39d2e3ea94f70076192e7d225e9e',
-        key='4567c8444b839a08b4a7c408531efb54ae69f1dcc24557ad0e21768b472f95cd',
+        iv=bytes.fromhex('0d0a39d2e3ea94f70076192e7d225e9e'),
+        key=bytes.fromhex(
+            '4567c8444b839a08b4a7c408531efb54ae69f1dcc24557ad0e21768b472f95cd'
+        ),
     )
 
+    with open('test_enc', 'wb') as f:
+        f.write(im4p.payload.output().data)
+
     im4p.payload.decrypt(dec_kbag)
+
+    with open('test_dec', 'wb') as f:
+        f.write(im4p.payload.output().data)
 
     assert im4p.payload.compression == pyimg4.Compression.LZFSE
 

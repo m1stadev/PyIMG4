@@ -511,7 +511,6 @@ class IM4PProperties(_PyIMG4):
         for _ in range(2):
             self._decoder.leave()
 
-        self._decoder.enter()
         if self._decoder.peek().cls != asn1.Classes.Private:
             raise UnexpectedTagError(self._decoder.peek(), asn1.Classes.Private)
 

@@ -701,7 +701,15 @@ class IM4P(_PyIMG4):
             self._decoder.leave()
 
         if not self._decoder.eof() and self._decoder.peek().cls == asn1.Classes.Context:
-            self.properties = self._decoder.read()[1]
+            self._encoder.start()
+            self._encoder.write(
+                self._decoder.read()[1],
+                nr=0,
+                typ=asn1.Types.Constructed,
+                cls=asn1.Classes.Context,
+            )
+
+            self.properties = self._encoder.output()
 
         if not self._decoder.eof():
             raise AESError(

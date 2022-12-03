@@ -456,27 +456,13 @@ class IMG4(_PyIMG4):
 
 
 class IM4PProperties(_PyIMG4):
-    def __init__(
-        self,
-        data: Optional[bytes] = None,
-        *,
-        memory_map: Optional[bytes] = None,
-        restore_digest: Optional[bytes] = None,
-    ) -> None:
+    def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
-        if memory_map and restore_digest:
-            self.memory_map = memory_map
-            self.restore_digest = restore_digest
-
-        elif data:
-            self._parse()
-
-        else:
-            raise TypeError('No data or memory map/restore digest provided.')
+        self._parse()
 
     def __repr__(self) -> str:
-        return f"IM4PProperties(memory_map={self.memory_map.hex()}, restore_digest={self.restore_digest.hex()})"
+        return f"IM4PProperties(size={hex(len(self))})"
 
     def _parse(self) -> None:
         if not isinstance(self._data, bytes):
@@ -497,110 +483,29 @@ class IM4PProperties(_PyIMG4):
             raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Set)
 
         self._decoder.enter()
-        if self._decoder.peek().cls != asn1.Classes.Private:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Classes.Private)
 
-        self._decoder.enter()
-        if self._decoder.peek().nr != asn1.Numbers.Sequence:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
+        while not self._decoder.eof():
+            if self._decoder.peek().cls != asn1.Classes.Private:
+                raise UnexpectedTagError(self._decoder.peek(), asn1.Classes.Private)
 
-        self._decoder.enter()
-        self._verify_fourcc(self._decoder.read()[1], 'mmap')
-        self.memory_map = self._decoder.read()[1]
+            self._decoder.enter()
+            if self._decoder.peek().nr != asn1.Numbers.Sequence:
+                raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
 
-        for _ in range(2):
-            self._decoder.leave()
+            self._decoder.enter()
+            self._verify_fourcc(self._decoder.read()[1])
 
-        if self._decoder.peek().cls != asn1.Classes.Private:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Classes.Private)
-
-        self._decoder.enter()
-        if self._decoder.peek().nr != asn1.Numbers.Sequence:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
-
-        self._decoder.enter()
-        self._verify_fourcc(self._decoder.read()[1], 'rddg')
-        self.restore_digest = self._decoder.read()[1]
-
-        for _ in range(2):
-            self._decoder.leave()
-
-        if not self._decoder.eof():
-            raise AESError(
-                f'Unexpected data found at end of Image4 payload properties: {self._decoder.peek().nr.name.upper()}'
-            )
+            for _ in range(2):
+                self._decoder.leave()
 
     @property
-    def memory_map(self) -> bytes:
-        return self._memory_map
+    def data(self) -> bytes:
+        return self._data
 
-    @memory_map.setter
-    def memory_map(self, memory_map: bytes) -> None:
-        if not isinstance(memory_map, bytes):
-            raise UnexpectedDataError('bytes', memory_map)
-
-        if len(memory_map) != 384:
-            raise UnexpectedDataError('bytes with length of 384', memory_map)
-
-        self._memory_map = memory_map
-
-    @property
-    def restore_digest(self) -> bytes:
-        return self._restore_digest
-
-    @restore_digest.setter
-    def restore_digest(self, restore_digest: bytes) -> None:
-        if not isinstance(restore_digest, bytes):
-            raise UnexpectedDataError('bytes', restore_digest)
-
-        if len(restore_digest) != 48:
-            raise UnexpectedDataError('bytes with length of 48', restore_digest)
-
-        self._restore_digest = restore_digest
-
-    def output(self) -> bytes:
-        self._encoder.start()
-
-        self._encoder.enter(nr=0, cls=asn1.Classes.Context)
-
-        self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
-        self._encoder.write(
-            'PAYP', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
-        )
-
-        self._encoder.enter(asn1.Numbers.Set, asn1.Classes.Universal)
-
-        # 1835884912 == mmap
-        self._encoder.enter(1835884912, asn1.Classes.Private)
-        self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
-        self._encoder.write(
-            'mmap', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
-        )
-        self._encoder.write(
-            self.memory_map,
-            asn1.Numbers.OctetString,
-            asn1.Types.Primitive,
-            asn1.Classes.Universal,
-        )
-        for _ in range(2):
-            self._encoder.leave()
-
-        # 1919181927 == rddg
-        self._encoder.enter(1919181927, asn1.Classes.Private)
-        self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
-        self._encoder.write(
-            'rddg', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
-        )
-        self._encoder.write(
-            self.restore_digest,
-            asn1.Numbers.OctetString,
-            asn1.Types.Primitive,
-            asn1.Classes.Universal,
-        )
-        for _ in range(4):
-            self._encoder.leave()
-
-        return self._encoder.output()
+    @data.setter
+    def data(self, data: bytes) -> None:
+        if not isinstance(data, bytes):
+            raise UnexpectedDataError('bytes', data)
 
 
 class IM4P(_PyIMG4):

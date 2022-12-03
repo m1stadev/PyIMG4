@@ -7,11 +7,11 @@ import lzss
 from Crypto.Cipher import AES
 
 from .errors import *
-from .types import *
+from ._types import *
 
 
 class _PyIMG4:
-    def __init__(self, data: bytes) -> None:
+    def __init__(self, data: Optional[bytes] = None) -> None:
         self._data = data
 
         self._decoder = asn1.Decoder()
@@ -739,7 +739,7 @@ class IM4P(_PyIMG4):
 class Keybag(_PyIMG4):
     def __init__(
         self,
-        data: bytes = None,
+        data: Optional[bytes] = None,
         type_: KeybagType = KeybagType.PRODUCTION,  # Assume PRODUCTION if not provided
         *,
         iv: Union[bytes, str] = None,

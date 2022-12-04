@@ -192,7 +192,7 @@ class IM4M(_PyIMG4):
         self.certificates = self._decoder.read()[1]
 
         if not self._decoder.eof():
-            raise AESError(
+            raise ValueError(
                 f'Unexpected data found at end of Image4 manifest: {self._decoder.peek().nr.name.upper()}'
             )
 
@@ -272,7 +272,7 @@ class IM4R(_PyIMG4):
         self.boot_nonce = self._decoder.read()[1]
 
         if not self._decoder.eof():
-            raise AESError(
+            raise ValueError(
                 f'Unexpected data found at end of Image4 restore info: {self._decoder.peek().nr.name.upper()}'
             )
 
@@ -377,7 +377,7 @@ class IMG4(_PyIMG4):
             self.im4r = None
 
         if not self._decoder.eof():
-            raise AESError(
+            raise ValueError(
                 f'Unexpected data found at end of Image4: {self._decoder.peek().nr.name.upper()}'
             )
 
@@ -618,7 +618,7 @@ class IM4P(_PyIMG4):
             self.properties = None
 
         if not self._decoder.eof():
-            raise AESError(
+            raise ValueError(
                 f'Unexpected data found at end of Image4 payload: {self._decoder.peek().nr.name.upper()}'
             )
 
@@ -750,41 +750,22 @@ class Keybag(_PyIMG4):
         data: Optional[bytes] = None,
         type_: KeybagType = KeybagType.PRODUCTION,  # Assume PRODUCTION if not provided
         *,
-        iv: Union[bytes, str] = None,
-        key: Union[bytes, str] = None,
+        iv: bytes = None,
+        key: bytes = None,
     ) -> None:
         super().__init__(data)
 
+        self.type = type_
+
         if iv and key:
-            if isinstance(iv, str):
-                try:
-                    iv = bytes.fromhex(iv)
-                except ValueError:
-                    raise AESError('Invalid IV provided.')
-
-            if len(iv) == 16:
-                self.iv = iv
-            else:
-                raise AESError('Invalid IV length.')
-
-            if isinstance(key, str):
-                try:
-                    key = bytes.fromhex(key)
-                except ValueError:
-                    raise AESError('Invalid key provided.')
-
-            if len(key) == 32:
-                self.key = key
-            else:
-                raise AESError('Invalid key length.')
+            self.iv = iv
+            self.key = key
 
         elif data:
             self._parse()
 
         else:
             raise TypeError('No data or IV/Key provided.')
-
-        self.type = type_
 
     def __repr__(self) -> str:
         return (
@@ -808,9 +789,37 @@ class Keybag(_PyIMG4):
         self.key = self._decoder.read()[1]
 
         if not self._decoder.eof():
-            raise AESError(
+            raise ValueError(
                 f'Unexpected data found at end of keybag: {self._decoder.peek().nr.name.upper()}'
             )
+
+    @property
+    def iv(self) -> bytes:
+        return self._iv
+
+    @iv.setter
+    def iv(self, iv: bytes) -> None:
+        if not isinstance(iv, bytes):
+            raise UnexpectedDataError('bytes', iv)
+
+        if len(iv) != 16:
+            raise UnexpectedDataError('bytes with len of 16', iv)
+
+        self._iv = iv
+
+    @property
+    def key(self) -> bytes:
+        return self._key
+
+    @key.setter
+    def key(self, key: bytes) -> None:
+        if not isinstance(key, bytes):
+            raise UnexpectedDataError('bytes', key)
+
+        if len(key) != 32:
+            raise UnexpectedDataError('bytes with len of 32', key)
+
+        self._key = key
 
 
 class IM4PData(_PyIMG4):
@@ -906,8 +915,10 @@ class IM4PData(_PyIMG4):
                 self._data += self.extra
 
         elif compression == Compression.LZFSE:
-            self.set_lzfse_payload_size(len(self._data))
+            payload_size = len(self._data)
             self._data = liblzfse.compress(self._data)
+            # Cannot set LZFSE payload size until after compression
+            self.set_lzfse_payload_size(payload_size)
 
             if self.compression != Compression.LZFSE:  # If bvx2 header isn't present
                 self._lzfse_payload_size = None

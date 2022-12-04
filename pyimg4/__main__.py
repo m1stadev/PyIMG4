@@ -398,8 +398,8 @@ def im4r_info(input_: BinaryIO) -> None:
             f'Failed to parse Image4 restore info file: {input_.name}'
         )
 
-    click.echo('  Image4 restore info:')
-    click.echo(f'    Boot nonce (hex): 0x{im4r.boot_nonce.hex()}')
+    click.echo('Image4 restore info:')
+    click.echo(f'  Boot nonce (hex): 0x{im4r.boot_nonce.hex()}')
 
 
 @cli.group()

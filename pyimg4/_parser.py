@@ -516,7 +516,7 @@ class IM4P(_PyIMG4):
         fourcc: Optional[str] = None,
         description: Optional[str] = None,
         payload: Optional[Union['IM4PData', bytes]] = None,
-        properties: Optional[bytes] = None,
+        properties: Optional[Union[IM4PProperties, bytes]] = None,
     ) -> None:
         super().__init__(data)
 
@@ -614,6 +614,8 @@ class IM4P(_PyIMG4):
             )
 
             self.properties = self._encoder.output()
+        else:
+            self.properties = None
 
         if not self._decoder.eof():
             raise AESError(
@@ -728,6 +730,15 @@ class IM4P(_PyIMG4):
             )
 
             self._encoder.leave()
+
+        if self.properties is not None:
+            self._decoder.start(self.properties.output())
+            self._encoder.write(
+                self._decoder.read()[1],
+                nr=0,
+                typ=asn1.Types.Constructed,
+                cls=asn1.Classes.Context,
+            )
 
         self._encoder.leave()
         return self._encoder.output()

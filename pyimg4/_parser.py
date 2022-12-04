@@ -641,9 +641,6 @@ class IM4P(_PyIMG4):
             self._fourcc = fourcc
 
         elif isinstance(fourcc, str):
-            if not fourcc.islower():
-                raise UnexpectedDataError('lowercase string', fourcc)
-
             self._fourcc = self._verify_fourcc(fourcc)
         else:
             raise UnexpectedDataError('string', fourcc)

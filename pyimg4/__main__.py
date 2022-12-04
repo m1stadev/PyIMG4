@@ -310,27 +310,30 @@ def im4p_info(input_: BinaryIO) -> None:
     except:
         raise click.BadParameter(f'Failed to parse Image4 payload file: {input_.name}')
 
-    click.echo('  Image4 payload info:')
-    click.echo(f'    FourCC: {im4p.fourcc}')
-    click.echo(f'    Description: {im4p.description}')
-    click.echo(f'    Data size: {round(len(im4p.payload) / 1000)}KB')
+    click.echo('Image4 payload info:')
+    click.echo(f'  FourCC: {im4p.fourcc}')
+    click.echo(f'  Description: {im4p.description}')
+    click.echo(f'  Data size: {round(len(im4p.payload) / 1000)}KB')
 
     if (
         im4p.payload.encrypted == False
         and im4p.payload.compression != pyimg4.Compression.NONE
     ):
-        click.echo(f'    Data compression type: {im4p.payload.compression.name}')
+        click.echo(f'  Data compression type: {im4p.payload.compression.name}')
 
         im4p.payload.decompress()
-        click.echo(f'    Data size (uncompressed): {round(len(im4p.payload) / 1000)}KB')
+        click.echo(f'  Data size (uncompressed): {round(len(im4p.payload) / 1000)}KB')
 
-    click.echo(f'    Encrypted: {im4p.payload.encrypted}\n')
+    click.echo(f'  Encrypted: {im4p.payload.encrypted}\n')
     if im4p.payload.encrypted:
-        for kb in im4p.payload.keybags:
-            click.echo('    Keybag:')
-            click.echo(f'      Type: {kb.type.name}')
-            click.echo(f'      IV: {kb.iv.hex()}')
-            click.echo(f'      Key: {kb.key.hex()}')
+        for k, kb in enumerate(im4p.payload.keybags):
+            click.echo('  Keybag:')
+            click.echo(f'    Type: {kb.type.name}')
+            click.echo(f'    IV: {kb.iv.hex()}')
+            click.echo(f'    Key: {kb.key.hex()}')
+
+            if k != (len(im4p.payload.keybags) - 1):
+                click.echo()
 
 
 @cli.group()

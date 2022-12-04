@@ -99,13 +99,7 @@ def test_read_lzfse_enc(enc_lzfse: bytes) -> None:
         ),
     )
 
-    with open('test_enc', 'wb') as f:
-        f.write(im4p.payload.output().data)
-
     im4p.payload.decrypt(dec_kbag)
-
-    with open('test_dec', 'wb') as f:
-        f.write(im4p.payload.output().data)
 
     assert im4p.payload.compression == pyimg4.Compression.LZFSE
 

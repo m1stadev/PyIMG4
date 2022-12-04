@@ -326,10 +326,10 @@ def im4p_info(input_: BinaryIO) -> None:
             f'  Data size (uncompressed): {round(len(im4p.payload) / 1000, 2)}KB'
         )
 
-    click.echo(f'  Encrypted: {im4p.payload.encrypted}\n')
+    click.echo(f'  Encrypted: {im4p.payload.encrypted}')
     if im4p.payload.encrypted:
+        click.echo(f'  Keybags ({len(im4p.payload.keybags)}):')
         for k, kb in enumerate(im4p.payload.keybags):
-            click.echo('  Keybag:')
             click.echo(f'    Type: {kb.type.name}')
             click.echo(f'    IV: {kb.iv.hex()}')
             click.echo(f'    Key: {kb.key.hex()}')
@@ -612,18 +612,18 @@ def img4_info(input_: BinaryIO, verbose: bool) -> None:
             f'    Data size (uncompressed): {round(len(img4.im4p.payload) / 1000, 2)}KB'
         )
 
-    click.echo(f'    Encrypted: {img4.im4p.payload.encrypted}\n')
+    click.echo(f'    Encrypted: {img4.im4p.payload.encrypted}')
     if img4.im4p.payload.encrypted:
+        click.echo(f'    Keybags ({len(img4.im4p.payload.keybags)}):')
         for k, kb in enumerate(img4.im4p.payload.keybags):
-            click.echo(f'    Keybags ({len(img4.im4p.payload.keybags)}):')
             click.echo(f'      Type: {kb.type.name}')
             click.echo(f'      IV: {kb.iv.hex()}')
             click.echo(f'      Key: {kb.key.hex()}')
 
-        if k != (len(img4.im4p.payload.keybags) - 1):
-            click.echo()
+            if k != (len(img4.im4p.payload.keybags) - 1):
+                click.echo()
 
-    click.echo('  Image4 manifest info:')
+    click.echo('\n  Image4 manifest info:')
 
     if 0x8720 <= img4.im4m.chip_id <= 0x8960:
         soc = f'S5L{img4.im4m.chip_id:02x}'
@@ -673,7 +673,7 @@ def img4_info(input_: BinaryIO, verbose: bool) -> None:
         )
 
     if img4.im4r is not None:
-        click.echo('  Image4 restore info:')
+        click.echo('\n  Image4 restore info:')
         click.echo(f'    Boot nonce (hex): 0x{img4.im4r.boot_nonce.hex()}')
 
 

@@ -6,12 +6,12 @@ import liblzfse
 import lzss
 from Crypto.Cipher import AES
 
+from ._types import *
 from .errors import *
-from .types import *
 
 
 class _PyIMG4:
-    def __init__(self, data: bytes) -> None:
+    def __init__(self, data: Optional[bytes] = None) -> None:
         self._data = data
 
         self._decoder = asn1.Decoder()
@@ -455,6 +455,59 @@ class IMG4(_PyIMG4):
         return self._encoder.output()
 
 
+class IM4PProperties(_PyIMG4):
+    def __init__(self, data: bytes) -> None:
+        super().__init__(data)
+
+        self._parse()
+
+    def __repr__(self) -> str:
+        return f"IM4PProperties(size={hex(len(self))})"
+
+    def _parse(self) -> None:
+        if not isinstance(self._data, bytes):
+            raise UnexpectedDataError('bytes', self._data)
+
+        self._decoder.start(self._data)
+        if self._decoder.peek().cls != asn1.Classes.Context:
+            raise UnexpectedTagError(self._decoder.peek(), asn1.Classes.Context)
+
+        self._decoder.enter()
+        if self._decoder.peek().nr != asn1.Numbers.Sequence:
+            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
+
+        self._decoder.enter()
+        self._verify_fourcc(self._decoder.read()[1], 'PAYP')
+
+        if self._decoder.peek().nr != asn1.Numbers.Set:
+            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Set)
+
+        self._decoder.enter()
+
+        while not self._decoder.eof():
+            if self._decoder.peek().cls != asn1.Classes.Private:
+                raise UnexpectedTagError(self._decoder.peek(), asn1.Classes.Private)
+
+            self._decoder.enter()
+            if self._decoder.peek().nr != asn1.Numbers.Sequence:
+                raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
+
+            self._decoder.enter()
+            self._verify_fourcc(self._decoder.read()[1])
+
+            for _ in range(2):
+                self._decoder.leave()
+
+    @property
+    def data(self) -> bytes:
+        return self._data
+
+    @data.setter
+    def data(self, data: bytes) -> None:
+        if not isinstance(data, bytes):
+            raise UnexpectedDataError('bytes', data)
+
+
 class IM4P(_PyIMG4):
     def __init__(
         self,
@@ -463,6 +516,7 @@ class IM4P(_PyIMG4):
         fourcc: Optional[str] = None,
         description: Optional[str] = None,
         payload: Optional[Union['IM4PData', bytes]] = None,
+        properties: Optional[Union[IM4PProperties, bytes]] = None,
     ) -> None:
         super().__init__(data)
 
@@ -472,6 +526,7 @@ class IM4P(_PyIMG4):
             self.fourcc = fourcc
             self.description = description
             self.payload = payload
+            self.properties = properties
 
     def __add__(self, im4m: IM4M) -> IMG4:
         if isinstance(im4m, IM4M):
@@ -549,6 +604,19 @@ class IM4P(_PyIMG4):
 
             self._decoder.leave()
 
+        if not self._decoder.eof() and self._decoder.peek().cls == asn1.Classes.Context:
+            self._encoder.start()
+            self._encoder.write(
+                self._decoder.read()[1],
+                nr=0,
+                typ=asn1.Types.Constructed,
+                cls=asn1.Classes.Context,
+            )
+
+            self.properties = self._encoder.output()
+        else:
+            self.properties = None
+
         if not self._decoder.eof():
             raise ValueError(
                 f'Unexpected data found at end of Image4 payload: {self._decoder.peek().nr.name.upper()}'
@@ -575,9 +643,6 @@ class IM4P(_PyIMG4):
             self._fourcc = fourcc
 
         elif isinstance(fourcc, str):
-            if not fourcc.islower():
-                raise UnexpectedDataError('lowercase string', fourcc)
-
             self._fourcc = self._verify_fourcc(fourcc)
         else:
             raise UnexpectedDataError('string', fourcc)
@@ -592,6 +657,21 @@ class IM4P(_PyIMG4):
             raise UnexpectedDataError('IM4PData or bytes', payload)
 
         self._payload = IM4PData(payload) if isinstance(payload, bytes) else payload
+
+    @property
+    def properties(self) -> IM4PProperties:
+        return self._properties
+
+    @properties.setter
+    def properties(self, properties: Optional[Union[IM4PProperties, bytes]]) -> None:
+        if properties is not None and not isinstance(
+            properties, (bytes, IM4PProperties)
+        ):
+            raise UnexpectedDataError('IM4PProperties or bytes', properties)
+
+        self._properties = (
+            IM4PProperties(properties) if isinstance(properties, bytes) else properties
+        )
 
     def output(self) -> bytes:
         self._encoder.start()
@@ -651,6 +731,15 @@ class IM4P(_PyIMG4):
 
             self._encoder.leave()
 
+        if self.properties is not None:
+            self._decoder.start(self.properties.output())
+            self._encoder.write(
+                self._decoder.read()[1],
+                nr=0,
+                typ=asn1.Types.Constructed,
+                cls=asn1.Classes.Context,
+            )
+
         self._encoder.leave()
         return self._encoder.output()
 
@@ -658,7 +747,7 @@ class IM4P(_PyIMG4):
 class Keybag(_PyIMG4):
     def __init__(
         self,
-        data: bytes = None,
+        data: Optional[bytes] = None,
         type_: KeybagType = KeybagType.PRODUCTION,  # Assume PRODUCTION if not provided
         *,
         iv: bytes = None,

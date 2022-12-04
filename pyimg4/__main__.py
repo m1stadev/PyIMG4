@@ -31,7 +31,14 @@ def im4m() -> None:
     help='Input Image4 manifest file.',
     required=True,
 )
-def im4m_info(input_: BinaryIO) -> None:
+@click.option(
+    '-v',
+    '--verbose',
+    'verbose',
+    is_flag=True,
+    help='Increase verbosity.',
+)
+def im4m_info(input_: BinaryIO, verbose: bool = True) -> None:
     '''Print available information on an Image4 manifest.'''
 
     click.echo(f'Reading {input_.name}...')
@@ -42,6 +49,7 @@ def im4m_info(input_: BinaryIO) -> None:
         raise click.BadParameter(f'Failed to parse Image4 manifest file: {input_.name}')
 
     click.echo('Image4 manifest info:')
+
     if 0x8720 <= im4m.chip_id <= 0x8960:
         soc = f'S5L{im4m.chip_id:02x}'
     elif im4m.chip_id in range(0x7002, 0x8003):
@@ -49,15 +57,45 @@ def im4m_info(input_: BinaryIO) -> None:
     else:
         soc = f'T{im4m.chip_id:02x}'
 
-    click.echo(f'  Device Processor: {soc}')
+    if verbose:
+        click.echo(f'  Device Processor: {soc} ({hex(im4m.chip_id)})')
+    else:
+        click.echo(f'  Device Processor: {soc}')
 
-    click.echo(f"  ECID (hex): {hex(im4m.ecid)}")
-    click.echo(f"  ApNonce: {im4m.apnonce.hex()}")
-    click.echo(f"  SepNonce: {im4m.sepnonce.hex()}")
+    click.echo(f'  ECID (hex): {hex(im4m.ecid)}')
+    click.echo(f'  ApNonce (hex): {im4m.apnonce.hex()}')
+    click.echo(f'  SepNonce (hex): {im4m.sepnonce.hex()}')
 
-    click.echo(
-        f"  Manifest images ({len(im4m.images)}): {', '.join(i.fourcc for i in im4m.images)}"
-    )
+    if verbose:
+        for p, prop in enumerate(im4m.properties):
+            # Skip these, as we just printed them
+            if prop.name in ('BNCH', 'CHIP', 'ECID', 'snon'):
+                continue
+
+            if isinstance(prop.value, bytes):
+                click.echo(f'  {prop.name} (hex): {prop.value.hex()}')
+            else:
+                click.echo(f'  {prop.name}: {prop.value}')
+
+            if p == (len(im4m.properties) - 1):
+                click.echo()
+
+        click.echo(f'  Manifest images ({len(im4m.images)}):')
+        for i, image in enumerate(im4m.images):
+            click.echo(f'    {image.fourcc}:')
+
+            for prop in image.properties:
+                click.echo(
+                    f'      {prop.name}: {prop.value.hex() if isinstance(prop.value, bytes) else prop.value}'
+                )
+
+            if i != (len(im4m.images) - 1):
+                click.echo()
+
+    else:
+        click.echo(
+            f"  Manifest images ({len(im4m.images)}): {', '.join(i.fourcc for i in im4m.images)}"
+        )
 
 
 @cli.group()

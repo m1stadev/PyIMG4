@@ -566,5 +566,114 @@ def img4_extract(
         click.echo(f'Extracted Image4 restore info to: {im4r.name}')
 
 
+@img4.command('info')
+@click.option(
+    '-i',
+    '--input',
+    'input_',
+    type=click.File('rb'),
+    help='Input Image4 file.',
+    required=True,
+)
+@click.option(
+    '-v',
+    '--verbose',
+    'verbose',
+    is_flag=True,
+    help='Increase verbosity.',
+)
+def img4_info(input_: BinaryIO, verbose: bool) -> None:
+    '''Print available information on an Image4 file.'''
+
+    click.echo(f'Reading {input_.name}...')
+
+    try:
+        img4 = pyimg4.IMG4(input_.read())
+    except:
+        raise click.BadParameter(f'Failed to parse Image4 file: {input_.name}')
+
+    click.echo('Image4 info:')
+
+    click.echo('  Image4 payload info:')
+    click.echo(f'    FourCC: {img4.im4p.fourcc}')
+    click.echo(f'    Description: {img4.im4p.description}')
+    click.echo(f'    Data size: {round(len(img4.im4p.payload) / 1000)}KB')
+
+    if (
+        img4.im4p.payload.encrypted == False
+        and img4.im4p.payload.compression != pyimg4.Compression.NONE
+    ):
+        click.echo(f'    Data compression type: {img4.im4p.payload.compression.name}')
+
+        img4.im4p.payload.decompress()
+        click.echo(
+            f'    Data size (uncompressed): {round(len(img4.im4p.payload) / 1000)}KB'
+        )
+
+    click.echo(f'    Encrypted: {img4.im4p.payload.encrypted}\n')
+    if img4.im4p.payload.encrypted:
+        for k, kb in enumerate(img4.im4p.payload.keybags):
+            click.echo(f'    Keybags ({len(img4.im4p.payload.keybags)}):')
+            click.echo(f'      Type: {kb.type.name}')
+            click.echo(f'      IV: {kb.iv.hex()}')
+            click.echo(f'      Key: {kb.key.hex()}')
+
+        if k != (len(img4.im4p.payload.keybags) - 1):
+            click.echo()
+
+    click.echo('  Image4 manifest info:')
+
+    if 0x8720 <= img4.im4m.chip_id <= 0x8960:
+        soc = f'S5L{img4.im4m.chip_id:02x}'
+    elif img4.im4m.chip_id in range(0x7002, 0x8003):
+        soc = f'S{img4.im4m.chip_id:02x}'
+    else:
+        soc = f'T{img4.im4m.chip_id:02x}'
+
+    if verbose:
+        click.echo(f'    Device Processor: {soc} ({hex(img4.im4m.chip_id)})')
+    else:
+        click.echo(f'    Device Processor: {soc}')
+
+    click.echo(f'    ECID (hex): {hex(img4.im4m.ecid)}')
+    click.echo(f'    ApNonce (hex): {img4.im4m.apnonce.hex()}')
+    click.echo(f'    SepNonce (hex): {img4.im4m.sepnonce.hex()}')
+
+    if verbose:
+        for p, prop in enumerate(img4.im4m.properties):
+            # Skip these, as we just printed them
+            if prop.name in ('BNCH', 'CHIP', 'ECID', 'snon'):
+                continue
+
+            if isinstance(prop.value, bytes):
+                click.echo(f'    {prop.name} (hex): {prop.value.hex()}')
+            else:
+                click.echo(f'    {prop.name}: {prop.value}')
+
+            if p == (len(img4.im4m.properties) - 1):
+                click.echo()
+
+        click.echo(f'    Manifest images ({len(img4.im4m.images)}):')
+        for i, image in enumerate(img4.im4m.images):
+            click.echo(f'      {image.fourcc}:')
+
+            for prop in image.properties:
+                click.echo(
+                    f'        {prop.name}: {prop.value.hex() if isinstance(prop.value, bytes) else prop.value}'
+                )
+
+            if i != (len(img4.im4m.images) - 1):
+                click.echo()
+
+    else:
+        click.echo(
+            f"    Manifest images ({len(img4.im4m.images)}): {', '.join(i.fourcc for i in img4.im4m.images)}"
+        )
+
+    if img4.im4r is not None:
+        click.echo('  Image4 restore info:')
+        click.echo(f'    Boot nonce (hex): 0x{img4.im4r.boot_nonce.hex()}')
+
+
 if __name__ == '__main__':
     cli()

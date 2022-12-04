@@ -38,7 +38,7 @@ def im4m() -> None:
     is_flag=True,
     help='Increase verbosity.',
 )
-def im4m_info(input_: BinaryIO, verbose: bool = True) -> None:
+def im4m_info(input_: BinaryIO, verbose: bool) -> None:
     '''Print available information on an Image4 manifest.'''
 
     click.echo(f'Reading {input_.name}...')

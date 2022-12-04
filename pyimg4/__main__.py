@@ -313,7 +313,7 @@ def im4p_info(input_: BinaryIO) -> None:
     click.echo('Image4 payload info:')
     click.echo(f'  FourCC: {im4p.fourcc}')
     click.echo(f'  Description: {im4p.description}')
-    click.echo(f'  Data size: {round(len(im4p.payload) / 1000)}KB')
+    click.echo(f'  Data size: {round(len(im4p.payload) / 1000, 2)}KB')
 
     if (
         im4p.payload.encrypted == False
@@ -322,7 +322,9 @@ def im4p_info(input_: BinaryIO) -> None:
         click.echo(f'  Data compression type: {im4p.payload.compression.name}')
 
         im4p.payload.decompress()
-        click.echo(f'  Data size (uncompressed): {round(len(im4p.payload) / 1000)}KB')
+        click.echo(
+            f'  Data size (uncompressed): {round(len(im4p.payload) / 1000, 2)}KB'
+        )
 
     click.echo(f'  Encrypted: {im4p.payload.encrypted}\n')
     if im4p.payload.encrypted:
@@ -597,7 +599,7 @@ def img4_info(input_: BinaryIO, verbose: bool) -> None:
     click.echo('  Image4 payload info:')
     click.echo(f'    FourCC: {img4.im4p.fourcc}')
     click.echo(f'    Description: {img4.im4p.description}')
-    click.echo(f'    Data size: {round(len(img4.im4p.payload) / 1000)}KB')
+    click.echo(f'    Data size: {round(len(img4.im4p.payload) / 1000, 2)}KB')
 
     if (
         img4.im4p.payload.encrypted == False
@@ -607,7 +609,7 @@ def img4_info(input_: BinaryIO, verbose: bool) -> None:
 
         img4.im4p.payload.decompress()
         click.echo(
-            f'    Data size (uncompressed): {round(len(img4.im4p.payload) / 1000)}KB'
+            f'    Data size (uncompressed): {round(len(img4.im4p.payload) / 1000, 2)}KB'
         )
 
     click.echo(f'    Encrypted: {img4.im4p.payload.encrypted}\n')

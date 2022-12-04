@@ -6,8 +6,8 @@ import liblzfse
 import lzss
 from Crypto.Cipher import AES
 
-from .errors import *
 from ._types import *
+from .errors import *
 
 
 class _PyIMG4:

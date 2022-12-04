@@ -1,6 +1,6 @@
-from .errors import *
 from ._parser import *
 from ._types import *
+from .errors import *
 
 try:
     from importlib.metadata import version

@@ -10,9 +10,6 @@ def test_create(test_data: bytes, IM4P: bytes) -> None:
 
     im4p.fourcc = 'test'
 
-    with pytest.raises(pyimg4.UnexpectedDataError):
-        im4p.fourcc = 'TEST'
-
     im4p.description = 'Test Image4 payload.'
 
     with pytest.raises(pyimg4.UnexpectedDataError):

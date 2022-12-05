@@ -53,10 +53,20 @@ class _PyIMG4:
 
 
 class _Property(_PyIMG4):
-    def __init__(self, data: bytes) -> None:
+    def __init__(
+        self, data: Optional[bytes], *, fourcc: Optional[str] = None, value: Any = None
+    ) -> None:
         super().__init__(data)
 
-        self._parse()
+        if fourcc and value:
+            self._verify_fourcc(fourcc)
+            self.fourcc = value
+
+        elif data:
+            self._parse()
+
+        else:
+            raise TypeError('No data or fourcc/value pair provided.')
 
     def _parse(self) -> None:
         self._decoder.start(self._data)
@@ -65,8 +75,32 @@ class _Property(_PyIMG4):
             raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
 
         self._decoder.enter()
-        self.name = self._verify_fourcc(self._decoder.read()[1])
+        self.fourcc = self._verify_fourcc(self._decoder.read()[1])
         self.value = self._decoder.read()[1]
+
+    def output(self) -> bytes:
+        self._encoder.start()
+
+        self._encoder.enter(
+            int(bytes(self.fourcc, 'ascii').hex(), 16), asn1.Classes.Private
+        )
+        self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+
+        self._encoder.write(
+            self.fourcc,
+            asn1.Numbers.IA5String,
+            asn1.Types.Primitive,
+            asn1.Classes.Universal,
+        )
+
+        self._encoder.write(
+            self.value, None, asn1.Types.Primitive, asn1.Classes.Universal
+        )
+
+        for _ in range(2):
+            self._encoder.leave()
+
+        return self._encoder.output()
 
 
 class _ImageData(_PyIMG4):

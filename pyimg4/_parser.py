@@ -106,12 +106,13 @@ class _Property(_PyIMG4):
 class _ImageData(_PyIMG4):
     _property = _Property
 
-    def __init__(self, data: bytes) -> None:
+    def __init__(self, data: Optional[bytes] = None) -> None:
         super().__init__(data)
 
         self.properties: List[self._property] = []
 
-        self._parse()
+        if data is not None:
+            self._parse()
 
     def _parse(self) -> None:
         self._decoder.start(self._data)
@@ -130,6 +131,40 @@ class _ImageData(_PyIMG4):
 
         while not self._decoder.eof():
             self.properties.append(self._property(self._decoder.read()[1]))
+
+    def output(self) -> bytes:
+        self._encoder.start()
+
+        self._encoder.enter(
+            int(bytes(self.fourcc, 'ascii').hex(), 16), asn1.Classes.Private
+        )
+        self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+
+        self._encoder.write(
+            self.fourcc,
+            asn1.Numbers.IA5String,
+            asn1.Types.Primitive,
+            asn1.Classes.Universal,
+        )
+
+        self._encoder.enter(asn1.Numbers.Set, asn1.Classes.Universal)
+        for prop in self.properties:
+            self._decoder.start(prop.output())
+            self._encoder.enter(self._decoder.peek().nr, asn1.Classes.Private)
+
+            self._decoder.enter()
+            self._encoder.write(
+                self._decoder.read()[1],
+                asn1.Numbers.Sequence,
+                asn1.Types.Constructed,
+                asn1.Classes.Universal,
+            )
+            self._encoder.leave()
+
+        for _ in range(3):
+            self._encoder.leave()
+
+        return self._encoder.output()
 
 
 class Data(_PyIMG4):

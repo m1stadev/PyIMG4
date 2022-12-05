@@ -54,7 +54,11 @@ class _PyIMG4:
 
 class _Property(_PyIMG4):
     def __init__(
-        self, data: Optional[bytes], *, fourcc: Optional[str] = None, value: Any = None
+        self,
+        data: Optional[bytes] = None,
+        *,
+        fourcc: Optional[str] = None,
+        value: Any = None,
     ) -> None:
         super().__init__(data)
 
@@ -67,6 +71,16 @@ class _Property(_PyIMG4):
 
         else:
             raise TypeError('No data or fourcc/value pair provided.')
+
+    def __repr__(self) -> str:
+        if not isinstance(self.value, (float, int)) and len(self.value) > 15:
+            value = f'{type(self.value).__name__} with len of {len(self.value)}'
+        elif isinstance(self.value, bytes):
+            value = self.value.hex()
+        else:
+            value = self.value
+
+        return f'{type(self).__name__}({self.fourcc}={value})'
 
     def _parse(self) -> None:
         self._decoder.start(self._data)
@@ -113,6 +127,9 @@ class _ImageData(_PyIMG4):
 
         if data is not None:
             self._parse()
+
+    def __repr__(self) -> str:
+        return f'{type(self).__name__}(fourcc={self.fourcc})'
 
     def _parse(self) -> None:
         self._decoder.start(self._data)
@@ -188,15 +205,11 @@ class Data(_PyIMG4):
 
 
 class ManifestProperty(_Property):
-    def __repr__(self) -> str:
-        return f'ManifestProperty({self.name}={self.value})'
+    pass
 
 
 class ManifestImageData(_ImageData):
     _property = ManifestProperty
-
-    def __repr__(self) -> str:
-        return f'ManifestImageData(fourcc={self.fourcc})'
 
 
 class IM4M(_PyIMG4):
@@ -211,10 +224,10 @@ class IM4M(_PyIMG4):
     def __repr__(self) -> str:
         repr_ = f'IM4M('
         for p in ('CHIP', 'ECID'):
-            prop = next((prop for prop in self.properties if prop.name == p), None)
+            prop = next((prop for prop in self.properties if prop.fourcc == p), None)
 
             if prop is not None:
-                repr_ += f'{prop.name}={prop.value}, '
+                repr_ += f'{prop.fourcc}={prop.value}, '
 
         return repr_[:-2] + ')' if ',' in repr_ else repr_ + ')'
 
@@ -276,32 +289,32 @@ class IM4M(_PyIMG4):
     @property
     def apnonce(self) -> Optional[bytes]:
         return next(
-            (prop.value for prop in self.properties if prop.name == 'BNCH'),
+            (prop.value for prop in self.properties if prop.fourcc == 'BNCH'),
             None,
         )
 
     @property
     def board_id(self) -> Optional[int]:
         return next(
-            (prop.value for prop in self.properties if prop.name == 'BORD'), None
+            (prop.value for prop in self.properties if prop.fourcc == 'BORD'), None
         )
 
     @property
     def chip_id(self) -> Optional[int]:
         return next(
-            (prop.value for prop in self.properties if prop.name == 'CHIP'), None
+            (prop.value for prop in self.properties if prop.fourcc == 'CHIP'), None
         )
 
     @property
     def ecid(self) -> Optional[int]:
         return next(
-            (prop.value for prop in self.properties if prop.name == 'ECID'), None
+            (prop.value for prop in self.properties if prop.fourcc == 'ECID'), None
         )
 
     @property
     def sepnonce(self) -> Optional[bytes]:
         return next(
-            (prop.value for prop in self.properties if prop.name == 'snon'),
+            (prop.value for prop in self.properties if prop.fourcc == 'snon'),
             None,
         )
 

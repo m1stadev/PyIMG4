@@ -52,6 +52,52 @@ class _PyIMG4:
         return self._data
 
 
+class _Property(_PyIMG4):
+    def __init__(self, data: bytes) -> None:
+        super().__init__(data)
+
+        self._parse()
+
+    def _parse(self) -> None:
+        self._decoder.start(self._data)
+
+        if self._decoder.peek().nr != asn1.Numbers.Sequence:
+            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
+
+        self._decoder.enter()
+        self.name = self._verify_fourcc(self._decoder.read()[1])
+        self.value = self._decoder.read()[1]
+
+
+class _ImageData(_PyIMG4):
+    _property = _Property
+
+    def __init__(self, data: bytes) -> None:
+        super().__init__(data)
+
+        self.properties: List[self._property] = []
+
+        self._parse()
+
+    def _parse(self) -> None:
+        self._decoder.start(self._data)
+
+        if self._decoder.peek().nr != asn1.Numbers.Sequence:
+            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
+
+        self._decoder.enter()
+
+        self.fourcc = self._verify_fourcc(self._decoder.read()[1])
+
+        if self._decoder.peek().nr != asn1.Numbers.Set:
+            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Set)
+
+        self._decoder.enter()
+
+        while not self._decoder.eof():
+            self.properties.append(self._property(self._decoder.read()[1]))
+
+
 class Data(_PyIMG4):
     def get_type(self) -> Optional[Union['IMG4', 'IM4P', 'IM4M', 'IM4R']]:
         self._decoder.start(self._data)
@@ -72,54 +118,16 @@ class Data(_PyIMG4):
             return IM4R
 
 
-class ManifestProperty(_PyIMG4):
-    def __init__(self, data: bytes) -> None:
-        super().__init__(data)
-
-        self._parse()
-
+class ManifestProperty(_Property):
     def __repr__(self) -> str:
         return f'ManifestProperty({self.name}={self.value})'
 
-    def _parse(self) -> None:
-        self._decoder.start(self._data)
 
-        if self._decoder.peek().nr != asn1.Numbers.Sequence:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
-
-        self._decoder.enter()
-        self.name = self._verify_fourcc(self._decoder.read()[1])
-        self.value = self._decoder.read()[1]
-
-
-class ManifestImageData(_PyIMG4):
-    def __init__(self, data: bytes) -> None:
-        super().__init__(data)
-
-        self.properties: List[ManifestProperty] = []
-
-        self._parse()
+class ManifestImageData(_ImageData):
+    _property = ManifestProperty
 
     def __repr__(self) -> str:
         return f'ManifestImageData(fourcc={self.fourcc})'
-
-    def _parse(self) -> None:
-        self._decoder.start(self._data)
-
-        if self._decoder.peek().nr != asn1.Numbers.Sequence:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
-
-        self._decoder.enter()
-
-        self.fourcc = self._verify_fourcc(self._decoder.read()[1])
-
-        if self._decoder.peek().nr != asn1.Numbers.Set:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Set)
-
-        self._decoder.enter()
-
-        while not self._decoder.eof():
-            self.properties.append(ManifestProperty(self._decoder.read()[1]))
 
 
 class IM4M(_PyIMG4):

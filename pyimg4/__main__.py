@@ -484,7 +484,14 @@ def im4r_create(boot_nonce: str, output: BinaryIO) -> None:
     required=True,
     help='Input Image4 restore info file.',
 )
-def im4r_info(input_: BinaryIO) -> None:
+@click.option(
+    '-v',
+    '--verbose',
+    'verbose',
+    is_flag=True,
+    help='Increase verbosity.',
+)
+def im4r_info(input_: BinaryIO, verbose: bool) -> None:
     '''Print available information on an Image4 restore info file.'''
 
     click.echo(f'Reading {input_.name}...')
@@ -497,7 +504,25 @@ def im4r_info(input_: BinaryIO) -> None:
         )
 
     click.echo('Image4 restore info:')
-    click.echo(f'  Boot nonce (hex): 0x{im4r.boot_nonce.hex()}')
+    if im4r.boot_nonce is not None:
+        click.echo(f'  Boot nonce (hex): 0x{im4r.boot_nonce.hex()}')
+
+    extra_props = [prop for prop in im4r.properties if prop.fourcc != 'BNCN']
+    if len(extra_props) > 0:
+        if verbose:
+            click.echo('  Properties:')
+            for p, prop in enumerate(extra_props):
+                if isinstance(prop.value, bytes):
+                    click.echo(f'    {prop.fourcc} (hex): {prop.value.hex()}')
+                else:
+                    click.echo(f'    {prop.fourcc}: {prop.value}')
+
+                if p != (len(extra_props) - 1):
+                    click.echo()
+        else:
+            click.echo(
+                f"  Properties ({len(im4r.properties)}): {', '.join(i.fourcc for i in im4r.properties)}"
+            )
 
 
 @cli.group()

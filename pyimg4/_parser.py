@@ -209,6 +209,13 @@ class ManifestProperty(_Property):
 class ManifestImageData(_ImageData):
     _property = ManifestProperty
 
+    @property
+    def digest(self) -> Optional[bytes]:
+        return next(
+            (prop.value for prop in self.properties if prop.fourcc == 'DGST'),
+            None,
+        )
+
 
 class IM4M(_PyIMG4):
     def __init__(self, data: bytes) -> None:

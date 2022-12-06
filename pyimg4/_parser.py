@@ -334,20 +334,12 @@ class IM4R(_ImageData):
     def __init__(
         self,
         data: Optional[bytes] = None,
-        *,
-        boot_nonce: Optional[bytes] = None,
     ) -> None:
         super().__init__(data)
         self.properties = list()
 
-        if boot_nonce:
-            self.boot_nonce = boot_nonce
-
-        elif data:
+        if data:
             self._parse()
-
-        else:
-            raise TypeError('No data or boot nonce provided.')
 
     @property
     def boot_nonce(self) -> Optional[bytes]:
@@ -403,6 +395,9 @@ class IM4R(_ImageData):
                 raise ValueError(f'Property "{fourcc}" is not set')
 
     def output(self) -> bytes:
+        if len(self.properties) == 0:
+            raise ValueError('No properties set')
+
         self._encoder.start()
         self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
 

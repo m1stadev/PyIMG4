@@ -63,8 +63,8 @@ class _Property(_PyIMG4):
         super().__init__(data)
 
         if fourcc and value:
-            self._verify_fourcc(fourcc)
-            self.fourcc = value
+            self.fourcc = self._verify_fourcc(fourcc)
+            self.value = value
 
         elif data:
             self._parse()
@@ -359,7 +359,7 @@ class IM4R(_ImageData):
         if len(boot_nonce) != 8:
             raise UnexpectedDataError('bytes with length of 8', boot_nonce)
 
-        prop = next((p.value for p in self.properties if prop.fourcc == 'BNCN'), None)
+        prop = next((p for p in self.properties if p.fourcc == 'BNCN'), None)
         if prop is not None:
             self.remove_property(prop)
 
@@ -384,6 +384,8 @@ class IM4R(_ImageData):
             if prop not in self.properties:
                 raise ValueError(f'Property "{prop.fourcc}" is not set')
 
+            self.properties.remove(prop)
+
         elif fourcc is not None:
             self._verify_fourcc(fourcc)
 
@@ -393,14 +395,14 @@ class IM4R(_ImageData):
             if prop is not None:
                 self.properties.remove(prop)
             else:
-                raise ValueError(f'Property "{fourcc}" not found')
+                raise ValueError(f'Property "{fourcc}" is not set')
 
     def output(self) -> bytes:
         self._encoder.start()
         self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
 
         self._encoder.write(
-            self.fourcc,
+            'IM4R',
             asn1.Numbers.IA5String,
             asn1.Types.Primitive,
             asn1.Classes.Universal,

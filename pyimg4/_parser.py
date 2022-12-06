@@ -74,7 +74,7 @@ class _Property(_PyIMG4):
 
     def __repr__(self) -> str:
         if not isinstance(self.value, (float, int)) and len(self.value) > 15:
-            value = f'{type(self.value).__name__} with len of {len(self.value)}'
+            value = f'<{type(self.value).__name__} with len of {len(self.value)}>'
         elif isinstance(self.value, bytes):
             value = self.value.hex()
         else:

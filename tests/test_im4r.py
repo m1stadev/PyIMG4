@@ -3,8 +3,8 @@ import pytest
 import pyimg4
 
 
-def test_create(boot_nonce: bytes) -> None:
-    im4r = pyimg4.IM4R(boot_nonce=boot_nonce)
+def test_create() -> None:
+    im4r = pyimg4.IM4R()
 
     im4r.boot_nonce = bytes.fromhex('1234567890123456')
 

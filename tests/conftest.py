@@ -61,8 +61,3 @@ def read_im4p() -> bytes:
 def read_im4r() -> bytes:
     with (Path(__file__).parent / 'bin' / 'IM4R').open('rb') as f:
         return f.read()
-
-
-@pytest.fixture(name='boot_nonce', scope='session')
-def random_boot_nonce() -> bytes:
-    return getrandbits(64).to_bytes(8, 'big')

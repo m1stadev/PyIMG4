@@ -403,7 +403,13 @@ def im4p_info(input_: BinaryIO) -> None:
     click.echo(f'  Data size: {round(len(im4p.payload) / 1000, 2)}KB')
 
     if im4p.payload.compression != pyimg4.Compression.NONE:
-        click.echo(f'  Data compression type: {im4p.payload.compression.name}')
+        compression_type = (
+            'LZFSE'
+            if im4p.payload.compression
+            in (pyimg4.Compression.LZFSE, pyimg4.Compression.LZFSE_ENCRYPTED)
+            else im4p.payload.compression
+        )
+        click.echo(f'  Data compression type: {compression_type}')
 
         if im4p.payload.compression == pyimg4.Compression.LZSS:
             im4p.payload.decompress()

@@ -329,11 +329,9 @@ class IM4R(_ImageData):
         data: Optional[bytes] = None,
         *,
         boot_nonce: Optional[bytes] = None,
-        properties: List[Optional[_property]] = [],
     ) -> None:
         super().__init__(data)
-
-        self.properties = properties
+        self.properties = list()
 
         if boot_nonce:
             self.boot_nonce = boot_nonce
@@ -577,11 +575,9 @@ class IM4P(_PyIMG4):
         fourcc: Optional[str] = None,
         description: Optional[str] = None,
         payload: Optional[Union['IM4PData', bytes]] = None,
-        properties: List[Optional[PayloadProperty]] = [],
     ) -> None:
         super().__init__(data)
-
-        self.properties = properties
+        self.properties = list()
 
         if data:
             self._parse()

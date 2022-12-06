@@ -98,6 +98,93 @@ def im4m_info(input_: BinaryIO, verbose: bool) -> None:
         )
 
 
+@im4m.command('verify')
+@click.option(
+    '-i',
+    '--input',
+    'input_',
+    type=click.File('rb'),
+    help='Input Image4 manifest file.',
+    required=True,
+)
+@click.option(
+    '-b',
+    '--build-manifest',
+    'build_manifest',
+    type=click.File('rb'),
+    help='Input build manifest file.',
+    required=True,
+)
+@click.option(
+    '-v',
+    '--verbose',
+    'verbose',
+    is_flag=True,
+    help='Increase verbosity.',
+)
+def im4m_verify(input_: BinaryIO, build_manifest: BinaryIO, verbose: bool) -> None:
+    '''Verify an Image4 manifest with a provided build manifest.'''
+
+    click.echo(f'Reading {input_.name}...')
+
+    try:
+        im4m = pyimg4.IM4M(input_.read())
+    except:
+        raise click.BadParameter(f'Failed to parse Image4 manifest file: {input_.name}')
+
+    click.echo(f'Reading {build_manifest.name}...')
+
+    try:
+        manifest = plistlib.load(build_manifest)
+    except:
+        raise click.BadParameter(
+            f'Failed to parse build manifest file: {build_manifest.name}'
+        )
+
+    for identity in manifest['BuildIdentities']:
+        if not (
+            identity['ApBoardID'] == hex(im4m.board_id)
+            and identity['ApChipID'] == hex(im4m.chip_id)
+        ):
+            if verbose:
+                click.echo(
+                    f"Skipping build identity {manifest['BuildIdentities'].index(identity)}..."
+                )
+
+            continue
+
+        click.echo(
+            f"Selected build identity: {manifest['BuildIdentities'].index(identity)}"
+        )
+        for name, image_info in identity['Manifest'].items():
+            if 'Digest' not in image_info.keys():
+                if verbose:
+                    click.echo(f'Component: {name} has no hash, skipping...')
+
+                continue
+
+            if verbose:
+                click.echo(f'Verifying hash of component: {name}...')
+
+            if not any(i for i in im4m.images if i.digest == image_info['Digest']):
+                if verbose:
+                    click.echo(
+                        f'No hash found for component: {name} in Image4 manifest!'
+                    )
+
+                break
+        else:
+            click.echo(
+                '\nImage4 manifest was successfully validated with the build manifest for the following restore:'
+            )
+            click.echo(f"Board config: {identity['Info']['DeviceClass']}")
+            click.echo(f"Build ID: {identity['Info']['BuildNumber']}")
+            click.echo(f"Restore type: {identity['Info']['RestoreBehavior']}")
+            return
+
+    click.echo(f'Image4 manifest is not valid for the provided build manifest!')
+
+
 @cli.group()
 def im4p() -> None:
     '''Image4 payload commands.'''

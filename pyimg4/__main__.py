@@ -69,13 +69,13 @@ def im4m_info(input_: BinaryIO, verbose: bool) -> None:
     if verbose:
         for p, prop in enumerate(im4m.properties):
             # Skip these, as we just printed them
-            if prop.name in ('BNCH', 'CHIP', 'ECID', 'snon'):
+            if prop.fourcc in ('BNCH', 'CHIP', 'ECID', 'snon'):
                 continue
 
             if isinstance(prop.value, bytes):
-                click.echo(f'  {prop.name} (hex): {prop.value.hex()}')
+                click.echo(f'  {prop.fourcc} (hex): {prop.value.hex()}')
             else:
-                click.echo(f'  {prop.name}: {prop.value}')
+                click.echo(f'  {prop.fourcc}: {prop.value}')
 
             if p == (len(im4m.properties) - 1):
                 click.echo()
@@ -86,7 +86,7 @@ def im4m_info(input_: BinaryIO, verbose: bool) -> None:
 
             for prop in image.properties:
                 click.echo(
-                    f'      {prop.name}: {prop.value.hex() if isinstance(prop.value, bytes) else prop.value}'
+                    f'      {prop.fourcc}: {prop.value.hex() if isinstance(prop.value, bytes) else prop.value}'
                 )
 
             if i != (len(im4m.images) - 1):
@@ -737,13 +737,13 @@ def img4_info(input_: BinaryIO, verbose: bool) -> None:
     if verbose:
         for p, prop in enumerate(img4.im4m.properties):
             # Skip these, as we just printed them
-            if prop.name in ('BNCH', 'CHIP', 'ECID', 'snon'):
+            if prop.fourcc in ('BNCH', 'CHIP', 'ECID', 'snon'):
                 continue
 
             if isinstance(prop.value, bytes):
-                click.echo(f'    {prop.name} (hex): {prop.value.hex()}')
+                click.echo(f'    {prop.fourcc} (hex): {prop.value.hex()}')
             else:
-                click.echo(f'    {prop.name}: {prop.value}')
+                click.echo(f'    {prop.nafourccme}: {prop.value}')
 
             if p == (len(img4.im4m.properties) - 1):
                 click.echo()
@@ -754,7 +754,7 @@ def img4_info(input_: BinaryIO, verbose: bool) -> None:
 
             for prop in image.properties:
                 click.echo(
-                    f'        {prop.name}: {prop.value.hex() if isinstance(prop.value, bytes) else prop.value}'
+                    f'        {prop.fourcc}: {prop.value.hex() if isinstance(prop.value, bytes) else prop.value}'
                 )
 
             if i != (len(img4.im4m.images) - 1):

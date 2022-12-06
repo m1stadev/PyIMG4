@@ -387,7 +387,14 @@ def im4p_extract(
     required=True,
     help='Input Image4 payload file.',
 )
-def im4p_info(input_: BinaryIO) -> None:
+@click.option(
+    '-v',
+    '--verbose',
+    'verbose',
+    is_flag=True,
+    help='Increase verbosity.',
+)
+def im4p_info(input_: BinaryIO, verbose: bool) -> None:
     '''Print available information on an Image4 payload.'''
 
     click.echo(f'Reading {input_.name}...')
@@ -429,6 +436,22 @@ def im4p_info(input_: BinaryIO) -> None:
 
             if k != (len(im4p.payload.keybags) - 1):
                 click.echo()
+
+    if len(im4p.properties) > 0:
+        if verbose:
+            click.echo('\n  Properties:')
+            for p, prop in enumerate(im4p.properties):
+                if isinstance(prop.value, bytes):
+                    click.echo(f'    {prop.fourcc} (hex): {prop.value.hex()}')
+                else:
+                    click.echo(f'    {prop.fourcc}: {prop.value}')
+
+                if p != (len(im4p.properties) - 1):
+                    click.echo()
+        else:
+            click.echo(
+                f"\n  Properties ({len(im4p.properties)}): {', '.join(i.fourcc for i in im4p.properties)}"
+            )
 
 
 @cli.group()

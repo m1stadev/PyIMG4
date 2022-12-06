@@ -52,6 +52,136 @@ class _PyIMG4:
         return self._data
 
 
+class _Property(_PyIMG4):
+    def __init__(
+        self,
+        data: Optional[bytes] = None,
+        *,
+        fourcc: Optional[str] = None,
+        value: Any = None,
+    ) -> None:
+        super().__init__(data)
+
+        if fourcc and value:
+            self.fourcc = self._verify_fourcc(fourcc)
+            self.value = value
+
+        elif data:
+            self._parse()
+
+        else:
+            raise TypeError('No data or fourcc/value pair provided.')
+
+    def __repr__(self) -> str:
+        if not isinstance(self.value, (float, int)) and len(self.value) > 15:
+            value = f'<{type(self.value).__name__} with len of {len(self.value)}>'
+        elif isinstance(self.value, bytes):
+            value = self.value.hex()
+        else:
+            value = self.value
+
+        return f'{type(self).__name__}({self.fourcc}={value})'
+
+    def _parse(self) -> None:
+        self._decoder.start(self._data)
+
+        if self._decoder.peek().nr != asn1.Numbers.Sequence:
+            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
+
+        self._decoder.enter()
+        self.fourcc = self._verify_fourcc(self._decoder.read()[1])
+        self.value = self._decoder.read()[1]
+
+    def output(self) -> bytes:
+        self._encoder.start()
+        self._encoder.enter(
+            int(bytes(self.fourcc, 'ascii').hex(), 16), asn1.Classes.Private
+        )
+        self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+
+        self._encoder.write(
+            self.fourcc,
+            asn1.Numbers.IA5String,
+            asn1.Types.Primitive,
+            asn1.Classes.Universal,
+        )
+
+        self._encoder.write(
+            self.value, None, asn1.Types.Primitive, asn1.Classes.Universal
+        )
+
+        for _ in range(2):
+            self._encoder.leave()
+
+        return self._encoder.output()
+
+
+class _ImageData(_PyIMG4):
+    _property = _Property
+
+    def __init__(self, data: Optional[bytes] = None) -> None:
+        super().__init__(data)
+
+        self.properties: List[self._property] = []
+
+        if data is not None:
+            self._parse()
+
+    def __repr__(self) -> str:
+        return f'{type(self).__name__}(fourcc={self.fourcc})'
+
+    def _parse(self) -> None:
+        self._decoder.start(self._data)
+
+        if self._decoder.peek().nr != asn1.Numbers.Sequence:
+            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
+
+        self._decoder.enter()
+
+        self.fourcc = self._verify_fourcc(self._decoder.read()[1])
+
+        if self._decoder.peek().nr != asn1.Numbers.Set:
+            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Set)
+
+        self._decoder.enter()
+
+        while not self._decoder.eof():
+            self.properties.append(self._property(self._decoder.read()[1]))
+
+    def output(self) -> bytes:
+        self._encoder.start()
+        self._encoder.enter(
+            int(bytes(self.fourcc, 'ascii').hex(), 16), asn1.Classes.Private
+        )
+        self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+
+        self._encoder.write(
+            self.fourcc,
+            asn1.Numbers.IA5String,
+            asn1.Types.Primitive,
+            asn1.Classes.Universal,
+        )
+
+        self._encoder.enter(asn1.Numbers.Set, asn1.Classes.Universal)
+        for prop in self.properties:
+            self._decoder.start(prop.output())
+            self._encoder.enter(self._decoder.peek().nr, asn1.Classes.Private)
+
+            self._decoder.enter()
+            self._encoder.write(
+                self._decoder.read()[1],
+                asn1.Numbers.Sequence,
+                asn1.Types.Constructed,
+                asn1.Classes.Universal,
+            )
+            self._encoder.leave()
+
+        for _ in range(3):
+            self._encoder.leave()
+
+        return self._encoder.output()
+
+
 class Data(_PyIMG4):
     def get_type(self) -> Optional[Union['IMG4', 'IM4P', 'IM4M', 'IM4R']]:
         self._decoder.start(self._data)
@@ -72,54 +202,19 @@ class Data(_PyIMG4):
             return IM4R
 
 
-class ManifestProperty(_PyIMG4):
-    def __init__(self, data: bytes) -> None:
-        super().__init__(data)
-
-        self._parse()
-
-    def __repr__(self) -> str:
-        return f'ManifestProperty({self.name}={self.value})'
-
-    def _parse(self) -> None:
-        self._decoder.start(self._data)
-
-        if self._decoder.peek().nr != asn1.Numbers.Sequence:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
-
-        self._decoder.enter()
-        self.name = self._verify_fourcc(self._decoder.read()[1])
-        self.value = self._decoder.read()[1]
+class ManifestProperty(_Property):
+    pass
 
 
-class ManifestImageData(_PyIMG4):
-    def __init__(self, data: bytes) -> None:
-        super().__init__(data)
+class ManifestImageData(_ImageData):
+    _property = ManifestProperty
 
-        self.properties: List[ManifestProperty] = []
-
-        self._parse()
-
-    def __repr__(self) -> str:
-        return f'ManifestImageData(fourcc={self.fourcc})'
-
-    def _parse(self) -> None:
-        self._decoder.start(self._data)
-
-        if self._decoder.peek().nr != asn1.Numbers.Sequence:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
-
-        self._decoder.enter()
-
-        self.fourcc = self._verify_fourcc(self._decoder.read()[1])
-
-        if self._decoder.peek().nr != asn1.Numbers.Set:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Set)
-
-        self._decoder.enter()
-
-        while not self._decoder.eof():
-            self.properties.append(ManifestProperty(self._decoder.read()[1]))
+    @property
+    def digest(self) -> Optional[bytes]:
+        return next(
+            (prop.value for prop in self.properties if prop.fourcc == 'DGST'),
+            None,
+        )
 
 
 class IM4M(_PyIMG4):
@@ -134,10 +229,10 @@ class IM4M(_PyIMG4):
     def __repr__(self) -> str:
         repr_ = f'IM4M('
         for p in ('CHIP', 'ECID'):
-            prop = next((prop for prop in self.properties if prop.name == p), None)
+            prop = next((prop for prop in self.properties if prop.fourcc == p), None)
 
             if prop is not None:
-                repr_ += f'{prop.name}={prop.value}, '
+                repr_ += f'{prop.fourcc}={prop.value}, '
 
         return repr_[:-2] + ')' if ',' in repr_ else repr_ + ')'
 
@@ -199,86 +294,62 @@ class IM4M(_PyIMG4):
     @property
     def apnonce(self) -> Optional[bytes]:
         return next(
-            (prop.value for prop in self.properties if prop.name == 'BNCH'),
+            (prop.value for prop in self.properties if prop.fourcc == 'BNCH'),
             None,
         )
 
     @property
     def board_id(self) -> Optional[int]:
         return next(
-            (prop.value for prop in self.properties if prop.name == 'BORD'), None
+            (prop.value for prop in self.properties if prop.fourcc == 'BORD'), None
         )
 
     @property
     def chip_id(self) -> Optional[int]:
         return next(
-            (prop.value for prop in self.properties if prop.name == 'CHIP'), None
+            (prop.value for prop in self.properties if prop.fourcc == 'CHIP'), None
         )
 
     @property
     def ecid(self) -> Optional[int]:
         return next(
-            (prop.value for prop in self.properties if prop.name == 'ECID'), None
+            (prop.value for prop in self.properties if prop.fourcc == 'ECID'), None
         )
 
     @property
     def sepnonce(self) -> Optional[bytes]:
         return next(
-            (prop.value for prop in self.properties if prop.name == 'snon'),
+            (prop.value for prop in self.properties if prop.fourcc == 'snon'),
             None,
         )
 
 
-class IM4R(_PyIMG4):
-    def __init__(self, data: bytes = None, *, boot_nonce: bytes = None) -> None:
+class RestoreProperty(_Property):
+    pass
+
+
+class IM4R(_ImageData):
+    _property = RestoreProperty
+
+    def __init__(
+        self,
+        data: Optional[bytes] = None,
+    ) -> None:
         super().__init__(data)
+        self.properties = list()
 
-        if boot_nonce:
-            self.boot_nonce = boot_nonce
-
-        elif data:
+        if data:
             self._parse()
 
-        else:
-            raise TypeError('No data or boot nonce provided.')
-
-    def _parse(self) -> None:
-        self._decoder.start(self._data)
-
-        if self._decoder.peek().nr != asn1.Numbers.Sequence:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
-
-        self._decoder.enter()
-        self._verify_fourcc(self._decoder.read()[1], 'IM4R')  # Verify IM4R FourCC
-
-        if self._decoder.peek().nr != asn1.Numbers.Set:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Set)
-
-        self._decoder.enter()
-
-        if self._decoder.peek().cls != asn1.Classes.Private:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Classes.Private)
-
-        self._decoder.enter()
-
-        if self._decoder.peek().nr != asn1.Numbers.Sequence:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
-
-        self._decoder.enter()
-        self._verify_fourcc(
-            self._decoder.read()[1], 'BNCN'
-        )  # Verify BNCN (Boot Nonce) FourCC
-
-        self.boot_nonce = self._decoder.read()[1]
-
-        if not self._decoder.eof():
-            raise ValueError(
-                f'Unexpected data found at end of Image4 restore info: {self._decoder.peek().nr.name.upper()}'
-            )
+    def __repr__(self) -> str:
+        return f'IM4R(properties={len(self.properties)})'
 
     @property
-    def boot_nonce(self) -> bytes:
-        return self._boot_nonce
+    def boot_nonce(self) -> Optional[bytes]:
+        return next(
+            (prop.value for prop in self.properties if prop.fourcc == 'BNCN'),
+            None,
+        )
 
     @boot_nonce.setter
     def boot_nonce(self, boot_nonce: bytes) -> None:
@@ -288,31 +359,73 @@ class IM4R(_PyIMG4):
         if len(boot_nonce) != 8:
             raise UnexpectedDataError('bytes with length of 8', boot_nonce)
 
-        self._boot_nonce = boot_nonce
+        prop = next((p for p in self.properties if p.fourcc == 'BNCN'), None)
+        if prop is not None:
+            self.remove_property(prop)
+
+        self.add_property(RestoreProperty(fourcc='BNCN', value=boot_nonce))
+
+    def add_property(self, prop: _property) -> None:
+        if not isinstance(prop, self._property):
+            raise UnexpectedDataError(self._property.__name__, prop)
+
+        if any(p.fourcc == prop.fourcc for p in self.properties):
+            raise ValueError(f'Property "{prop.fourcc}" already exists.')
+
+        self.properties.append(prop)
+
+    def remove_property(
+        self, prop: Optional[_property] = None, fourcc: Optional[str] = None
+    ) -> None:
+        if prop is not None:
+            if not isinstance(prop, self._property):
+                raise UnexpectedDataError(self._property.__name__, prop)
+
+            if prop not in self.properties:
+                raise ValueError(f'Property "{prop.fourcc}" is not set')
+
+            self.properties.remove(prop)
+
+        elif fourcc is not None:
+            self._verify_fourcc(fourcc)
+
+            prop = next(
+                (prop for prop in self.properties if prop.fourcc == fourcc), None
+            )
+            if prop is not None:
+                self.properties.remove(prop)
+            else:
+                raise ValueError(f'Property "{fourcc}" is not set')
 
     def output(self) -> bytes:
+        if len(self.properties) == 0:
+            raise ValueError('No properties set')
+
         self._encoder.start()
         self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
 
         self._encoder.write(
-            'IM4R', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
-        )
-
-        self._encoder.enter(asn1.Numbers.Set, asn1.Classes.Universal)
-        self._encoder.enter(0x424E434E, asn1.Classes.Private)
-        self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
-
-        self._encoder.write(
-            'BNCN', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
-        )
-        self._encoder.write(
-            self.boot_nonce,
-            asn1.Numbers.OctetString,
+            'IM4R',
+            asn1.Numbers.IA5String,
             asn1.Types.Primitive,
             asn1.Classes.Universal,
         )
 
-        for _ in range(4):
+        self._encoder.enter(asn1.Numbers.Set, asn1.Classes.Universal)
+        for prop in self.properties:
+            self._decoder.start(prop.output())
+            self._encoder.enter(self._decoder.peek().nr, asn1.Classes.Private)
+
+            self._decoder.enter()
+            self._encoder.write(
+                self._decoder.read()[1],
+                asn1.Numbers.Sequence,
+                asn1.Types.Constructed,
+                asn1.Classes.Universal,
+            )
+            self._encoder.leave()
+
+        for _ in range(2):
             self._encoder.leave()
 
         return self._encoder.output()
@@ -455,57 +568,8 @@ class IMG4(_PyIMG4):
         return self._encoder.output()
 
 
-class IM4PProperties(_PyIMG4):
-    def __init__(self, data: bytes) -> None:
-        super().__init__(data)
-
-        self._parse()
-
-    def __repr__(self) -> str:
-        return f"IM4PProperties(size={hex(len(self))})"
-
-    def _parse(self) -> None:
-        if not isinstance(self._data, bytes):
-            raise UnexpectedDataError('bytes', self._data)
-
-        self._decoder.start(self._data)
-        if self._decoder.peek().cls != asn1.Classes.Context:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Classes.Context)
-
-        self._decoder.enter()
-        if self._decoder.peek().nr != asn1.Numbers.Sequence:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
-
-        self._decoder.enter()
-        self._verify_fourcc(self._decoder.read()[1], 'PAYP')
-
-        if self._decoder.peek().nr != asn1.Numbers.Set:
-            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Set)
-
-        self._decoder.enter()
-
-        while not self._decoder.eof():
-            if self._decoder.peek().cls != asn1.Classes.Private:
-                raise UnexpectedTagError(self._decoder.peek(), asn1.Classes.Private)
-
-            self._decoder.enter()
-            if self._decoder.peek().nr != asn1.Numbers.Sequence:
-                raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
-
-            self._decoder.enter()
-            self._verify_fourcc(self._decoder.read()[1])
-
-            for _ in range(2):
-                self._decoder.leave()
-
-    @property
-    def data(self) -> bytes:
-        return self._data
-
-    @data.setter
-    def data(self, data: bytes) -> None:
-        if not isinstance(data, bytes):
-            raise UnexpectedDataError('bytes', data)
+class PayloadProperty(_Property):
+    pass
 
 
 class IM4P(_PyIMG4):
@@ -516,9 +580,9 @@ class IM4P(_PyIMG4):
         fourcc: Optional[str] = None,
         description: Optional[str] = None,
         payload: Optional[Union['IM4PData', bytes]] = None,
-        properties: Optional[Union[IM4PProperties, bytes]] = None,
     ) -> None:
         super().__init__(data)
+        self.properties = list()
 
         if data:
             self._parse()
@@ -526,14 +590,13 @@ class IM4P(_PyIMG4):
             self.fourcc = fourcc
             self.description = description
             self.payload = payload
-            self.properties = properties
 
     def __add__(self, im4m: IM4M) -> IMG4:
         if isinstance(im4m, IM4M):
             return IMG4(im4m=im4m, im4p=self)
         else:
             raise TypeError(
-                f'can only concatenate IM4M (not "{im4m.__name__}") to IM4P'
+                f'can only concatenate IM4M (not "{type(im4m).__name__}") to IM4P'
             )
 
     __radd__ = __add__
@@ -605,17 +668,20 @@ class IM4P(_PyIMG4):
             self._decoder.leave()
 
         if not self._decoder.eof() and self._decoder.peek().cls == asn1.Classes.Context:
-            self._encoder.start()
-            self._encoder.write(
-                self._decoder.read()[1],
-                nr=0,
-                typ=asn1.Types.Constructed,
-                cls=asn1.Classes.Context,
-            )
+            self._decoder.enter()
 
-            self.properties = self._encoder.output()
-        else:
-            self.properties = None
+            if self._decoder.peek().nr != asn1.Numbers.Sequence:
+                raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
+
+            self._decoder.enter()
+            self._verify_fourcc(self._decoder.read()[1], 'PAYP')
+
+            if self._decoder.peek().nr != asn1.Numbers.Set:
+                raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Set)
+
+            self._decoder.enter()
+            while not self._decoder.eof():
+                self.properties.append(PayloadProperty(self._decoder.read()[1]))
 
         if not self._decoder.eof():
             raise ValueError(
@@ -658,20 +724,35 @@ class IM4P(_PyIMG4):
 
         self._payload = IM4PData(payload) if isinstance(payload, bytes) else payload
 
-    @property
-    def properties(self) -> IM4PProperties:
-        return self._properties
+    def add_property(self, prop: PayloadProperty) -> None:
+        if not isinstance(prop, PayloadProperty):
+            raise UnexpectedDataError(PayloadProperty.__name__, prop)
 
-    @properties.setter
-    def properties(self, properties: Optional[Union[IM4PProperties, bytes]]) -> None:
-        if properties is not None and not isinstance(
-            properties, (bytes, IM4PProperties)
-        ):
-            raise UnexpectedDataError('IM4PProperties or bytes', properties)
+        if any(p.fourcc == prop.fourcc for p in self.properties):
+            raise ValueError(f'Property "{prop.fourcc}" already exists.')
 
-        self._properties = (
-            IM4PProperties(properties) if isinstance(properties, bytes) else properties
-        )
+        self.properties.append(prop)
+
+    def remove_property(
+        self, prop: Optional[PayloadProperty] = None, fourcc: Optional[str] = None
+    ) -> None:
+        if prop is not None:
+            if not isinstance(prop, PayloadProperty):
+                raise UnexpectedDataError('PayloadProperty', prop)
+
+            if prop not in self.properties:
+                raise ValueError(f'Property "{prop.fourcc}" is not set')
+
+        elif fourcc is not None:
+            self._verify_fourcc(fourcc)
+
+            prop = next(
+                (prop for prop in self.properties if prop.fourcc == fourcc), None
+            )
+            if prop is not None:
+                self.properties.remove(prop)
+            else:
+                raise ValueError(f'Property "{fourcc}" not found')
 
     def output(self) -> bytes:
         self._encoder.start()
@@ -682,7 +763,7 @@ class IM4P(_PyIMG4):
         )
 
         if self.fourcc is None:
-            raise ValueError('No FourCC is set.')
+            raise ValueError('No fourcc is set.')
 
         self._encoder.write(
             self.fourcc,
@@ -731,14 +812,33 @@ class IM4P(_PyIMG4):
 
             self._encoder.leave()
 
-        if self.properties is not None:
-            self._decoder.start(self.properties.output())
+        if len(self.properties) > 0:
+            self._encoder.enter(0, asn1.Classes.Context)
+            self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+
             self._encoder.write(
-                self._decoder.read()[1],
-                nr=0,
-                typ=asn1.Types.Constructed,
-                cls=asn1.Classes.Context,
+                'PAYP',
+                asn1.Numbers.IA5String,
+                asn1.Types.Primitive,
+                asn1.Classes.Universal,
             )
+
+            self._encoder.enter(asn1.Numbers.Set, asn1.Classes.Universal)
+            for prop in self.properties:
+                self._decoder.start(prop.output())
+                self._encoder.enter(self._decoder.peek().nr, asn1.Classes.Private)
+
+                self._decoder.enter()
+                self._encoder.write(
+                    self._decoder.read()[1],
+                    asn1.Numbers.Sequence,
+                    asn1.Types.Constructed,
+                    asn1.Classes.Universal,
+                )
+                self._encoder.leave()
+
+            for _ in range(3):
+                self._encoder.leave()
 
         self._encoder.leave()
         return self._encoder.output()

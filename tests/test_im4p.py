@@ -3,10 +3,10 @@ import pytest
 import pyimg4
 
 
-def test_create(test_data: bytes, IM4P: bytes) -> None:
+def test_create(TEST_PAYLOAD: bytes, IM4P: bytes) -> None:
     im4p = pyimg4.IM4P()
 
-    im4p.payload = test_data
+    im4p.payload = TEST_PAYLOAD
 
     im4p.fourcc = 'test'
 
@@ -18,8 +18,8 @@ def test_create(test_data: bytes, IM4P: bytes) -> None:
     assert im4p == IM4P
 
 
-def test_read_lzss_dec(dec_lzss: bytes) -> None:
-    im4p = pyimg4.IM4P(dec_lzss)
+def test_read_lzss_dec(DEC_LZSS_IM4P: bytes) -> None:
+    im4p = pyimg4.IM4P(DEC_LZSS_IM4P)
 
     assert im4p.fourcc == 'krnl'
     assert im4p.description == 'KernelCacheBuilder_release-2238.10.3'
@@ -36,23 +36,8 @@ def test_read_lzss_dec(dec_lzss: bytes) -> None:
     im4p.output()
 
 
-def test_read_lzfse_dec(dec_lzfse: bytes) -> None:
-    im4p = pyimg4.IM4P(dec_lzfse)
-
-    assert im4p.fourcc == 'krnl'
-    assert im4p.description == 'KernelCacheBuilder_release-2238.10.3'
-
-    assert im4p.payload.compression == pyimg4.Compression.LZFSE
-
-    im4p.payload.decompress()
-
-    assert im4p.payload.compression == pyimg4.Compression.NONE
-
-    im4p.output()
-
-
-def test_read_lzss_enc(enc_lzss: bytes) -> None:
-    im4p = pyimg4.IM4P(enc_lzss)
+def test_read_lzss_enc(ENC_LZSS_IM4P: bytes) -> None:
+    im4p = pyimg4.IM4P(ENC_LZSS_IM4P)
 
     assert im4p.fourcc == 'krnl'
     assert im4p.description == 'KernelCacheBuilder-960.40.11'
@@ -81,8 +66,23 @@ def test_read_lzss_enc(enc_lzss: bytes) -> None:
     im4p.output()
 
 
-def test_read_lzfse_enc(enc_lzfse: bytes) -> None:
-    im4p = pyimg4.IM4P(enc_lzfse)
+def test_read_lzfse_dec(DEC_LZFSE_IM4P: bytes) -> None:
+    im4p = pyimg4.IM4P(DEC_LZFSE_IM4P)
+
+    assert im4p.fourcc == 'krnl'
+    assert im4p.description == 'KernelCacheBuilder_release-2238.10.3'
+
+    assert im4p.payload.compression == pyimg4.Compression.LZFSE
+
+    im4p.payload.decompress()
+
+    assert im4p.payload.compression == pyimg4.Compression.NONE
+
+    im4p.output()
+
+
+def test_read_lzfse_enc(ENC_LZFSE_IM4P: bytes) -> None:
+    im4p = pyimg4.IM4P(ENC_LZFSE_IM4P)
 
     assert im4p.fourcc == 'ibss'
     assert im4p.description == 'iBoot-7429.12.15'
@@ -106,5 +106,22 @@ def test_read_lzfse_enc(enc_lzfse: bytes) -> None:
     im4p.payload.decompress()
 
     assert im4p.payload.compression == pyimg4.Compression.NONE
+
+    im4p.output()
+
+
+def test_read_payp(PAYP_IM4P: bytes) -> None:
+    im4p = pyimg4.IM4P(PAYP_IM4P)
+
+    assert im4p.fourcc == 'ibss'
+    assert im4p.description == 'iBoot-8419.40.112'
+
+    assert im4p.payload.encrypted == True
+    assert len(im4p.payload.keybags) == 2
+
+    assert im4p.payload.compression == pyimg4.Compression.LZFSE_ENCRYPTED
+
+    assert len(im4p.properties) == 2
+    assert any(prop.fourcc not in ('mmap', 'rddg') for prop in im4p.properties) == False
 
     im4p.output()

@@ -18,9 +18,11 @@ class CompressionError(_PyIMG4Error):
 class UnexpectedDataError(_PyIMG4Error, ValueError):
     def __init__(self, expect: str, real: Any) -> NoReturn:
         if not isinstance(real, (float, int)) and len(real) > 15:
-            real = f'{type(real).__name__} with len of {len(real)}'
+            real = f'<{type(real).__name__} with len of {len(real)}>'
 
-        super().__init__(f"Expected data: {expect}, got: {real if not isinstance(real, bytes) else real.hex()}")
+        super().__init__(
+            f"Expected data: {expect}, got: {real if not isinstance(real, bytes) else real.hex()}"
+        )
 
 
 class UnexpectedTagError(_PyIMG4Error, ValueError):

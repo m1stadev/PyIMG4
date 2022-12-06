@@ -17,35 +17,6 @@ class _PyIMG4:
         self._decoder = asn1.Decoder()
         self._encoder = asn1.Encoder()
 
-
-def test_read_lzfse_enc(enc_lzfse: bytes) -> None:
-    im4p = pyimg4.IM4P(enc_lzfse)
-
-    assert im4p.fourcc == 'ibss'
-    assert im4p.description == 'iBoot-7429.12.15'
-
-    assert im4p.payload.encrypted == True
-    assert len(im4p.payload.keybags) == 2
-
-    assert im4p.payload.compression == pyimg4.Compression.LZFSE_ENCRYPTED
-
-    dec_kbag = pyimg4.Keybag(
-        iv=bytes.fromhex('0d0a39d2e3ea94f70076192e7d225e9e'),
-        key=bytes.fromhex(
-            '4567c8444b839a08b4a7c408531efb54ae69f1dcc24557ad0e21768b472f95cd'
-        ),
-    )
-
-    im4p.payload.decrypt(dec_kbag)
-
-    assert im4p.payload.compression == pyimg4.Compression.LZFSE
-
-    im4p.payload.decompress()
-
-    assert im4p.payload.compression == pyimg4.Compression.NONE
-
-    im4p.output()
-
     def __bytes__(self) -> bytes:
         return self.output()
 

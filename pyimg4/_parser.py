@@ -738,7 +738,7 @@ class IM4P(_PyIMG4):
     ) -> None:
         if prop is not None:
             if not isinstance(prop, PayloadProperty):
-                raise UnexpectedDataError(PayloadProperty.__name__, prop)
+                raise UnexpectedDataError('PayloadProperty', prop)
 
             if prop not in self.properties:
                 raise ValueError(f'Property "{prop.fourcc}" is not set')

@@ -341,6 +341,9 @@ class IM4R(_ImageData):
         if data:
             self._parse()
 
+    def __repr__(self) -> str:
+        return f'IM4R(properties={len(self.properties)})'
+
     @property
     def boot_nonce(self) -> Optional[bytes]:
         return next(

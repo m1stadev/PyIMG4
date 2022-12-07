@@ -116,7 +116,7 @@ class _Property(_PyIMG4):
         return self._encoder.output()
 
 
-class _ImageData(_PyIMG4):
+class _ImageProperties(_PyIMG4):
     _property = _Property
 
     def __init__(self, data: Optional[bytes] = None) -> None:
@@ -206,7 +206,7 @@ class ManifestProperty(_Property):
     pass
 
 
-class ManifestImageData(_ImageData):
+class ManifestImageProperties(_ImageProperties):
     _property = ManifestProperty
 
     @property
@@ -221,7 +221,7 @@ class IM4M(_PyIMG4):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
-        self.images: List[ManifestImageData] = []
+        self.images: List[ManifestImageProperties] = []
         self.properties: List[ManifestProperty] = []
 
         self._parse()
@@ -274,7 +274,7 @@ class IM4M(_PyIMG4):
             if self._decoder.eof():
                 break
 
-            data = ManifestImageData(self._decoder.read()[1])
+            data = ManifestImageProperties(self._decoder.read()[1])
             if data.fourcc == 'MANP':
                 self.properties = data.properties
             else:
@@ -328,7 +328,7 @@ class RestoreProperty(_Property):
     pass
 
 
-class IM4R(_ImageData):
+class IM4R(_ImageProperties):
     _property = RestoreProperty
 
     def __init__(

@@ -1,3 +1,4 @@
+import plistlib
 import sys
 from typing import BinaryIO, Optional
 

@@ -172,7 +172,45 @@ class _PropertyGroup(_PyIMG4):
     def properties(self) -> Tuple[Optional[_property]]:
         return tuple(self._properties)
 
+    def add_property(self, prop: _property) -> None:
+        if not isinstance(prop, self._property):
+            raise UnexpectedDataError(self._property.__name__, prop)
+
+        if any(p.fourcc == prop.fourcc for p in self.properties):
+            raise ValueError(f'Property "{prop.fourcc}" already exists.')
+
+        self._properties.append(prop)
+
+    def remove_property(
+        self, prop: Optional[_property] = None, fourcc: Optional[str] = None
+    ) -> None:
+        if prop is not None:
+            if not isinstance(prop, self._property):
+                raise UnexpectedDataError(self._property.__name__, prop)
+
+            if prop not in self.properties:
+                raise ValueError(f'Property "{prop.fourcc}" is not set')
+
+            self._properties.remove(prop)
+
+        elif fourcc is not None:
+            self._verify_fourcc(fourcc)
+
+            prop = next(
+                (prop for prop in self.properties if prop.fourcc == fourcc), None
+            )
+            if prop is not None:
+                self._properties.remove(prop)
+            else:
+                raise ValueError(f'Property "{fourcc}" is not set')
+
+        else:
+            raise TypeError(f'No {self._property.__name__} or fourcc provided.')
+
     def output(self) -> bytes:
+        if len(self.properties) == 0:
+            raise ValueError('No properties are set')
+
         self._encoder.start()
         self._encoder.enter(
             int(bytes(self.fourcc, 'ascii').hex(), 16), asn1.Classes.Private
@@ -227,21 +265,11 @@ class Data(_PyIMG4):
 
 
 class ManifestProperty(_Property):
-    def __init__(self, data: bytes) -> None:
-        if data is None or not isinstance(data, bytes):
-            raise TypeError('No valid data provided.')
-
-        super().__init__(data)
+    pass
 
 
 class ManifestImageProperties(_PropertyGroup):
     _property = ManifestProperty
-
-    def __init__(self, data: bytes) -> None:
-        if data is None or not isinstance(data, bytes):
-            raise TypeError('No valid data provided.')
-
-        super().__init__(data)
 
     @property
     def digest(self) -> Optional[bytes]:
@@ -252,13 +280,14 @@ class ManifestImageProperties(_PropertyGroup):
 
 
 class IM4M(_PyIMG4):
-    def __init__(self, data: bytes) -> None:
+    def __init__(self, data: Optional[bytes] = None) -> None:
         super().__init__(data)
 
         self._images: List[ManifestImageProperties] = []
         self._properties: List[ManifestProperty] = []
 
-        self._parse()
+        if data:
+            self._parse()
 
     def __repr__(self) -> str:
         repr_ = f'IM4M('
@@ -310,7 +339,7 @@ class IM4M(_PyIMG4):
 
             data = ManifestImageProperties(self._decoder.read()[1])
             if data.fourcc == 'MANP':
-                self._properties = data.properties
+                self._properties = list(data.properties)
             else:
                 self._images.append(data)
 
@@ -373,6 +402,152 @@ class IM4M(_PyIMG4):
     def signature(self) -> bytes:
         return self._signature
 
+    def add_image_properties(self, image_properties: ManifestImageProperties) -> None:
+        if not isinstance(image_properties, ManifestImageProperties):
+            raise UnexpectedDataError(
+                ManifestImageProperties.__name__, image_properties
+            )
+
+        if any(image.fourcc == image_properties.fourcc for image in self.images):
+            raise ValueError(
+                f'Properties for image "{image_properties.fourcc}" already exist.'
+            )
+
+        self._images.append(image_properties)
+        self._images.sort()
+
+    def remove_image_properties(
+        self,
+        image_properties: Optional[ManifestImageProperties] = None,
+        fourcc: Optional[str] = None,
+    ) -> None:
+        if image_properties is not None:
+            if not isinstance(image_properties, ManifestImageProperties):
+                raise UnexpectedDataError(
+                    ManifestImageProperties.__name__, image_properties
+                )
+
+            if image_properties not in self.images:
+                raise ValueError(
+                    f'Properties for image "{image_properties.fourcc}" are not set'
+                )
+
+            self._images.remove(image_properties)
+            self._images.sort()
+
+        elif fourcc is not None:
+            self._verify_fourcc(fourcc)
+
+            image_properties = next(
+                (image for image in self.images if image.fourcc == fourcc), None
+            )
+            if image_properties is not None:
+                self._images.remove(image_properties)
+                self._images.sort()
+            else:
+                raise ValueError(f'Properties for image "{fourcc}" are not set')
+
+        else:
+            raise TypeError('No ManifestImageProperties or fourcc provided.')
+
+    def add_property(self, prop: ManifestProperty) -> None:
+        if not isinstance(prop, ManifestProperty):
+            raise UnexpectedDataError(ManifestProperty.__name__, prop)
+
+        if any(p.fourcc == prop.fourcc for p in self.properties):
+            raise ValueError(f'Property "{prop.fourcc}" already exists.')
+
+        self._properties.append(prop)
+
+    def remove_property(
+        self, prop: Optional[ManifestProperty] = None, fourcc: Optional[str] = None
+    ) -> None:
+        if prop is not None:
+            if not isinstance(prop, ManifestProperty):
+                raise UnexpectedDataError(ManifestProperty.__name__, prop)
+
+            if prop not in self.properties:
+                raise ValueError(f'Property "{prop.fourcc}" is not set')
+
+            self._properties.remove(prop)
+
+        elif fourcc is not None:
+            self._verify_fourcc(fourcc)
+
+            prop = next(
+                (prop for prop in self.properties if prop.fourcc == fourcc), None
+            )
+            if prop is not None:
+                self._properties.remove(prop)
+            else:
+                raise ValueError(f'Property "{fourcc}" is not set')
+
+        else:
+            raise TypeError('No ManifestProperty or fourcc provided.')
+
+    def output(self) -> bytes:
+        if len(self.properties) == 0:
+            raise ValueError('No properties are set')
+
+        if len(self.images) == 0:
+            raise ValueError('No images are set')
+
+        self._encoder.start()
+        self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+
+        self._encoder.write(
+            'IM4M',
+            asn1.Numbers.IA5String,
+            asn1.Types.Primitive,
+            asn1.Classes.Universal,
+        )
+
+        self._encoder.write(
+            0,
+            asn1.Numbers.Integer,
+            asn1.Types.Primitive,
+            asn1.Classes.Universal,
+        )
+
+        self._encoder.enter(asn1.Numbers.Set, asn1.Classes.Universal)
+
+        manp = ManifestImageProperties(fourcc='MANP')
+        for prop in self.properties:
+            manp.add_property(prop)
+
+        manb = ManifestImageProperties(fourcc='MANB')
+        manb._properties = [manp, *self.images]
+        self._decoder.start(manb.output())
+        self._encoder.enter(self._decoder.peek().nr, asn1.Classes.Private)
+
+        self._decoder.enter()
+        self._encoder.write(
+            self._decoder.read()[1],
+            asn1.Numbers.Sequence,
+            asn1.Types.Constructed,
+            asn1.Classes.Universal,
+        )
+
+        for _ in range(2):
+            self._encoder.leave()
+
+        self._encoder.write(
+            self.signature,
+            asn1.Numbers.OctetString,
+            asn1.Types.Primitive,
+            asn1.Classes.Universal,
+        )
+
+        self._encoder.write(
+            self.certificates,
+            asn1.Numbers.Sequence,
+            asn1.Types.Constructed,
+            asn1.Classes.Universal,
+        )
+
+        self._encoder.leave()
+        return self._encoder.output()
+
 
 class RestoreProperty(_Property):
     pass
@@ -407,38 +582,6 @@ class IM4R(_PropertyGroup):
             self.remove_property(prop)
 
         self.add_property(RestoreProperty(fourcc='BNCN', value=boot_nonce))
-
-    def add_property(self, prop: _property) -> None:
-        if not isinstance(prop, self._property):
-            raise UnexpectedDataError(self._property.__name__, prop)
-
-        if any(p.fourcc == prop.fourcc for p in self.properties):
-            raise ValueError(f'Property "{prop.fourcc}" already exists.')
-
-        self._properties.append(prop)
-
-    def remove_property(
-        self, prop: Optional[_property] = None, fourcc: Optional[str] = None
-    ) -> None:
-        if prop is not None:
-            if not isinstance(prop, self._property):
-                raise UnexpectedDataError(self._property.__name__, prop)
-
-            if prop not in self.properties:
-                raise ValueError(f'Property "{prop.fourcc}" is not set')
-
-            self._properties.remove(prop)
-
-        elif fourcc is not None:
-            self._verify_fourcc(fourcc)
-
-            prop = next(
-                (prop for prop in self.properties if prop.fourcc == fourcc), None
-            )
-            if prop is not None:
-                self._properties.remove(prop)
-            else:
-                raise ValueError(f'Property "{fourcc}" is not set')
 
     def output(self) -> bytes:
         if len(self.properties) == 0:

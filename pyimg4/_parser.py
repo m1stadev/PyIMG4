@@ -203,7 +203,11 @@ class Data(_PyIMG4):
 
 
 class ManifestProperty(_Property):
-    pass
+    def __init__(self, data: bytes) -> None:
+        if data is None or not isinstance(data, bytes):
+            raise TypeError('No data provided.')
+
+        super().__init__(data)
 
 
 class ManifestImageProperties(_PropertyGroup):

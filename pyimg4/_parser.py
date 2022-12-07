@@ -116,7 +116,7 @@ class _Property(_PyIMG4):
         return self._encoder.output()
 
 
-class _ImageProperties(_PyIMG4):
+class _PropertyGroup(_PyIMG4):
     _property = _Property
 
     def __init__(self, data: Optional[bytes] = None) -> None:
@@ -206,7 +206,7 @@ class ManifestProperty(_Property):
     pass
 
 
-class ManifestImageProperties(_ImageProperties):
+class ManifestImageProperties(_PropertyGroup):
     _property = ManifestProperty
 
     @property
@@ -328,7 +328,7 @@ class RestoreProperty(_Property):
     pass
 
 
-class IM4R(_ImageProperties):
+class IM4R(_PropertyGroup):
     _property = RestoreProperty
 
     def __init__(

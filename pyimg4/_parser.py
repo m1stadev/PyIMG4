@@ -1046,7 +1046,7 @@ class IM4PData(_PyIMG4):
         self._extra = extra
 
     @property
-    def keybags(self) -> Tuple[Keybag]:
+    def keybags(self) -> Tuple[Optional[Keybag]]:
         return tuple(self._keybags)
 
     def add_keybag(self, keybag: Keybag) -> None:

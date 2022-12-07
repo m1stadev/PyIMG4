@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Tuple, Union
 from zlib import adler32
 
 import asn1
@@ -63,8 +63,8 @@ class _Property(_PyIMG4):
         super().__init__(data)
 
         if fourcc and value:
-            self.fourcc = self._verify_fourcc(fourcc)
-            self.value = value
+            self._fourcc = self._verify_fourcc(fourcc)
+            self._value = value
 
         elif data:
             self._parse()
@@ -89,8 +89,16 @@ class _Property(_PyIMG4):
             raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
 
         self._decoder.enter()
-        self.fourcc = self._verify_fourcc(self._decoder.read()[1])
-        self.value = self._decoder.read()[1]
+        self._fourcc = self._verify_fourcc(self._decoder.read()[1])
+        self._value = self._decoder.read()[1]
+
+    @property
+    def fourcc(self) -> str:
+        return self._fourcc
+
+    @property
+    def value(self) -> Any:
+        return self._value
 
     def output(self) -> bytes:
         self._encoder.start()
@@ -119,13 +127,21 @@ class _Property(_PyIMG4):
 class _PropertyGroup(_PyIMG4):
     _property = _Property
 
-    def __init__(self, data: Optional[bytes] = None) -> None:
+    def __init__(
+        self, data: Optional[bytes] = None, *, fourcc: Optional[str] = None
+    ) -> None:
         super().__init__(data)
 
-        self.properties: List[self._property] = []
+        self._properties: List[Optional[self._property]] = []
 
-        if data is not None:
+        if data:
             self._parse()
+
+        elif fourcc:
+            self._fourcc = self._verify_fourcc(fourcc)
+
+        else:
+            raise TypeError('No data or fourcc provided.')
 
     def __repr__(self) -> str:
         return f'{type(self).__name__}(fourcc={self.fourcc})'
@@ -138,7 +154,7 @@ class _PropertyGroup(_PyIMG4):
 
         self._decoder.enter()
 
-        self.fourcc = self._verify_fourcc(self._decoder.read()[1])
+        self._fourcc = self._verify_fourcc(self._decoder.read()[1])
 
         if self._decoder.peek().nr != asn1.Numbers.Set:
             raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Set)
@@ -146,7 +162,15 @@ class _PropertyGroup(_PyIMG4):
         self._decoder.enter()
 
         while not self._decoder.eof():
-            self.properties.append(self._property(self._decoder.read()[1]))
+            self._properties.append(self._property(self._decoder.read()[1]))
+
+    @property
+    def fourcc(self) -> str:
+        return self._fourcc
+
+    @property
+    def properties(self) -> Tuple[Optional[_property]]:
+        return tuple(self._properties)
 
     def output(self) -> bytes:
         self._encoder.start()
@@ -205,13 +229,19 @@ class Data(_PyIMG4):
 class ManifestProperty(_Property):
     def __init__(self, data: bytes) -> None:
         if data is None or not isinstance(data, bytes):
-            raise TypeError('No data provided.')
+            raise TypeError('No valid data provided.')
 
         super().__init__(data)
 
 
 class ManifestImageProperties(_PropertyGroup):
     _property = ManifestProperty
+
+    def __init__(self, data: bytes) -> None:
+        if data is None or not isinstance(data, bytes):
+            raise TypeError('No valid data provided.')
+
+        super().__init__(data)
 
     @property
     def digest(self) -> Optional[bytes]:
@@ -225,8 +255,8 @@ class IM4M(_PyIMG4):
     def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
-        self.images: List[ManifestImageProperties] = []
-        self.properties: List[ManifestProperty] = []
+        self._images: List[ManifestImageProperties] = []
+        self._properties: List[ManifestProperty] = []
 
         self._parse()
 
@@ -280,15 +310,15 @@ class IM4M(_PyIMG4):
 
             data = ManifestImageProperties(self._decoder.read()[1])
             if data.fourcc == 'MANP':
-                self.properties = data.properties
+                self._properties = data.properties
             else:
-                self.images.append(data)
+                self._images.append(data)
 
         for _ in range(4):
             self._decoder.leave()
 
-        self.signature = self._decoder.read()[1]
-        self.certificates = self._decoder.read()[1]
+        self._signature = self._decoder.read()[1]
+        self._certificates = self._decoder.read()[1]
 
         if not self._decoder.eof():
             raise ValueError(
@@ -309,6 +339,10 @@ class IM4M(_PyIMG4):
         )
 
     @property
+    def certificates(self) -> bytes:
+        return self._certificates
+
+    @property
     def chip_id(self) -> Optional[int]:
         return next(
             (prop.value for prop in self.properties if prop.fourcc == 'CHIP'), None
@@ -321,11 +355,23 @@ class IM4M(_PyIMG4):
         )
 
     @property
+    def images(self) -> Tuple[Optional[ManifestImageProperties]]:
+        return tuple(self._images)
+
+    @property
+    def properties(self) -> Tuple[Optional[ManifestProperty]]:
+        return tuple(self._properties)
+
+    @property
     def sepnonce(self) -> Optional[bytes]:
         return next(
             (prop.value for prop in self.properties if prop.fourcc == 'snon'),
             None,
         )
+
+    @property
+    def signature(self) -> bytes:
+        return self._signature
 
 
 class RestoreProperty(_Property):
@@ -335,15 +381,8 @@ class RestoreProperty(_Property):
 class IM4R(_PropertyGroup):
     _property = RestoreProperty
 
-    def __init__(
-        self,
-        data: Optional[bytes] = None,
-    ) -> None:
-        super().__init__(data)
-        self.properties = list()
-
-        if data:
-            self._parse()
+    def __init__(self, data: Optional[bytes] = None) -> None:
+        super().__init__(data, fourcc='IM4R')
 
     def __repr__(self) -> str:
         return f'IM4R(properties={len(self.properties)})'
@@ -376,7 +415,7 @@ class IM4R(_PropertyGroup):
         if any(p.fourcc == prop.fourcc for p in self.properties):
             raise ValueError(f'Property "{prop.fourcc}" already exists.')
 
-        self.properties.append(prop)
+        self._properties.append(prop)
 
     def remove_property(
         self, prop: Optional[_property] = None, fourcc: Optional[str] = None
@@ -388,7 +427,7 @@ class IM4R(_PropertyGroup):
             if prop not in self.properties:
                 raise ValueError(f'Property "{prop.fourcc}" is not set')
 
-            self.properties.remove(prop)
+            self._properties.remove(prop)
 
         elif fourcc is not None:
             self._verify_fourcc(fourcc)
@@ -397,7 +436,7 @@ class IM4R(_PropertyGroup):
                 (prop for prop in self.properties if prop.fourcc == fourcc), None
             )
             if prop is not None:
-                self.properties.remove(prop)
+                self._properties.remove(prop)
             else:
                 raise ValueError(f'Property "{fourcc}" is not set')
 
@@ -409,7 +448,7 @@ class IM4R(_PropertyGroup):
         self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
 
         self._encoder.write(
-            'IM4R',
+            self.fourcc,
             asn1.Numbers.IA5String,
             asn1.Types.Primitive,
             asn1.Classes.Universal,
@@ -586,7 +625,8 @@ class IM4P(_PyIMG4):
         payload: Optional[Union['IM4PData', bytes]] = None,
     ) -> None:
         super().__init__(data)
-        self.properties = list()
+
+        self._properties = []
 
         if data:
             self._parse()
@@ -634,7 +674,7 @@ class IM4P(_PyIMG4):
         if self._decoder.peek().nr != asn1.Numbers.OctetString:
             raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.OctetString)
 
-        payload_data = self._decoder.read()[1]
+        self.payload = self._decoder.read()[1]
 
         if (
             not self._decoder.eof()
@@ -648,17 +688,11 @@ class IM4P(_PyIMG4):
 
             kbag_decoder.enter()
 
-            keybags = []
             for kt in KeybagType:
                 if kbag_decoder.peek().nr != asn1.Numbers.Sequence:
                     raise UnexpectedTagError(kbag_decoder.peek(), asn1.Numbers.Sequence)
 
-                keybags.append(Keybag(kbag_decoder.read()[1], kt))
-
-            self.payload = IM4PData(payload_data, keybags=keybags)
-
-        else:
-            self.payload = IM4PData(payload_data)
+                self.payload.add_keybag(Keybag(kbag_decoder.read()[1], kt))
 
         if not self._decoder.eof() and self._decoder.peek().nr == asn1.Numbers.Sequence:
             self._decoder.enter()
@@ -685,7 +719,7 @@ class IM4P(_PyIMG4):
 
             self._decoder.enter()
             while not self._decoder.eof():
-                self.properties.append(PayloadProperty(self._decoder.read()[1]))
+                self._properties.append(PayloadProperty(self._decoder.read()[1]))
 
         if not self._decoder.eof():
             raise ValueError(
@@ -728,6 +762,10 @@ class IM4P(_PyIMG4):
 
         self._payload = IM4PData(payload) if isinstance(payload, bytes) else payload
 
+    @property
+    def properties(self) -> Tuple[Optional[PayloadProperty]]:
+        return tuple(self._properties)
+
     def add_property(self, prop: PayloadProperty) -> None:
         if not isinstance(prop, PayloadProperty):
             raise UnexpectedDataError(PayloadProperty.__name__, prop)
@@ -735,7 +773,7 @@ class IM4P(_PyIMG4):
         if any(p.fourcc == prop.fourcc for p in self.properties):
             raise ValueError(f'Property "{prop.fourcc}" already exists.')
 
-        self.properties.append(prop)
+        self._properties.append(prop)
 
     def remove_property(
         self, prop: Optional[PayloadProperty] = None, fourcc: Optional[str] = None
@@ -754,7 +792,7 @@ class IM4P(_PyIMG4):
                 (prop for prop in self.properties if prop.fourcc == fourcc), None
             )
             if prop is not None:
-                self.properties.remove(prop)
+                self._properties.remove(prop)
             else:
                 raise ValueError(f'Property "{fourcc}" not found')
 
@@ -925,12 +963,23 @@ class Keybag(_PyIMG4):
 
         self._key = key
 
+    @property
+    def type(self) -> KeybagType:
+        return self._type
+
+    @type.setter
+    def type(self, type_: KeybagType) -> None:
+        if not isinstance(type_, KeybagType):
+            raise UnexpectedDataError('KeybagType', type_)
+
+        self._type = type_
+
 
 class IM4PData(_PyIMG4):
-    def __init__(self, data: bytes, *, keybags: Optional[List[Keybag]] = []) -> None:
+    def __init__(self, data: bytes) -> None:
         super().__init__(data)
 
-        self.keybags = keybags
+        self._keybags = []
         self.extra: Optional[bytes] = None
         self._lzfse_payload_size: Optional[int] = None
 
@@ -996,6 +1045,45 @@ class IM4PData(_PyIMG4):
 
         self._extra = extra
 
+    @property
+    def keybags(self) -> Tuple[Keybag]:
+        return tuple(self._keybags)
+
+    def add_keybag(self, keybag: Keybag) -> None:
+        if not isinstance(keybag, Keybag):
+            raise UnexpectedDataError('Keybag', keybag)
+
+        if any(kbag.type == keybag.type for kbag in self.keybags):
+            raise ValueError(
+                f'There is already a {keybag.type.name.lower()} keybag added.'
+            )
+
+        if any(kbag == keybag for kbag in self.keybags):
+            raise ValueError(f'This keybag already exists.')
+
+        self._keybags.append(keybag)
+
+    def remove_keybag(
+        self, keybag: Optional[Keybag] = None, type_: Optional[KeybagType] = None
+    ) -> None:
+        if keybag is not None:
+            if not isinstance(keybag, keybag):
+                raise UnexpectedDataError('Keybag', keybag)
+
+            if keybag not in self._keybags:
+                raise ValueError(f'Keybag has not been added.')
+
+            self._keybags.remove(keybag)
+
+        elif type_ is not None:
+            keybag = next(
+                (kbag for kbag in self.properties if kbag.type == type_), None
+            )
+            if keybag is not None:
+                self._keybags.remove(keybag)
+            else:
+                raise ValueError(f'There is no {type_.name.lower()} keybag added.')
+
     def compress(self, compression: Compression) -> None:
         if compression in (
             Compression.NONE,
@@ -1051,7 +1139,7 @@ class IM4PData(_PyIMG4):
     def decrypt(self, kbag: Keybag) -> None:
         try:
             self._data = AES.new(kbag.key, AES.MODE_CBC, kbag.iv).decrypt(self._data)
-            self.keybags = []
+            self._keybags = []
         except:
             raise AESError('Failed to decrypt payload.')
 

@@ -26,24 +26,23 @@ def main() -> None:
     except:
         sys.exit(f'[ERROR] Failed to parse ApTicket: {shsh_path}')
 
-    print('SHSH Info:')
-    if im4m.chip_id is not None:
-        if 0x8720 <= im4m.chip_id <= 0x8960:
-            soc = f'S5L{im4m.chip_id:02x}'
-        elif im4m.chip_id in range(0x7002, 0x8003):
-            soc = f'S{im4m.chip_id:02x}'
-        else:
-            soc = f'T{im4m.chip_id:02x}'
-
-        print(f'  Device Processor: {soc}')
+    print('SHSH info:')
+    if 0x8720 <= im4m.chip_id <= 0x8960:
+        soc = f'S5L{im4m.chip_id:02x}'
+    elif im4m.chip_id in range(0x7002, 0x8003):
+        soc = f'S{im4m.chip_id:02x}'
     else:
-        print(
-            '  Warning: Chip ID not found in ApTicket, unable to find Device Processor'
-        )
+        soc = f'T{im4m.chip_id:02x}'
 
-    print(f"  ECID (hex): {im4m.ecid:X}")
-    print(f"  ApNonce: {im4m.apnonce.hex()}")
-    print(f"  SepNonce: {im4m.sepnonce.hex()}")
+    print(f'  Device Processor: {soc}')
+
+    print(f'  ECID (hex): {hex(im4m.ecid)}')
+    print(f'  ApNonce (hex): {im4m.apnonce.hex()}')
+    print(f'  SepNonce (hex): {im4m.sepnonce.hex()}')
+
+    print(
+        f"  Manifest images ({len(im4m.images)}): {', '.join(i.fourcc for i in im4m.images)}"
+    )
 
 
 if __name__ == '__main__':

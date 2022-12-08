@@ -22,7 +22,7 @@ def main() -> None:
 
     im4p = img4_path.with_suffix('.im4p')
     with im4p.open('wb') as f:
-        f.write(img4.im4p)
+        f.write(img4.im4p.output())
 
     print(f'Image4 Payload outputted to: {im4p}.')
 

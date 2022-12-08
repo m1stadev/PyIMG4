@@ -20,19 +20,19 @@ def main() -> None:
         except:
             sys.exit(f'[ERROR] Failed to parse Image4 payload: {im4p_path}')
 
+    if im4p.payload.encrypted:
+        print('Raw data is encrypted.')
+
+    elif im4p.payload.compression != pyimg4.Compression.NONE:
+        print(
+            f'Raw data is {im4p.im4p.payload.compression.name} compressed, decompressing.'
+        )
+
+        im4p.payload.decompress()
+
     raw_data = im4p_path.with_suffix('.raw')
     with raw_data.open('wb') as f:
-        if im4p.keybags:
-            print('Raw data is encrypted.')
-
-        elif im4p.payload.compression != pyimg4.Compression.NONE:
-            print(
-                f'Raw data is {im4p.im4p.payload.compression.name} compressed, decompressing.'
-            )
-
-            im4p.payload.decompress()
-
-        f.write(im4p.payload)
+        f.write(im4p.payload.output().data)
 
     print(f'Raw data outputted to: {raw_data}.')
 

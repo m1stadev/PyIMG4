@@ -792,7 +792,7 @@ def img4_info(input_: BinaryIO, verbose: bool) -> None:
             if isinstance(prop.value, bytes):
                 click.echo(f'    {prop.fourcc} (hex): {prop.value.hex()}')
             else:
-                click.echo(f'    {prop.nafourccme}: {prop.value}')
+                click.echo(f'    {prop.fourcc}: {prop.value}')
 
             if p == (len(img4.im4m.properties) - 1):
                 click.echo()
@@ -816,7 +816,25 @@ def img4_info(input_: BinaryIO, verbose: bool) -> None:
 
     if img4.im4r is not None:
         click.echo('\n  Image4 restore info:')
-        click.echo(f'    Boot nonce (hex): 0x{img4.im4r.boot_nonce.hex()}')
+
+        if img4.im4r.boot_nonce is not None:
+            click.echo(f'    Boot nonce (hex): 0x{img4.im4r.boot_nonce.hex()}')
+
+        if verbose:
+            click.echo(f'    Restore properties ({len(img4.im4r.properties)}):')
+            for p, prop in enumerate(img4.im4r.properties):
+                if isinstance(prop.value, bytes):
+                    click.echo(f'      {prop.fourcc} (hex): {prop.value.hex()}')
+                else:
+                    click.echo(f'      {prop.fourcc}: {prop.value}')
+
+                if p != (len(img4.im4r.properties) - 1):
+                    click.echo()
+
+        else:
+            click.echo(
+                f"    Restore properties ({len(img4.im4r.properties)}): {', '.join(prop.fourcc for prop in img4.im4r.properties)}"
+            )
 
 
 if __name__ == '__main__':

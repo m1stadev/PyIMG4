@@ -122,6 +122,6 @@ def test_read_payp(PAYP_IM4P: bytes) -> None:
     assert im4p.payload.compression == pyimg4.Compression.LZFSE_ENCRYPTED
 
     assert len(im4p.properties) == 2
-    assert any(prop.fourcc not in ('mmap', 'rddg') for prop in im4p.properties) == False
+    assert all(prop.fourcc in ('mmap', 'rddg') for prop in im4p.properties)
 
     im4p.output()

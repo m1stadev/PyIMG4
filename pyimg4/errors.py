@@ -21,7 +21,7 @@ class UnexpectedDataError(_PyIMG4Error, ValueError):
             real = f'<{type(real).__name__} with len of {len(real)}>'
 
         super().__init__(
-            f"Expected data: {expect}, got: {real if not isinstance(real, bytes) else real.hex()}"
+            f"Expected data: {expect}, got: {real.hex() if isinstance(real, bytes) else real}"
         )
 
 

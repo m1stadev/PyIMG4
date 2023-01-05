@@ -183,7 +183,7 @@ def im4m_verify(input_: BinaryIO, build_manifest: BinaryIO, verbose: bool) -> No
             click.echo(f"Restore type: {identity['Info']['RestoreBehavior']}")
             return
 
-    click.echo(f'Image4 manifest is not valid for the provided build manifest!')
+    click.echo('Image4 manifest is not valid for the provided build manifest!')
 
 
 @cli.group()
@@ -321,42 +321,44 @@ def im4p_extract(
     except:
         raise click.BadParameter(f'Failed to parse Image4 payload file: {input_.name}')
 
-    if im4p.payload.encrypted == True:
-        if iv is None and key is None:
+    if iv is None and key is None:
+        if im4p.payload.encrypted == True:
             click.echo('[NOTE] Image4 payload data is encrypted')
 
-        elif (iv is None and key is not None) or (key is None and iv is not None):
+    elif iv is None or key is None:
+        if im4p.payload.encrypted == True:
             raise click.BadParameter('You must specify both the IV and the key')
 
-        else:
-            click.echo('[NOTE] Image4 payload data is encrypted, decrypting...')
+    elif im4p.payload.encrypted == True:
+        click.echo('[NOTE] Image4 payload data is encrypted, decrypting...')
 
-            if iv.lower().startswith('0x'):
-                iv = iv[2:]
+        if iv.lower().startswith('0x'):
+            iv = iv[2:]
 
-            if key.lower().startswith('0x'):
-                key = key[2:]
+        if key.lower().startswith('0x'):
+            key = key[2:]
 
-            try:
-                iv = bytes.fromhex(iv)
-            except TypeError:
-                raise click.BadParameter('Decryption IV must be a hex string')
+        try:
+            iv = bytes.fromhex(iv)
+        except TypeError:
+            raise click.BadParameter('Decryption IV must be a hex string')
 
-            try:
-                key = bytes.fromhex(key)
-            except TypeError:
-                raise click.BadParameter('Decryption key must be a hex string')
+        try:
+            key = bytes.fromhex(key)
+        except TypeError:
+            raise click.BadParameter('Decryption key must be a hex string')
 
-            if len(iv) != 16:
-                raise click.BadParameter('Decryption IV must be 16 bytes long')
+        if len(iv) != 16:
+            raise click.BadParameter('Decryption IV must be 16 bytes long')
 
-            if len(key) != 32:
-                raise click.BadParameter('Decryption key must be 32 bytes long')
-
+        if len(key) == 32:
             im4p.payload.decrypt(Keybag(key=key, iv=iv))
 
+        else:
+            raise click.BadParameter('Decryption key must be 32 bytes long')
+
     if im4p.payload.compression != Compression.NONE:
-        if decompress == True:
+        if decompress:
             click.echo(
                 f'[NOTE] Image4 payload data is {im4p.payload.compression.name} compressed, decompressing...'
             )
@@ -531,8 +533,9 @@ def im4r_info(input_: BinaryIO, verbose: bool) -> None:
     if im4r.boot_nonce is not None:
         click.echo(f'  Boot nonce (hex): 0x{im4r.boot_nonce.hex()}')
 
-    extra_props = [prop for prop in im4r.properties if prop.fourcc != 'BNCN']
-    if len(extra_props) > 0:
+    if extra_props := [
+        prop for prop in im4r.properties if prop.fourcc != 'BNCN'
+    ]:
         if verbose:
             click.echo('  Properties:')
             for p, prop in enumerate(extra_props):
@@ -685,7 +688,7 @@ def img4_extract(
     except:
         raise click.BadParameter(f'Failed to parse Image4 file: {input_.name}')
 
-    if not any(i is not None for i in (im4p, im4m, im4r)):
+    if all(i is None for i in (im4p, im4m, im4r)):
         raise click.BadParameter('You must specify at least one output file')
 
     if im4p is not None:

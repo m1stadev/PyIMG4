@@ -91,7 +91,7 @@ def main(build_manifest_path: Path, shsh_path: Path, verbose: bool) -> None:
 
             return
 
-    print(f'SHSH blob is not valid for the provided build manifest!')
+    print('SHSH blob is not valid for the provided build manifest!')
 
 
 parser = argparse.ArgumentParser(

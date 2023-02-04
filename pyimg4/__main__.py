@@ -535,8 +535,9 @@ def im4r_info(input_: BinaryIO, verbose: bool) -> None:
     if im4r.boot_nonce is not None:
         click.echo(f'  Boot nonce (hex): 0x{im4r.boot_nonce.hex()}')
 
-    extra_props = [prop for prop in im4r.properties if prop.fourcc != 'BNCN']
-    if extra_props:
+    if extra_props := [
+        prop for prop in im4r.properties if prop.fourcc != 'BNCN'
+    ]:
         if verbose:
             click.echo('  Properties:')
             for p, prop in enumerate(extra_props):

@@ -9,7 +9,7 @@ import pyimg4
 
 
 def main(build_manifest_path: Path, shsh_path: Path, verbose: bool) -> None:
-    generator_list = ['0x1111111111111111']
+    generator_list = ['0x1111111111111111', '0xbd34a880be0b53f3']
 
     if not build_manifest_path.is_file():
         sys.exit(f'[ERROR] BuildManifest not found: {build_manifest_path} ')
@@ -36,9 +36,9 @@ def main(build_manifest_path: Path, shsh_path: Path, verbose: bool) -> None:
             sys.exit(f'[ERROR] Failed to parse ApTicket: {shsh_path}')
 
     if len(hex(im4m.board_id)) == 3:
-        board_id = hex(im4m.board_id)[:2] + "0" + hex(im4m.board_id)[2:].upper()
+        board_id = f"0x0{hex(im4m.board_id)[2:].upper()}"
     else:
-        board_id = hex(im4m.board_id)[:2] + hex(im4m.board_id)[2:].upper()
+        board_id = f"0x{hex(im4m.board_id)[2:].upper()}"
 
     if 0x8720 <= im4m.chip_id <= 0x8960:
         soc = f'S5L{im4m.chip_id:02x}'
@@ -48,7 +48,7 @@ def main(build_manifest_path: Path, shsh_path: Path, verbose: bool) -> None:
         soc = f'T{im4m.chip_id:02x}'
 
     for identity in manifest['BuildIdentities']:
-        if not (identity['ApBoardID'] == board_id and identity['ApChipID'] == hex(im4m.chip_id)):
+        if identity['ApBoardID'] != board_id and identity['ApChipID'] != hex(im4m.chip_id):
             if verbose:
                 print(f"Skipping build identity {manifest['BuildIdentities'].index(identity)}...")
 
@@ -67,19 +67,28 @@ def main(build_manifest_path: Path, shsh_path: Path, verbose: bool) -> None:
 
             if not any(i for i in im4m.images if i.digest == image_info['Digest']):
                 if verbose:
-                    print(f'No hash found for component: {name} in Image4 manifest!')
+                    print(f'No hash found for component: {name} in SHSH!')
 
                 break
         else:
             print('\nSHSH blob was successfully validated with the build manifest for the following restore:')
             print(f"Device Processor: {soc}")
             print(f"ECID (hex): {hex(im4m.ecid)}")
+            print(f"ApNonce (hex): {im4m.apnonce.hex()}")
+            print(f"SepNonce (hex): {im4m.sepnonce.hex()}")
             print(f"Board config: {identity['Info']['DeviceClass']}")
             print(f"Build ID: {identity['Info']['BuildNumber']}")
             print(f"Restore type: {identity['Info']['RestoreBehavior']}")
-            if 'generator' in shsh.keys():
-                print(f"Generator: {shsh['generator']}"
-                      f"{' which is GOOD.' if shsh['generator'] in generator_list else ''}")
+
+            if 'generator' in shsh.keys() and shsh['generator'] in generator_list:
+                print(f"Generator: {shsh['generator']} which is GOOD.")
+
+            elif 'generator' in shsh.keys():
+                print(f"Generator: {shsh['generator']}")
+
+            else:
+                print('Generator not found in SHSH.')
+
             return
 
     print(f'SHSH blob is not valid for the provided build manifest!')
@@ -115,4 +124,3 @@ args = parser.parse_args()
 
 if __name__ == '__main__':
     main(build_manifest_path=args.build_manifest, shsh_path=args.shsh, verbose=args.verbose)
-

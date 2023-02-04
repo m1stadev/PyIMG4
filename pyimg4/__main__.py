@@ -142,9 +142,14 @@ def im4m_verify(input_: BinaryIO, build_manifest: BinaryIO, verbose: bool) -> No
             f'Failed to parse build manifest file: {build_manifest.name}'
         )
 
+    if len(hex(im4m.board_id)) == 3:
+        board_id = hex(im4m.board_id)[:2] + "0" + hex(im4m.board_id)[2:].upper()
+    else:
+        board_id = hex(im4m.board_id)[:2] + hex(im4m.board_id)[2:].upper()
+
     for identity in manifest['BuildIdentities']:
         if not (
-            identity['ApBoardID'] == hex(im4m.board_id)
+            identity['ApBoardID'] == board_id
             and identity['ApChipID'] == hex(im4m.chip_id)
         ):
             if verbose:

@@ -143,15 +143,12 @@ def im4m_verify(input_: BinaryIO, build_manifest: BinaryIO, verbose: bool) -> No
         )
 
     if len(hex(im4m.board_id)) == 3:
-        board_id = hex(im4m.board_id)[:2] + "0" + hex(im4m.board_id)[2:].upper()
+        board_id = f"0x0{hex(im4m.board_id)[2:].upper()}"
     else:
-        board_id = hex(im4m.board_id)[:2] + hex(im4m.board_id)[2:].upper()
+        board_id = f"0x{hex(im4m.board_id)[2:].upper()}"
 
     for identity in manifest['BuildIdentities']:
-        if not (
-            identity['ApBoardID'] == board_id
-            and identity['ApChipID'] == hex(im4m.chip_id)
-        ):
+        if identity['ApBoardID'] != board_id and identity['ApChipID'] != hex(im4m.chip_id):
             if verbose:
                 click.echo(
                     f"Skipping build identity {manifest['BuildIdentities'].index(identity)}..."

@@ -561,7 +561,7 @@ class IM4R(_PropertyGroup):
     @property
     def boot_nonce(self) -> Optional[bytes]:
         return next(
-            (prop.value for prop in self.properties if prop.fourcc == 'BNCN'),
+            (prop.value[::-1] for prop in self.properties if prop.fourcc == 'BNCN'),
             None,
         )
 

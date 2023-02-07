@@ -35,11 +35,6 @@ def main(build_manifest_path: Path, shsh_path: Path, verbose: bool) -> None:
         except:
             sys.exit(f'[ERROR] Failed to parse ApTicket: {shsh_path}')
 
-    if len(hex(im4m.board_id)) == 3:
-        board_id = f"0x0{hex(im4m.board_id)[2:].upper()}"
-    else:
-        board_id = f"0x{hex(im4m.board_id)[2:].upper()}"
-
     if 0x8720 <= im4m.chip_id <= 0x8960:
         soc = f'S5L{im4m.chip_id:02x}'
     elif im4m.chip_id in range(0x7002, 0x8003):
@@ -48,7 +43,7 @@ def main(build_manifest_path: Path, shsh_path: Path, verbose: bool) -> None:
         soc = f'T{im4m.chip_id:02x}'
 
     for identity in manifest['BuildIdentities']:
-        if identity['ApBoardID'] != board_id and identity['ApChipID'] != hex(im4m.chip_id):
+        if int(identity['ApBoardID'], 16) != im4m.board_id and int(identity['ApChipID'], 16) != im4m.chip_id:
             if verbose:
                 print(f"Skipping build identity {manifest['BuildIdentities'].index(identity)}...")
 

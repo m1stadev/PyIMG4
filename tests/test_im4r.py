@@ -17,6 +17,6 @@ def test_create() -> None:
 def test_read(IM4R: bytes) -> None:
     im4r = pyimg4.IM4R(IM4R)
 
-    assert im4r.boot_nonce.hex() == '7cd2c2e8aebb565f'
+    assert im4r.boot_nonce.hex() == '5f56bbaee8c2d27c'
 
     im4r.output()

@@ -536,7 +536,7 @@ def im4r_info(input_: BinaryIO, verbose: bool) -> None:
     extra_props = [prop for prop in im4r.properties if prop.fourcc != 'BNCN']
     if extra_props:
         if verbose:
-            click.echo('  Properties:')
+            click.echo(f'  Properties ({len(extra_props)}):')
             for p, prop in enumerate(extra_props):
                 if isinstance(prop.value, bytes):
                     click.echo(f'    {prop.fourcc} (hex): {prop.value.hex()}')
@@ -546,9 +546,7 @@ def im4r_info(input_: BinaryIO, verbose: bool) -> None:
                 if p != (len(extra_props) - 1):
                     click.echo()
         else:
-            click.echo(
-                f"  Properties ({len(im4r.properties)}): {', '.join(i.fourcc for i in im4r.properties)}"
-            )
+            click.echo(f"  Properties ({len(extra_props)}): {', '.join(extra_props)}")
 
 
 @cli.group()
@@ -822,21 +820,22 @@ def img4_info(input_: BinaryIO, verbose: bool) -> None:
         if img4.im4r.boot_nonce is not None:
             click.echo(f'    Boot nonce (hex): 0x{img4.im4r.boot_nonce.hex()}')
 
-        if verbose:
-            click.echo(f'    Restore properties ({len(img4.im4r.properties)}):')
-            for p, prop in enumerate(img4.im4r.properties):
-                if isinstance(prop.value, bytes):
-                    click.echo(f'      {prop.fourcc} (hex): {prop.value.hex()}')
-                else:
-                    click.echo(f'      {prop.fourcc}: {prop.value}')
+        extra_props = [prop for prop in img4.im4r.properties if prop.fourcc != 'BNCN']
+        if extra_props:
+            if verbose:
+                click.echo(f'    Properties ({len(extra_props)}):')
+                for p, prop in enumerate(extra_props):
+                    if isinstance(prop.value, bytes):
+                        click.echo(f'      {prop.fourcc} (hex): {prop.value.hex()}')
+                    else:
+                        click.echo(f'      {prop.fourcc}: {prop.value}')
 
-                if p != (len(img4.im4r.properties) - 1):
-                    click.echo()
-
-        else:
-            click.echo(
-                f"    Restore properties ({len(img4.im4r.properties)}): {', '.join(prop.fourcc for prop in img4.im4r.properties)}"
-            )
+                    if p != (len(extra_props) - 1):
+                        click.echo()
+            else:
+                click.echo(
+                    f"    Properties ({len(extra_props)}): {', '.join(extra_props)}"
+                )
 
 
 if __name__ == '__main__':

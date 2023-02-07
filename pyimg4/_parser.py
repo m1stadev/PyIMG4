@@ -555,13 +555,16 @@ class IM4R(_PropertyGroup):
     def __init__(self, data: Optional[bytes] = None) -> None:
         super().__init__(data, fourcc='IM4R')
 
+        if self.boot_nonce is not None:
+            self.boot_nonce = self.boot_nonce[::-1]
+
     def __repr__(self) -> str:
         return f'IM4R(properties={len(self.properties)})'
 
     @property
     def boot_nonce(self) -> Optional[bytes]:
         return next(
-            (prop.value[::-1] for prop in self.properties if prop.fourcc == 'BNCN'),
+            (prop.value for prop in self.properties if prop.fourcc == 'BNCN'),
             None,
         )
 
@@ -581,7 +584,7 @@ class IM4R(_PropertyGroup):
 
     def output(self) -> bytes:
         if len(self.properties) == 0:
-            raise ValueError('No properties set')
+            raise ValueError('No properties are set')
 
         self._encoder.start()
         self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
@@ -595,6 +598,9 @@ class IM4R(_PropertyGroup):
 
         self._encoder.enter(asn1.Numbers.Set, asn1.Classes.Universal)
         for prop in self.properties:
+            if prop.fourcc == 'BNCN':
+                prop.value = prop.value[::-1]
+
             self._decoder.start(prop.output())
             self._encoder.enter(self._decoder.peek().nr, asn1.Classes.Private)
 

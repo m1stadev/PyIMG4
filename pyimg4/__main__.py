@@ -144,8 +144,8 @@ def im4m_verify(input_: BinaryIO, build_manifest: BinaryIO, verbose: bool) -> No
 
     for identity in manifest['BuildIdentities']:
         if not (
-            identity['ApBoardID'] == hex(im4m.board_id)
-            and identity['ApChipID'] == hex(im4m.chip_id)
+                int(identity['ApBoardID'], 16) == im4m.board_id
+                and int(identity['ApChipID'], 16) == im4m.chip_id
         ):
             if verbose:
                 click.echo(

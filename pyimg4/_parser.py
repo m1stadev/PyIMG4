@@ -597,10 +597,11 @@ class IM4R(_PropertyGroup):
         )
 
         self._encoder.enter(asn1.Numbers.Set, asn1.Classes.Universal)
-        for prop in self.properties:
-            if prop.fourcc == 'BNCN':
-                prop.value = prop.value[::-1]
 
+        if self.boot_nonce is not None:
+            self.boot_nonce = self.boot_nonce[::-1]
+
+        for prop in self.properties:
             self._decoder.start(prop.output())
             self._encoder.enter(self._decoder.peek().nr, asn1.Classes.Private)
 

@@ -2,12 +2,24 @@ from typing import Any, List, Optional, Tuple, Union
 from zlib import adler32
 
 import asn1
-import liblzfse
-import lzss
 from Crypto.Cipher import AES
 
 from ._types import *
 from .errors import *
+
+try:
+    import lzss
+
+    have_lzss = True
+except ImportError:
+    have_lzss = False
+
+try:
+    import liblzfse
+
+    have_lzfse = True
+except ImportError:
+    have_lzfse = False
 
 
 class _PyIMG4:
@@ -1247,12 +1259,20 @@ class IM4PData(_PyIMG4):
             )
 
         if compression == Compression.LZSS:
+            if not have_lzss:
+                raise RuntimeError('pylzss not installed, cannot use LZSS compression')
+
             self._data = self._create_complzss_header() + lzss.compress(self._data)
 
             if self.extra is not None:
                 self._data += self.extra
 
         elif compression == Compression.LZFSE:
+            if not have_lzfse:
+                raise RuntimeError(
+                    'pyliblzfse not installed, cannot use LZFSE compression'
+                )
+
             payload_size = len(self._data)
             self._data = liblzfse.compress(self._data)
             # Cannot set LZFSE payload size until after compression
@@ -1275,10 +1295,18 @@ class IM4PData(_PyIMG4):
             raise CompressionError('Cannot decompress encrypted payload.')
 
         elif self.compression == Compression.LZSS:
+            if not have_lzss:
+                raise RuntimeError('pylzss not installed, cannot use LZSS compression')
+
             self._parse_complzss_header()
             self._data = lzss.decompress(self._data)
 
         elif self.compression == Compression.LZFSE:
+            if not have_lzfse:
+                raise RuntimeError(
+                    'pyliblzfse not installed, cannot use LZFSE compression'
+                )
+
             self._lzfse_payload_size = None
             self._data = liblzfse.decompress(self._data)
 

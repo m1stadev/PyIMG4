@@ -846,11 +846,11 @@ class IM4P(_PyIMG4):
 
             kbag_decoder.enter()
 
-            for kt in KeybagType:
+            while not kbag_decoder.eof():
                 if kbag_decoder.peek().nr != asn1.Numbers.Sequence:
                     raise UnexpectedTagError(kbag_decoder.peek(), asn1.Numbers.Sequence)
 
-                self.payload.add_keybag(Keybag(kbag_decoder.read()[1], kt))
+                self.payload.add_keybag(Keybag(kbag_decoder.read()[1]))
 
         if not self._decoder.eof() and self._decoder.peek().nr == asn1.Numbers.Sequence:
             self._decoder.enter()
@@ -1048,18 +1048,17 @@ class Keybag(_PyIMG4):
     def __init__(
         self,
         data: Optional[bytes] = None,
-        type_: KeybagType = KeybagType.PRODUCTION,  # Assume PRODUCTION if not provided
         *,
         iv: bytes = None,
         key: bytes = None,
+        type_: KeybagType = KeybagType.PRODUCTION  # Assume PRODUCTION if not provided
     ) -> None:
         super().__init__(data)
-
-        self.type = type_
 
         if iv and key:
             self.iv = iv
             self.key = key
+            self.type = type_
 
         elif data:
             self._parse()
@@ -1077,6 +1076,8 @@ class Keybag(_PyIMG4):
 
         if self._decoder.read()[0].nr != asn1.Numbers.Integer:
             raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Integer)
+
+        self.type = KeybagType(self._decoder.read()[1])
 
         if self._decoder.peek().nr != asn1.Numbers.OctetString:
             raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.OctetString)

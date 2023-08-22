@@ -15,5 +15,5 @@ class Payload(NamedTuple):
 
 
 class KeybagType(IntEnum):
-    PRODUCTION = 0x0
-    DEVELOPMENT = 0x1
+    PRODUCTION = 0x1
+    DEVELOPMENT = 0x2

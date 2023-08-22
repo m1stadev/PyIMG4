@@ -1074,7 +1074,7 @@ class Keybag(_PyIMG4):
     def _parse(self) -> None:
         self._decoder.start(self._data)
 
-        if self._decoder.read()[0].nr != asn1.Numbers.Integer:
+        if self._decoder.peek().nr != asn1.Numbers.Integer:
             raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Integer)
 
         self.type = KeybagType(self._decoder.read()[1])

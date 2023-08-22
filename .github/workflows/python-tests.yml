@@ -29,6 +29,6 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip poetry
-        python -m poetry install
+        python -m poetry install -E compression
     - name: Run tests
       run: python -m poetry run pytest

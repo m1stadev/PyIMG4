@@ -43,18 +43,21 @@ Commands:
 ```
 
 ## Requirements
-- Python 3.6 or higher (Python 3.7+ is recommended)
+- Python 3.8 or higher
 - Python development headers (`python3-dev` on Debian-based OSes)
 
 ## Installation
 - Install from [PyPI](https://pypi.org/project/pyimg4/):
     - ```python3 -m pip install pyimg4```
+    - If you would like to use the compression features of PyIMG4, install the required libraries:
+      - ```python3 -m pip install pyimg4[compression]```
 - Local installation:
     - `./install.sh`
     - Requires [Poetry](https://python-poetry.org)
 
 ## TODO
 - Write documentation
+- Add logging
 
 ## Support
 

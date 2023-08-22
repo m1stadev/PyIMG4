@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyimg4"
-version = "0.7"
+version = "0.8"
 description = "A Python library/CLI tool for parsing Apple's Image4 format."
 authors = ["m1stadev <adamhamdi31@gmail.com>"]
 license = "MIT"
@@ -12,7 +12,7 @@ classifiers = [
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
     "Topic :: Utilities"
 ]
 
@@ -20,18 +20,21 @@ classifiers = [
 pyimg4 = "pyimg4.__main__:cli"
 
 [tool.poetry.dependencies]
-python = "^3.6"
-asn1 = "^2.6.0"
-click = "^8.0.0"
-pycryptodome = "^3.16.0"
-pyliblzfse = "^0.4.1"
-pylzss = "^0.3.1"
+python = "^3.8"
+asn1 = "^2.7.0"
+click = "^8.1.7"
+pycryptodome = "^3.18.0"
+pyliblzfse = {version = "^0.4.1", optional = true}
+pylzss = {version = "^0.3.1", optional = true}
+
+[tool.poetry.extras]
+compression = ["pyliblzfse", "pylzss"]
 
 [tool.poetry.dev-dependencies]
-black = {version = "^22.10.0", python = "^3.7"}
-isort = {version = "^5.10.1", python = "^3.7"}
-pytest = {version = "^7.2.0", python = "^3.7"}
-remotezip = {version = "^0.10.0", python = "^3.7"}
+black = "^23.7.0"
+isort = "^5.12.0"
+pytest = "^7.4.0"
+remotezip = "^0.12.1"
 
 [tool.black]
 skip-string-normalization = true

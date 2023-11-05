@@ -18,7 +18,7 @@ def main() -> None:
     with shsh_path.open('rb') as f:
         try:
             data = plistlib.load(f)
-        except:
+        except plistlib.InvalidFileException:
             sys.exit(f'[ERROR] Failed to read SHSH blob: {shsh_path}')
 
     try:

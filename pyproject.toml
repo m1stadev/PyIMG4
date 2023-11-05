@@ -31,20 +31,17 @@ pylzss = {version = "^0.3.1", optional = true}
 compression = ["pyliblzfse", "pylzss"]
 
 [tool.poetry.dev-dependencies]
-black = "^23.7.0"
-isort = "^5.12.0"
 pytest = "^7.4.0"
 remotezip = "^0.12.1"
 
-[tool.black]
-skip-string-normalization = true
-
-[tool.isort]
-profile = "black"
-src_paths = ["examples", "pyimg4", "tests"]
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff.lint]
+ignore = ["E722"]
+
+[tool.ruff.format]
+quote-style = "single"
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/m1stadev/PyIMG4/issues"

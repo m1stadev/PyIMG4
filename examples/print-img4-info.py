@@ -27,7 +27,7 @@ def main() -> None:
     print(f'    Data size: {round(len(img4.im4p.payload) / 1000, 2)}KB')
 
     if (
-        img4.im4p.payload.encrypted == False
+        img4.im4p.payload.encrypted is False
         and img4.im4p.payload.compression != pyimg4.Compression.NONE
     ):
         print(f'    Data compression type: {img4.im4p.payload.compression.name}')

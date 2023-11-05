@@ -1,10 +1,7 @@
-from ._parser import *
-from ._types import *
-from .errors import *
+from ._parser import *  # noqa: F403
+from ._types import *  # noqa: F403
+from .errors import *  # noqa: F403
 
-try:
-    from importlib.metadata import version
-except ModuleNotFoundError:
-    from importlib_metadata import version
+from importlib.metadata import version
 
 __version__ = version(__package__)

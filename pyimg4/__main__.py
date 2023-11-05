@@ -11,14 +11,14 @@ from pyimg4 import Compression, Keybag
 @click.group()
 @click.version_option(message=f'PyIMG4 {pyimg4.__version__}')
 def cli():
-    '''A Python CLI tool for parsing Apple's Image4 format.'''
+    """A Python CLI tool for parsing Apple's Image4 format."""
 
     sys.tracebacklimit = 0
 
 
 @cli.group()
 def im4m() -> None:
-    '''Image4 manifest commands.'''
+    """Image4 manifest commands."""
 
     pass
 
@@ -40,7 +40,7 @@ def im4m() -> None:
     help='Increase verbosity.',
 )
 def im4m_info(input_: BinaryIO, verbose: bool) -> None:
-    '''Print available information on an Image4 manifest.'''
+    """Print available information on an Image4 manifest."""
 
     click.echo(f'Reading {input_.name}...')
 
@@ -124,7 +124,7 @@ def im4m_info(input_: BinaryIO, verbose: bool) -> None:
     help='Increase verbosity.',
 )
 def im4m_verify(input_: BinaryIO, build_manifest: BinaryIO, verbose: bool) -> None:
-    '''Verify an Image4 manifest with a provided build manifest.'''
+    """Verify an Image4 manifest with a provided build manifest."""
 
     click.echo(f'Reading {input_.name}...')
 
@@ -137,7 +137,7 @@ def im4m_verify(input_: BinaryIO, build_manifest: BinaryIO, verbose: bool) -> No
 
     try:
         manifest = plistlib.load(build_manifest)
-    except:
+    except plistlib.InvalidFileException:
         raise click.BadParameter(
             f'Failed to parse build manifest file: {build_manifest.name}'
         )
@@ -188,7 +188,7 @@ def im4m_verify(input_: BinaryIO, build_manifest: BinaryIO, verbose: bool) -> No
 
 @cli.group()
 def im4p() -> None:
-    '''Image4 payload commands.'''
+    """Image4 payload commands."""
 
     pass
 
@@ -238,7 +238,7 @@ def im4p_create(
     extra: Optional[BinaryIO],
     compression_type: Optional[str],
 ) -> None:
-    '''Create an Image4 payload file.'''
+    """Create an Image4 payload file."""
 
     if len(fourcc) != 4:
         raise click.BadParameter('FourCC must be 4 characters long')
@@ -312,7 +312,7 @@ def im4p_extract(
     iv: Optional[str],
     key: Optional[str],
 ) -> None:
-    '''Extract data from an Image4 payload.'''
+    """Extract data from an Image4 payload."""
 
     click.echo(f'Reading {input_.name}...')
 
@@ -322,14 +322,14 @@ def im4p_extract(
         raise click.BadParameter(f'Failed to parse Image4 payload file: {input_.name}')
 
     if iv is None and key is None:
-        if im4p.payload.encrypted == True:
+        if im4p.payload.encrypted is True:
             click.echo('[NOTE] Image4 payload data is encrypted')
 
     elif iv is None or key is None:
-        if im4p.payload.encrypted == True:
+        if im4p.payload.encrypted is True:
             raise click.BadParameter('You must specify both the IV and the key')
 
-    elif im4p.payload.encrypted == True:
+    elif im4p.payload.encrypted is True:
         click.echo('[NOTE] Image4 payload data is encrypted, decrypting...')
 
         if iv.lower().startswith('0x'):
@@ -398,7 +398,7 @@ def im4p_extract(
     help='Increase verbosity.',
 )
 def im4p_info(input_: BinaryIO, verbose: bool) -> None:
-    '''Print available information on an Image4 payload.'''
+    """Print available information on an Image4 payload."""
 
     click.echo(f'Reading {input_.name}...')
 
@@ -459,7 +459,7 @@ def im4p_info(input_: BinaryIO, verbose: bool) -> None:
 
 @cli.group()
 def im4r() -> None:
-    '''Image4 restore info commands.'''
+    """Image4 restore info commands."""
 
     pass
 
@@ -480,7 +480,7 @@ def im4r() -> None:
     help='File to output Image4 restore info to.',
 )
 def im4r_create(boot_nonce: str, output: BinaryIO) -> None:
-    '''Create an Image4 restore info file.'''
+    """Create an Image4 restore info file."""
 
     click.echo(f'Creating Image4 restore info file with boot nonce: {boot_nonce}...')
 
@@ -518,7 +518,7 @@ def im4r_create(boot_nonce: str, output: BinaryIO) -> None:
     help='Increase verbosity.',
 )
 def im4r_info(input_: BinaryIO, verbose: bool) -> None:
-    '''Print available information on an Image4 restore info file.'''
+    """Print available information on an Image4 restore info file."""
 
     click.echo(f'Reading {input_.name}...')
 
@@ -551,7 +551,7 @@ def im4r_info(input_: BinaryIO, verbose: bool) -> None:
 
 @cli.group()
 def img4() -> None:
-    '''Image4 commands.'''
+    """Image4 commands."""
 
     pass
 
@@ -594,7 +594,7 @@ def img4_create(
     boot_nonce: Optional[str],
     output: BinaryIO,
 ):
-    '''Create an Image4 file.'''
+    """Create an Image4 file."""
 
     click.echo(f'Reading {im4p.name}...')
 
@@ -676,7 +676,7 @@ def img4_extract(
     im4m: Optional[BinaryIO],
     im4r: Optional[BinaryIO],
 ) -> None:
-    '''Extract Image4 manifest/payload/restore info from an Image4 file.'''
+    """Extract Image4 manifest/payload/restore info from an Image4 file."""
 
     click.echo(f'Reading {input_.name}...')
 
@@ -727,7 +727,7 @@ def img4_extract(
     help='Increase verbosity.',
 )
 def img4_info(input_: BinaryIO, verbose: bool) -> None:
-    '''Print available information on an Image4 file.'''
+    """Print available information on an Image4 file."""
 
     click.echo(f'Reading {input_.name}...')
 
@@ -744,7 +744,7 @@ def img4_info(input_: BinaryIO, verbose: bool) -> None:
     click.echo(f'    Data size: {round(len(img4.im4p.payload) / 1000, 2)}KB')
 
     if (
-        img4.im4p.payload.encrypted == False
+        img4.im4p.payload.encrypted is False
         and img4.im4p.payload.compression != pyimg4.Compression.NONE
     ):
         click.echo(f'    Data compression type: {img4.im4p.payload.compression.name}')

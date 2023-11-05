@@ -4,8 +4,8 @@ from zlib import adler32
 import asn1
 from Crypto.Cipher import AES
 
-from ._types import *
-from .errors import *
+from ._types import Compression, Payload, KeybagType
+from .errors import CompressionError, UnexpectedDataError, UnexpectedTagError
 
 try:
     import lzss
@@ -1051,7 +1051,7 @@ class Keybag(_PyIMG4):
         *,
         iv: bytes = None,
         key: bytes = None,
-        type_: KeybagType = KeybagType.PRODUCTION  # Assume PRODUCTION if not provided
+        type_: KeybagType = KeybagType.PRODUCTION,  # Assume PRODUCTION if not provided
     ) -> None:
         super().__init__(data)
 
@@ -1068,7 +1068,7 @@ class Keybag(_PyIMG4):
 
     def __repr__(self) -> str:
         return (
-            f"Keybag(iv={self.iv.hex()}, key={self.key.hex()}, type={self.type.name})"
+            f'Keybag(iv={self.iv.hex()}, key={self.key.hex()}, type={self.type.name})'
         )
 
     def _parse(self) -> None:
@@ -1292,7 +1292,7 @@ class IM4PData(_PyIMG4):
         if self.compression == Compression.NONE:
             raise CompressionError('Payload is not compressed.')
 
-        if self.encrypted == True:
+        if self.encrypted is True:
             raise CompressionError('Cannot decompress encrypted payload.')
 
         elif self.compression == Compression.LZSS:
@@ -1312,11 +1312,8 @@ class IM4PData(_PyIMG4):
             self._data = liblzfse.decompress(self._data)
 
     def decrypt(self, kbag: Keybag) -> None:
-        try:
-            self._data = AES.new(kbag.key, AES.MODE_CBC, kbag.iv).decrypt(self._data)
-            self._keybags = []
-        except:
-            raise AESError('Failed to decrypt payload.')
+        self._data = AES.new(kbag.key, AES.MODE_CBC, kbag.iv).decrypt(self._data)
+        self._keybags = []
 
     def get_lzfse_payload_size(self) -> int:
         if self._lzfse_payload_size is None:
@@ -1344,7 +1341,7 @@ class IM4PData(_PyIMG4):
             raise UnexpectedDataError('int', size)
 
         # If the payload isn't LZFSE-compressed nor encrypted, the payload size can't be set.
-        if self.compression != Compression.LZFSE and self.encrypted == False:
+        if self.compression != Compression.LZFSE and self.encrypted is False:
             raise CompressionError(
                 'Cannot set LZFSE payload size of non-LZFSE-compressed payload.'
             )

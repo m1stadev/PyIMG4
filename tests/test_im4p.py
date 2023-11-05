@@ -24,7 +24,7 @@ def test_read_lzss_dec(DEC_LZSS_IM4P: bytes) -> None:
     assert im4p.fourcc == 'krnl'
     assert im4p.description == 'KernelCacheBuilder_release-2238.10.3'
 
-    assert im4p.payload.encrypted == False
+    assert im4p.payload.encrypted is False
 
     assert im4p.payload.compression == pyimg4.Compression.LZSS
 
@@ -42,7 +42,7 @@ def test_read_lzss_enc(ENC_LZSS_IM4P: bytes) -> None:
     assert im4p.fourcc == 'krnl'
     assert im4p.description == 'KernelCacheBuilder-960.40.11'
 
-    assert im4p.payload.encrypted == True
+    assert im4p.payload.encrypted is True
     assert len(im4p.payload.keybags) == 2
 
     assert im4p.payload.compression == pyimg4.Compression.NONE
@@ -87,7 +87,7 @@ def test_read_lzfse_enc(ENC_LZFSE_IM4P: bytes) -> None:
     assert im4p.fourcc == 'ibss'
     assert im4p.description == 'iBoot-7429.12.15'
 
-    assert im4p.payload.encrypted == True
+    assert im4p.payload.encrypted is True
     assert len(im4p.payload.keybags) == 2
 
     assert im4p.payload.compression == pyimg4.Compression.LZFSE_ENCRYPTED
@@ -116,7 +116,7 @@ def test_read_payp(PAYP_IM4P: bytes) -> None:
     assert im4p.fourcc == 'ibss'
     assert im4p.description == 'iBoot-8419.40.112'
 
-    assert im4p.payload.encrypted == True
+    assert im4p.payload.encrypted is True
     assert len(im4p.payload.keybags) == 2
 
     assert im4p.payload.compression == pyimg4.Compression.LZFSE_ENCRYPTED

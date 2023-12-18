@@ -25,7 +25,7 @@ asn1 = "^2.7.0"
 click = "^8.1.7"
 pycryptodome = "^3.18.0"
 pyliblzfse = {version = "^0.4.1", optional = true}
-pylzss = {version = "^0.3.1", optional = true}
+pylzss = {version = "^0.3.4", optional = true}
 
 [tool.poetry.extras]
 compression = ["pyliblzfse", "pylzss"]
@@ -38,6 +38,7 @@ remotezip = "^0.12.1"
 testpaths = ["tests"]
 
 [tool.ruff.lint]
+extend-select = ["I"]
 ignore = ["E722"]
 
 [tool.ruff.format]

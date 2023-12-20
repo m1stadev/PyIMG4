@@ -204,19 +204,42 @@ def im4m_verify(input_: BinaryIO, build_manifest: BinaryIO, verbose: bool) -> No
     required=True,
 )
 @click.option(
-    '-v',
-    '--verbose',
-    'verbose',
-    is_flag=True,
-    help='Increase verbosity.',
+    '-u',
+    '--update',
+    'install_type',
+    flag_value='updateInstall',
+    help='Extract update Image4 manifest (if available).',
 )
-def im4m_extract(input_: BinaryIO, output: BinaryIO, verbose: bool) -> None:
+@click.option(
+    '-n',
+    '--no-nonce' 'install_type',
+    flag_value='noNonce',
+    help='Extract no-nonce Image4 manifest (if available).',
+)
+def im4m_extract(
+    input_: BinaryIO, output: BinaryIO, install_type: Optional[str]
+) -> None:
     """Extract an Image4 manifest from an SHSH blob."""
 
     try:
         data = plistlib.load(input_)
     except plistlib.InvalidFileException:
         raise click.BadParameter(f'Failed to read SHSH blob: {input_.name}')
+
+    if install_type == 'updateInstall':
+        if 'updateInstall' not in data.keys():
+            raise click.BadParameter(
+                f'SHSH blob does not contain an update Image4 manifest: {input_.name}'
+            )
+
+        data = data['updateInstall']
+    elif install_type == 'noNonce':
+        if 'noNonce' not in data.keys():
+            raise click.BadParameter(
+                f'SHSH blob does not contain a no-nonce Image4 manifest: {input_.name}'
+            )
+
+        data = data['noNonce']
 
     if 'ApImg4Ticket' not in data.keys():
         raise click.BadParameter(

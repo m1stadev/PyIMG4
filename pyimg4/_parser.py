@@ -4,7 +4,7 @@ from zlib import adler32
 import asn1
 from Crypto.Cipher import AES
 
-from ._types import Compression, Payload, KeybagType
+from ._types import Compression, KeybagType, Payload
 from .errors import CompressionError, UnexpectedDataError, UnexpectedTagError
 
 try:

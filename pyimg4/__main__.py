@@ -186,6 +186,54 @@ def im4m_verify(input_: BinaryIO, build_manifest: BinaryIO, verbose: bool) -> No
     click.echo('Image4 manifest is not valid for the provided build manifest!')
 
 
+@im4m.command('extract')
+@click.option(
+    '-i',
+    '--input',
+    'input_',
+    type=click.File('rb'),
+    help='Input SHSH blob file.',
+    required=True,
+)
+@click.option(
+    '-o',
+    '--output',
+    'output',
+    type=click.File('wb'),
+    help='Output file.',
+    required=True,
+)
+@click.option(
+    '-v',
+    '--verbose',
+    'verbose',
+    is_flag=True,
+    help='Increase verbosity.',
+)
+def im4m_extract(input_: BinaryIO, output: BinaryIO, verbose: bool) -> None:
+    """Extract an Image4 manifest from an SHSH blob."""
+
+    try:
+        data = plistlib.load(input_)
+    except plistlib.InvalidFileException:
+        raise click.BadParameter(f'Failed to read SHSH blob: {input_.name}')
+
+    if 'ApImg4Ticket' not in data.keys():
+        raise click.BadParameter(
+            f'SHSH blob does not contain an Image4 manifest: {input_.name}'
+        )
+
+    try:
+        im4m = pyimg4.IM4M(data['ApImg4Ticket'])
+    except:
+        raise click.BadParameter(
+            f'Failed to parse Image4 manifest in SHSH blob: {input_.name}'
+        )
+
+    output.write(im4m.output())
+    click.echo(f'Image4 manifest outputted to: {output.name}')
+
+
 @cli.group()
 def im4p() -> None:
     """Image4 payload commands."""
@@ -271,7 +319,7 @@ def im4p_create(
         im4p.payload.compress(compression_type)
 
     output.write(im4p.output())
-    click.echo(f'IM4P outputted to: {output.name}')
+    click.echo(f'Image4 payload outputted to: {output.name}')
 
 
 @im4p.command('extract')

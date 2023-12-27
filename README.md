@@ -30,7 +30,7 @@ Usage: pyimg4 [OPTIONS] COMMAND [ARGS]...
 
 Options:
   --version  Show the version and exit.
-  --help     Show this message and exit.
+  -h, --help     Show this message and exit.
 
 Commands:
   im4m  Image4 manifest commands.

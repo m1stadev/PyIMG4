@@ -7,8 +7,10 @@ import click
 import pyimg4
 from pyimg4 import Compression, Keybag
 
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-@click.group()
+
+@click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option(message=f'PyIMG4 {pyimg4.__version__}')
 def cli():
     """A Python CLI tool for parsing Apple's Image4 format."""

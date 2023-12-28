@@ -214,7 +214,8 @@ def im4m_verify(input_: BinaryIO, build_manifest: BinaryIO, verbose: bool) -> No
 )
 @click.option(
     '-n',
-    '--no-nonce' 'install_type',
+    '--no-nonce',
+    'install_type',
     flag_value='noNonce',
     help='Extract no-nonce Image4 manifest (if available).',
 )

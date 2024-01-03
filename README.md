@@ -13,6 +13,9 @@ PyIMG4
     <image src="https://img.shields.io/github/stars/m1stadev/PyIMG4">
   </a>
   <a href="https://github.com/m1stadev/PyIMG4">
+    <image src="https://tokei.rs/b1/github/m1stadev/PyIMG4?category=code&lang=python&style=flat">
+  </a>
+  <a href="https://github.com/m1stadev/PyIMG4">
     <image src="https://img.shields.io/github/actions/workflow/status/m1stadev/PyIMG4/.github/workflows/python-tests.yml">
   </a>
     <br>

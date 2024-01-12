@@ -10,7 +10,7 @@ PAYP_IPSW = 'https://updates.cdn-apple.com/2022FallFCS/fullrestores/032-11449/39
 
 
 def get_ipsw_file(url: str, filename: str) -> bytes:
-    for _ in range(5):
+    while True:
         try:
             rz = RemoteZip(url)
             break

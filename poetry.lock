@@ -4,7 +4,7 @@
 name = "apple-compress"
 version = "0.2.2"
 description = "Python bindings for Apple's libcompression."
-optional = false
+optional = true
 python-versions = ">=3.8,<4.0"
 files = [
     {file = "apple_compress-0.2.2-py3-none-any.whl", hash = "sha256:499b25f8d04c1e557dc5a50878b06170a7ca196931ee32cfd7d8cf2abc002745"},
@@ -215,7 +215,7 @@ files = [
 name = "loguru"
 version = "0.7.2"
 description = "Python logging made (stupidly) simple"
-optional = false
+optional = true
 python-versions = ">=3.5"
 files = [
     {file = "loguru-0.7.2-py3-none-any.whl", hash = "sha256:003d71e3d3ed35f0f8984898359d65b79e5b21943f78af86aa5491210429b8eb"},
@@ -516,7 +516,7 @@ zstd = ["zstandard (>=0.18.0)"]
 name = "win32-setctime"
 version = "1.1.0"
 description = "A small Python utility to set file creation time on Windows"
-optional = false
+optional = true
 python-versions = ">=3.5"
 files = [
     {file = "win32_setctime-1.1.0-py3-none-any.whl", hash = "sha256:231db239e959c2fe7eb1d7dc129f11172354f98361c4fa2d6d2d7e278baa8aad"},
@@ -527,9 +527,9 @@ files = [
 dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 
 [extras]
-compression = ["pyliblzfse", "pylzss"]
+compression = ["apple-compress", "pyliblzfse", "pylzss"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "cad9e1fa4c3bd7a366f4e8cf8ec1d71b83645ae85f9eef31a1de483596c94043"
+content-hash = "7c0d25822fbe3e2fcdf0465f32db3f7cf08e43df18aad4ac104a9a0eb10dd4d6"

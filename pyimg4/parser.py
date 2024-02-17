@@ -11,42 +11,42 @@ from .types import Compression, KeybagType, Payload
 try:
     import lzss
 
-    have_lzss = True
+    _have_lzss = True
 except ImportError:
-    have_lzss = False
+    _have_lzss = False
 
-have_lzfse = False
+_have_lzfse = False
 if platform == 'Darwin':
     try:
         import apple_compress
 
-        def lzfse_decompress(data: bytes, decmp_size: Optional[int] = None) -> bytes:
+        def _lzfse_decompress(data: bytes, decmp_size: Optional[int] = None) -> bytes:
             return apple_compress.decompress(
                 data,
                 algorithm=apple_compress.Algorithm.LZFSE_IBOOT,
                 decmp_size=decmp_size,
             )
 
-        def lzfse_compress(data: bytes) -> bytes:
+        def _lzfse_compress(data: bytes) -> bytes:
             return apple_compress.compress(
                 data, algorithm=apple_compress.Algorithm.LZFSE_IBOOT
             )
 
-        have_lzfse = True
+        _have_lzfse = True
     except ImportError:
         pass
 
-if have_lzfse is False:
+if _have_lzfse is False:
     try:
         import liblzfse
 
-        def lzfse_decompress(data: bytes, _: Optional[int] = None) -> bytes:
+        def _lzfse_decompress(data: bytes, _: Optional[int] = None) -> bytes:
             return liblzfse.decompress(data)
 
-        def lzfse_compress(data: bytes) -> bytes:
+        def _lzfse_compress(data: bytes) -> bytes:
             return liblzfse.compress(data)
 
-        have_lzfse = True
+        _have_lzfse = True
     except ImportError:
         pass
 
@@ -1313,19 +1313,19 @@ class IM4PData(_PyIMG4):
 
         self.size = len(self._data)
         if compression == Compression.LZSS:
-            if not have_lzss:
+            if not _have_lzss:
                 raise RuntimeError('pylzss not installed, cannot use LZSS compression')
 
             comp_data = lzss.compress(self._data)
             self._data = self._create_complzss_header(len(comp_data)) + comp_data
 
         elif compression == Compression.LZFSE:
-            if not have_lzfse:
+            if not _have_lzfse:
                 raise RuntimeError(
                     'apple-compress/pyliblzfse not installed, cannot use LZFSE compression'
                 )
 
-            comp_data = lzfse_compress(self._data)
+            comp_data = _lzfse_compress(self._data)
             if not (comp_data.startswith(b'bvx2') and b'bvx$' in comp_data):
                 raise CompressionError('Failed to LZFSE-compress payload.')
 
@@ -1342,20 +1342,20 @@ class IM4PData(_PyIMG4):
             raise CompressionError('Cannot decompress encrypted payload.')
 
         if self.compression == Compression.LZSS:
-            if not have_lzss:
+            if not _have_lzss:
                 raise RuntimeError('pylzss not installed, cannot use LZSS compression')
 
             self._parse_complzss_header()
             self._data = lzss.decompress(self._data)
 
         elif self.compression == Compression.LZFSE:
-            if not have_lzfse:
+            if not _have_lzfse:
                 raise RuntimeError(
                     'apple-compress/pyliblzfse not installed, cannot use LZFSE compression'
                 )
 
             size = self.size or None
-            self._data = lzfse_decompress(self._data, size)
+            self._data = _lzfse_decompress(self._data, size)
 
     def decrypt(self, kbag: Keybag) -> None:
         self._data = AES.new(kbag.key, AES.MODE_CBC, kbag.iv).decrypt(self._data)

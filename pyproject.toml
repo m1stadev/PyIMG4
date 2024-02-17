@@ -26,6 +26,7 @@ click = "^8.1.7"
 pycryptodome = "^3.18.0"
 pyliblzfse = {version = "^0.4.1", optional = true}
 pylzss = {version = "^0.3.4", optional = true}
+apple-compress = "^0.2.2"
 
 [tool.poetry.extras]
 compression = ["pyliblzfse", "pylzss"]

@@ -1,3 +1,4 @@
+from sys import platform
 from typing import Any, List, Optional, Tuple, Union
 from zlib import adler32
 
@@ -14,12 +15,40 @@ try:
 except ImportError:
     have_lzss = False
 
-try:
-    import liblzfse
+have_lzfse = False
+if platform == 'Darwin':
+    try:
+        import apple_compress
 
-    have_lzfse = True
-except ImportError:
-    have_lzfse = False
+        def lzfse_decompress(data: bytes, decmp_size: Optional[int] = None) -> bytes:
+            return apple_compress.decompress(
+                data,
+                algorithm=apple_compress.Algorithm.LZFSE_IBOOT,
+                decmp_size=decmp_size,
+            )
+
+        def lzfse_compress(data: bytes) -> bytes:
+            return apple_compress.compress(
+                data, algorithm=apple_compress.Algorithm.LZFSE_IBOOT
+            )
+
+        have_lzfse = True
+    except ImportError:
+        pass
+
+if have_lzfse is False:
+    try:
+        import liblzfse
+
+        def lzfse_decompress(data: bytes, _: Optional[int] = None) -> bytes:
+            return liblzfse.decompress(data)
+
+        def lzfse_compress(data: bytes) -> bytes:
+            return liblzfse.compress(data)
+
+        have_lzfse = True
+    except ImportError:
+        pass
 
 
 class _PyIMG4:

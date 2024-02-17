@@ -54,10 +54,6 @@ Commands:
     - `./install.sh`
     - Requires [Poetry](https://python-poetry.org)
 
-## TODO
-- Write documentation
-- Add logging
-
 ## Support
 
 For any questions/issues you have, [open an issue](https://github.com/m1stadev/PyIMG4/issues) or join my [Discord](https://m1sta.xyz/discord).

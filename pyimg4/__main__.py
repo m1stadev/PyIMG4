@@ -484,24 +484,27 @@ def im4p_info(input_: BinaryIO, verbose: bool) -> None:
     click.echo('Image4 payload info:')
     click.echo(f'  FourCC: {im4p.fourcc}')
     click.echo(f'  Description: {im4p.description}')
-    click.echo(f'  Data size: {round(len(im4p.payload) / 1000, 2)}KB')
+
+    if verbose:
+        payload_size = len(im4p.payload)
+    else:
+        payload_size = f'{round(len(im4p.payload) / 1000, 2)}KB'
+    click.echo(f'  Data size: {payload_size}')
 
     if im4p.payload.compression != pyimg4.Compression.NONE:
         compression_type = (
             'LZFSE'
             if im4p.payload.compression
             in (pyimg4.Compression.LZFSE, pyimg4.Compression.LZFSE_ENCRYPTED)
-            else im4p.payload.compression
+            else im4p.payload.compression.name
         )
         click.echo(f'  Data compression type: {compression_type}')
 
-        if im4p.payload.compression == pyimg4.Compression.LZSS:
-            im4p.payload.decompress()
-            payload_size = len(im4p.payload)
+        if verbose:
+            payload_size = im4p.payload.size
         else:
-            payload_size = im4p.payload.get_lzfse_payload_size()
-
-        click.echo(f'  Data size (uncompressed): {round(payload_size / 1000, 2)}KB')
+            payload_size = f'{round(im4p.payload.size / 1000, 2)}KB'
+        click.echo(f'  Data size (uncompressed): {payload_size}')
 
     click.echo(f'  Encrypted: {im4p.payload.encrypted}')
     if im4p.payload.encrypted:

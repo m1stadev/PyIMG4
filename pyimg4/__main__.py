@@ -151,13 +151,13 @@ def im4m_verify(input_: BinaryIO, build_manifest: BinaryIO, verbose: bool) -> No
         ):
             if verbose:
                 click.echo(
-                    f"Skipping build identity {manifest['BuildIdentities'].index(identity)}..."
+                    f"Skipping build identity {manifest['BuildIdentities'].index(identity) + 1}..."
                 )
 
             continue
 
         click.echo(
-            f"Selected build identity: {manifest['BuildIdentities'].index(identity)}"
+            f"Selected build identity: {manifest['BuildIdentities'].index(identity) + 1}"
         )
         for name, image_info in identity['Manifest'].items():
             if 'Digest' not in image_info.keys():

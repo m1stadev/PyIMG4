@@ -635,10 +635,38 @@ def img4() -> None:
 
 @img4.command('create')
 @click.option(
+    '-i',
+    '--input',
+    'input_',
+    type=click.File('rb'),
+    required=True,
+    help='Input file.',
+)
+@click.option('-f', '--fourcc', type=str, required=True, help='FourCC to set.')
+@click.option(
+    '-d',
+    '--description',
+    type=str,
+    help='Description to set.',
+)
+@click.option(
+    '--lzss', 'compression_type', flag_value='LZSS', help='LZSS compress the data.'
+)
+@click.option(
+    '--lzfse',
+    'compression_type',
+    flag_value='LZFSE',
+    help='LZFSE compress the data.',
+)
+@click.option(
+    '--extra',
+    type=click.File('rb'),
+    help='Extra IM4P payload data to set (requires --lzss).',
+)
+@click.option(
     '-p',
     '--im4p',
     type=click.File('rb'),
-    required=True,
     help='Input Image4 payload file.',
 )
 @click.option(
@@ -665,7 +693,12 @@ def img4() -> None:
     '-o', '--output', type=click.File('wb'), required=True, help='Output file.'
 )
 def img4_create(
-    im4p: BinaryIO,
+    input_: Optional[BinaryIO],
+    fourcc: Optional[str],
+    description: Optional[str],
+    compression_type: Optional[str],
+    extra: Optional[BinaryIO],
+    im4p: Optional[BinaryIO],
     im4m: BinaryIO,
     im4r: Optional[BinaryIO],
     boot_nonce: Optional[str],
@@ -673,19 +706,65 @@ def img4_create(
 ):
     """Create an Image4 file."""
 
-    click.echo(f'Reading {im4p.name}...')
+    if all(i is None for i in (input_, im4p, im4m, im4r, boot_nonce)):
+        raise click.BadParameter('You must specify at least one input file')
 
-    try:
-        im4p = pyimg4.IM4P(im4p.read())
-    except:
-        raise click.BadParameter(f'Failed to parse Image4 payload file: {im4p.name}')
+    img4 = pyimg4.IMG4()
+    if im4p is not None:
+        click.echo(f'Reading {im4p.name}...')
 
-    click.echo(f'Reading {im4m.name}...')
+        try:
+            im4p = pyimg4.IM4P(im4p.read())
+        except:
+            raise click.BadParameter(
+                f'Failed to parse Image4 payload file: {im4p.name}'
+            )
 
-    try:
-        im4m = pyimg4.IM4M(im4m.read())
-    except:
-        raise click.BadParameter(f'Failed to parse Image4 manifest file: {im4m.name}')
+        img4.im4p = im4p
+
+    elif input_ is not None:
+        if len(fourcc) != 4:
+            raise click.BadParameter('FourCC must be 4 characters long')
+
+        click.echo(f'Reading {input_.name}...')
+
+        try:
+            im4p = pyimg4.IM4P(
+                fourcc=fourcc, description=description, payload=input_.read()
+            )
+        except:
+            raise click.BadParameter(
+                f'Failed to parse Image4 payload file: {input_.name}'
+            )
+
+        if extra is not None:
+            click.echo(f'Reading extra: {extra.name}...')
+            im4p.payload.extra = extra.read()
+
+        if compression_type is not None:
+            compression_type = getattr(Compression, compression_type)
+
+            if im4p.payload.compression != Compression.NONE:
+                raise click.BadParameter(
+                    f'Payload is already {im4p.payload.compression.name} compressed'
+                )
+
+            click.echo(f'Compressing payload using {compression_type.name}...')
+            im4p.payload.compress(compression_type)
+
+        img4.im4p = im4p
+
+    if im4m is not None:
+        click.echo(f'Reading {im4m.name}...')
+
+        try:
+            im4m = pyimg4.IM4M(im4m.read())
+        except:
+            raise click.BadParameter(
+                f'Failed to parse Image4 manifest file: {im4m.name}'
+            )
+
+        img4.im4m = im4m
 
     if im4r is not None:
         click.echo(f'Reading {im4r.name}...')
@@ -696,6 +775,8 @@ def img4_create(
             raise click.BadParameter(
                 f'Failed to parse Image4 restore info file: {im4r.name}'
             )
+
+        img4.im4r = im4r
 
     elif boot_nonce is not None:
         click.echo(f'Creating Image4 restore info with boot nonce: {boot_nonce}...')
@@ -711,11 +792,9 @@ def img4_create(
         if len(boot_nonce) != 8:
             raise click.BadParameter('Boot nonce must be 8 bytes long')
 
-        im4r = pyimg4.IM4R(boot_nonce=boot_nonce)
+        img4.im4r = pyimg4.IM4R(boot_nonce=boot_nonce)
 
-    click.echo('Creating Image4...')
-    img4 = pyimg4.IMG4(im4p=im4p, im4m=im4m, im4r=im4r)
-
+    click.echo('Outputting Image4...')
     output.write(img4.output())
     click.echo(f'Image4 file outputted to: {output.name}')
 

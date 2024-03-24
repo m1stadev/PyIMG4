@@ -291,11 +291,6 @@ def im4p() -> None:
     help='Description to set.',
 )
 @click.option(
-    '--extra',
-    type=click.File('rb'),
-    help='Extra IM4P payload data to set (requires --lzss).',
-)
-@click.option(
     '--lzss', 'compression_type', flag_value='LZSS', help='LZSS compress the data.'
 )
 @click.option(
@@ -304,13 +299,18 @@ def im4p() -> None:
     flag_value='LZFSE',
     help='LZFSE compress the data.',
 )
+@click.option(
+    '--extra',
+    type=click.File('rb'),
+    help='Extra IM4P payload data to set (requires --lzss).',
+)
 def im4p_create(
     input_: BinaryIO,
     output: BinaryIO,
     fourcc: str,
     description: Optional[str],
-    extra: Optional[BinaryIO],
     compression_type: Optional[str],
+    extra: Optional[BinaryIO],
 ) -> None:
     """Create an Image4 payload file."""
 

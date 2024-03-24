@@ -809,6 +809,18 @@ def img4_create(
     required=True,
 )
 @click.option(
+    '-r',
+    '--raw',
+    'raw',
+    type=click.File('wb'),
+    help='File to output Image4 payload data to.',
+)
+@click.option(
+    '--extra',
+    type=click.File('wb'),
+    help='File to output extra Image4 payload data to.',
+)
+@click.option(
     '-p',
     '--im4p',
     type=click.File('wb'),
@@ -828,6 +840,8 @@ def img4_create(
 )
 def img4_extract(
     input_: BinaryIO,
+    raw: Optional[BinaryIO],
+    extra: Optional[BinaryIO],
     im4p: Optional[BinaryIO],
     im4m: Optional[BinaryIO],
     im4r: Optional[BinaryIO],
@@ -841,8 +855,19 @@ def img4_extract(
     except:
         raise click.BadParameter(f'Failed to parse Image4 file: {input_.name}')
 
-    if all(i is None for i in (im4p, im4m, im4r)):
+    if all(i is None for i in (raw, extra, im4p, im4m, im4r)):
         raise click.BadParameter('You must specify at least one output file')
+
+    if raw is not None:
+        raw.write(img4.im4p.payload.data)
+        click.echo(f'Extracted Image4 payload data to: {raw.name}')
+
+    if extra is not None:
+        if img4.im4p.payload.extra is None:
+            raise click.BadParameter('No extra Image4 payload data found')
+
+        extra.write(img4.im4p.payload.extra)
+        click.echo(f'Extracted extra Image4 payload data to: {extra.name}')
 
     if im4p is not None:
         if img4.im4p is None:

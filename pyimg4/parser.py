@@ -143,24 +143,20 @@ class _Property(_PyIMG4):
 
     def output(self) -> bytes:
         self._encoder.start()
-        self._encoder.enter(
+        with self._encoder.construct(
             int(bytes(self.fourcc, 'ascii').hex(), 16), asn1.Classes.Private
-        )
-        self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+        ):
+            with self._encoder.construct(asn1.Numbers.Sequence, asn1.Classes.Universal):
+                self._encoder.write(
+                    self.fourcc,
+                    asn1.Numbers.IA5String,
+                    asn1.Types.Primitive,
+                    asn1.Classes.Universal,
+                )
 
-        self._encoder.write(
-            self.fourcc,
-            asn1.Numbers.IA5String,
-            asn1.Types.Primitive,
-            asn1.Classes.Universal,
-        )
-
-        self._encoder.write(
-            self.value, None, asn1.Types.Primitive, asn1.Classes.Universal
-        )
-
-        for _ in range(2):
-            self._encoder.leave()
+                self._encoder.write(
+                    self.value, None, asn1.Types.Primitive, asn1.Classes.Universal
+                )
 
         return self._encoder.output()
 
@@ -253,34 +249,30 @@ class _PropertyGroup(_PyIMG4):
             raise ValueError('No properties are set')
 
         self._encoder.start()
-        self._encoder.enter(
+        with self._encoder.construct(
             int(bytes(self.fourcc, 'ascii').hex(), 16), asn1.Classes.Private
-        )
-        self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+        ):
+            with self._encoder.construct(asn1.Numbers.Sequence, asn1.Classes.Universal):
+                self._encoder.write(
+                    self.fourcc,
+                    asn1.Numbers.IA5String,
+                    asn1.Types.Primitive,
+                    asn1.Classes.Universal,
+                )
 
-        self._encoder.write(
-            self.fourcc,
-            asn1.Numbers.IA5String,
-            asn1.Types.Primitive,
-            asn1.Classes.Universal,
-        )
-
-        self._encoder.enter(asn1.Numbers.Set, asn1.Classes.Universal)
-        for prop in self.properties:
-            self._decoder.start(prop.output())
-            self._encoder.enter(self._decoder.peek().nr, asn1.Classes.Private)
-
-            self._decoder.enter()
-            self._encoder.write(
-                self._decoder.read()[1],
-                asn1.Numbers.Sequence,
-                asn1.Types.Constructed,
-                asn1.Classes.Universal,
-            )
-            self._encoder.leave()
-
-        for _ in range(3):
-            self._encoder.leave()
+                with self._encoder.construct(asn1.Numbers.Set, asn1.Classes.Universal):
+                    for prop in self.properties:
+                        self._decoder.start(prop.output())
+                        with self._encoder.construct(
+                            self._decoder.peek().nr, asn1.Classes.Private
+                        ):
+                            self._decoder.enter()
+                            self._encoder.write(
+                                self._decoder.read()[1],
+                                asn1.Numbers.Sequence,
+                                asn1.Types.Constructed,
+                                asn1.Classes.Universal,
+                            )
 
         return self._encoder.output()
 
@@ -530,59 +522,53 @@ class IM4M(_PyIMG4):
             raise ValueError('No images are set')
 
         self._encoder.start()
-        self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+        with self._encoder.construct(asn1.Numbers.Sequence, asn1.Classes.Universal):
+            self._encoder.write(
+                'IM4M',
+                asn1.Numbers.IA5String,
+                asn1.Types.Primitive,
+                asn1.Classes.Universal,
+            )
 
-        self._encoder.write(
-            'IM4M',
-            asn1.Numbers.IA5String,
-            asn1.Types.Primitive,
-            asn1.Classes.Universal,
-        )
+            self._encoder.write(
+                0,
+                asn1.Numbers.Integer,
+                asn1.Types.Primitive,
+                asn1.Classes.Universal,
+            )
 
-        self._encoder.write(
-            0,
-            asn1.Numbers.Integer,
-            asn1.Types.Primitive,
-            asn1.Classes.Universal,
-        )
+            with self._encoder.construct(asn1.Numbers.Set, asn1.Classes.Universal):
+                manp = ManifestImageProperties(fourcc='MANP')
+                for prop in self.properties:
+                    manp.add_property(prop)
 
-        self._encoder.enter(asn1.Numbers.Set, asn1.Classes.Universal)
+                manb = ManifestImageProperties(fourcc='MANB')
+                manb._properties = [manp, *self.images]
+                self._decoder.start(manb.output())
+                with self._encoder.construct(
+                    self._decoder.peek().nr, asn1.Classes.Private
+                ):
+                    self._decoder.enter()
+                    self._encoder.write(
+                        self._decoder.read()[1],
+                        asn1.Numbers.Sequence,
+                        asn1.Types.Constructed,
+                        asn1.Classes.Universal,
+                    )
 
-        manp = ManifestImageProperties(fourcc='MANP')
-        for prop in self.properties:
-            manp.add_property(prop)
+            self._encoder.write(
+                self.signature,
+                asn1.Numbers.OctetString,
+                asn1.Types.Primitive,
+                asn1.Classes.Universal,
+            )
 
-        manb = ManifestImageProperties(fourcc='MANB')
-        manb._properties = [manp, *self.images]
-        self._decoder.start(manb.output())
-        self._encoder.enter(self._decoder.peek().nr, asn1.Classes.Private)
-
-        self._decoder.enter()
-        self._encoder.write(
-            self._decoder.read()[1],
-            asn1.Numbers.Sequence,
-            asn1.Types.Constructed,
-            asn1.Classes.Universal,
-        )
-
-        for _ in range(2):
-            self._encoder.leave()
-
-        self._encoder.write(
-            self.signature,
-            asn1.Numbers.OctetString,
-            asn1.Types.Primitive,
-            asn1.Classes.Universal,
-        )
-
-        self._encoder.write(
-            self.certificates,
-            asn1.Numbers.Sequence,
-            asn1.Types.Constructed,
-            asn1.Classes.Universal,
-        )
-
-        self._encoder.leave()
+            self._encoder.write(
+                self.certificates,
+                asn1.Numbers.Sequence,
+                asn1.Types.Constructed,
+                asn1.Classes.Universal,
+            )
         return self._encoder.output()
 
 
@@ -628,35 +614,30 @@ class IM4R(_PropertyGroup):
             raise ValueError('No properties are set')
 
         self._encoder.start()
-        self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
-
-        self._encoder.write(
-            self.fourcc,
-            asn1.Numbers.IA5String,
-            asn1.Types.Primitive,
-            asn1.Classes.Universal,
-        )
-
-        self._encoder.enter(asn1.Numbers.Set, asn1.Classes.Universal)
-
-        if self.boot_nonce is not None:
-            self.boot_nonce = self.boot_nonce[::-1]
-
-        for prop in self.properties:
-            self._decoder.start(prop.output())
-            self._encoder.enter(self._decoder.peek().nr, asn1.Classes.Private)
-
-            self._decoder.enter()
+        with self._encoder.construct(asn1.Numbers.Sequence, asn1.Classes.Universal):
             self._encoder.write(
-                self._decoder.read()[1],
-                asn1.Numbers.Sequence,
-                asn1.Types.Constructed,
+                self.fourcc,
+                asn1.Numbers.IA5String,
+                asn1.Types.Primitive,
                 asn1.Classes.Universal,
             )
-            self._encoder.leave()
 
-        for _ in range(2):
-            self._encoder.leave()
+            with self._encoder.construct(asn1.Numbers.Set, asn1.Classes.Universal):
+                if self.boot_nonce is not None:
+                    self.boot_nonce = self.boot_nonce[::-1]
+
+                for prop in self.properties:
+                    self._decoder.start(prop.output())
+                    with self._encoder.construct(
+                        self._decoder.peek().nr, asn1.Classes.Private
+                    ):
+                        self._decoder.enter()
+                        self._encoder.write(
+                            self._decoder.read()[1],
+                            asn1.Numbers.Sequence,
+                            asn1.Types.Constructed,
+                            asn1.Classes.Universal,
+                        )
 
         return self._encoder.output()
 
@@ -760,41 +741,43 @@ class IMG4(_PyIMG4):
     def output(self) -> bytes:
         self._encoder.start()
 
-        self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
-        self._encoder.write(
-            'IMG4', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
-        )
-
-        if self.im4p is None:
-            raise ValueError('No IM4P is set.')
-
-        self._decoder.start(self.im4p.output())
-        self._encoder.write(
-            self._decoder.read()[1],
-            asn1.Numbers.Sequence,
-            asn1.Types.Constructed,
-            asn1.Classes.Universal,
-        )
-
-        if self.im4m is None:
-            raise ValueError('No IM4M is set.')
-
-        self._encoder.write(
-            self.im4m.output(),
-            0,
-            asn1.Types.Constructed,
-            asn1.Classes.Context,
-        )
-
-        if self.im4r is not None:
+        with self._encoder.construct(asn1.Numbers.Sequence, asn1.Classes.Universal):
             self._encoder.write(
-                self.im4r.output(),
-                1,
+                'IMG4',
+                asn1.Numbers.IA5String,
+                asn1.Types.Primitive,
+                asn1.Classes.Universal,
+            )
+
+            if self.im4p is None:
+                raise ValueError('No IM4P is set.')
+
+            self._decoder.start(self.im4p.output())
+            self._encoder.write(
+                self._decoder.read()[1],
+                asn1.Numbers.Sequence,
+                asn1.Types.Constructed,
+                asn1.Classes.Universal,
+            )
+
+            if self.im4m is None:
+                raise ValueError('No IM4M is set.')
+
+            self._encoder.write(
+                self.im4m.output(),
+                0,
                 asn1.Types.Constructed,
                 asn1.Classes.Context,
             )
 
-        self._encoder.leave()
+            if self.im4r is not None:
+                self._encoder.write(
+                    self.im4r.output(),
+                    1,
+                    asn1.Types.Constructed,
+                    asn1.Classes.Context,
+                )
+
         return self._encoder.output()
 
 
@@ -986,90 +969,94 @@ class IM4P(_PyIMG4):
     def output(self) -> bytes:
         self._encoder.start()
 
-        self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
-        self._encoder.write(
-            'IM4P', asn1.Numbers.IA5String, asn1.Types.Primitive, asn1.Classes.Universal
-        )
-
-        if self.fourcc is None:
-            raise ValueError('No fourcc is set.')
-
-        self._encoder.write(
-            self.fourcc,
-            asn1.Numbers.IA5String,
-            asn1.Types.Primitive,
-            asn1.Classes.Universal,
-        )
-
-        self._encoder.write(
-            self.description,
-            asn1.Numbers.IA5String,
-            asn1.Types.Primitive,
-            asn1.Classes.Universal,
-        )
-
-        if self.payload is None:
-            raise ValueError('No payload is set.')
-
-        for i in self.payload.output():
-            if i is None:
-                continue
-
+        with self._encoder.construct(asn1.Numbers.Sequence, asn1.Classes.Universal):
             self._encoder.write(
-                i,
-                asn1.Numbers.OctetString,
-                asn1.Types.Primitive,
-                asn1.Classes.Universal,
-            )
-
-        if self.payload.compression in (Compression.LZFSE, Compression.LZFSE_ENCRYPTED):
-            self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
-
-            self._encoder.write(
-                1,
-                asn1.Numbers.Integer,
-                asn1.Types.Primitive,
-                asn1.Classes.Universal,
-            )
-
-            self._encoder.write(
-                self.payload.size,
-                asn1.Numbers.Integer,
-                asn1.Types.Primitive,
-                asn1.Classes.Universal,
-            )
-
-            self._encoder.leave()
-
-        if len(self.properties) > 0:
-            self._encoder.enter(0, asn1.Classes.Context)
-            self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
-
-            self._encoder.write(
-                'PAYP',
+                'IM4P',
                 asn1.Numbers.IA5String,
                 asn1.Types.Primitive,
                 asn1.Classes.Universal,
             )
 
-            self._encoder.enter(asn1.Numbers.Set, asn1.Classes.Universal)
-            for prop in self.properties:
-                self._decoder.start(prop.output())
-                self._encoder.enter(self._decoder.peek().nr, asn1.Classes.Private)
+            if self.fourcc is None:
+                raise ValueError('No fourcc is set.')
 
-                self._decoder.enter()
+            self._encoder.write(
+                self.fourcc,
+                asn1.Numbers.IA5String,
+                asn1.Types.Primitive,
+                asn1.Classes.Universal,
+            )
+
+            self._encoder.write(
+                self.description,
+                asn1.Numbers.IA5String,
+                asn1.Types.Primitive,
+                asn1.Classes.Universal,
+            )
+
+            if self.payload is None:
+                raise ValueError('No payload is set.')
+
+            for i in self.payload.output():
+                if i is None:
+                    continue
+
                 self._encoder.write(
-                    self._decoder.read()[1],
-                    asn1.Numbers.Sequence,
-                    asn1.Types.Constructed,
+                    i,
+                    asn1.Numbers.OctetString,
+                    asn1.Types.Primitive,
                     asn1.Classes.Universal,
                 )
-                self._encoder.leave()
 
-            for _ in range(3):
-                self._encoder.leave()
+            if self.payload.compression in (
+                Compression.LZFSE,
+                Compression.LZFSE_ENCRYPTED,
+            ):
+                with self._encoder.construct(
+                    asn1.Numbers.Sequence, asn1.Classes.Universal
+                ):
+                    self._encoder.write(
+                        1,
+                        asn1.Numbers.Integer,
+                        asn1.Types.Primitive,
+                        asn1.Classes.Universal,
+                    )
 
-        self._encoder.leave()
+                    self._encoder.write(
+                        self.payload.size,
+                        asn1.Numbers.Integer,
+                        asn1.Types.Primitive,
+                        asn1.Classes.Universal,
+                    )
+
+            if len(self.properties) > 0:
+                with self._encoder.construct(0, asn1.Classes.Context):
+                    with self._encoder.construct(
+                        asn1.Numbers.Sequence, asn1.Classes.Universal
+                    ):
+                        self._encoder.write(
+                            'PAYP',
+                            asn1.Numbers.IA5String,
+                            asn1.Types.Primitive,
+                            asn1.Classes.Universal,
+                        )
+
+                        with self._encoder.construct(
+                            asn1.Numbers.Set, asn1.Classes.Universal
+                        ):
+                            for prop in self.properties:
+                                self._decoder.start(prop.output())
+                                with self._encoder.construct(
+                                    self._decoder.peek().nr, asn1.Classes.Private
+                                ):
+                                    self._decoder.enter()
+                                    self._encoder.write(
+                                        self._decoder.read()[1],
+                                        asn1.Numbers.Sequence,
+                                        asn1.Types.Constructed,
+                                        asn1.Classes.Universal,
+                                    )
+
         return self._encoder.output()
 
 
@@ -1365,31 +1352,30 @@ class IM4PData(_PyIMG4):
         kbag_data = None
         if self.encrypted:
             self._encoder.start()
-            self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
+            with self._encoder.construct(asn1.Numbers.Sequence, asn1.Classes.Universal):
+                for kbag in self.keybags:
+                    with self._encoder.construct(
+                        asn1.Numbers.Sequence, asn1.Classes.Universal
+                    ):
+                        self._encoder.write(
+                            self.keybags.index(kbag) + 1,
+                            asn1.Numbers.Integer,
+                            asn1.Types.Primitive,
+                            asn1.Classes.Universal,
+                        )
+                        self._encoder.write(
+                            kbag.iv,
+                            asn1.Numbers.OctetString,
+                            asn1.Types.Primitive,
+                            asn1.Classes.Universal,
+                        )
+                        self._encoder.write(
+                            kbag.key,
+                            asn1.Numbers.OctetString,
+                            asn1.Types.Primitive,
+                            asn1.Classes.Universal,
+                        )
 
-            for kbag in self.keybags:
-                self._encoder.enter(asn1.Numbers.Sequence, asn1.Classes.Universal)
-                self._encoder.write(
-                    self.keybags.index(kbag) + 1,
-                    asn1.Numbers.Integer,
-                    asn1.Types.Primitive,
-                    asn1.Classes.Universal,
-                )
-                self._encoder.write(
-                    kbag.iv,
-                    asn1.Numbers.OctetString,
-                    asn1.Types.Primitive,
-                    asn1.Classes.Universal,
-                )
-                self._encoder.write(
-                    kbag.key,
-                    asn1.Numbers.OctetString,
-                    asn1.Types.Primitive,
-                    asn1.Classes.Universal,
-                )
-                self._encoder.leave()
-
-            self._encoder.leave()
             kbag_data = self._encoder.output()
 
         return Payload(self._data, kbag_data)

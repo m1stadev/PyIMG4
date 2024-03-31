@@ -639,10 +639,9 @@ def img4() -> None:
     '--input',
     'input_',
     type=click.File('rb'),
-    required=True,
     help='Input file.',
 )
-@click.option('-f', '--fourcc', type=str, required=True, help='FourCC to set.')
+@click.option('-f', '--fourcc', type=str, help='FourCC to set.')
 @click.option(
     '-d',
     '--description',
@@ -723,32 +722,17 @@ def img4_create(
         img4.im4p = im4p
 
     elif input_ is not None:
-        if len(fourcc) != 4:
-            raise click.BadParameter('FourCC must be 4 characters long')
-
         click.echo(f'Reading {input_.name}...')
-
-        try:
-            im4p = pyimg4.IM4P(
-                fourcc=fourcc, description=description, payload=input_.read()
-            )
-        except:
-            raise click.BadParameter(
-                f'Failed to parse Image4 payload file: {input_.name}'
-            )
+        im4p = pyimg4.IM4P(
+            fourcc=fourcc, description=description, payload=input_.read()
+        )
 
         if extra is not None:
-            click.echo(f'Reading extra: {extra.name}...')
+            click.echo(f'Reading extra Image4 payload data: {extra.name}...')
             im4p.payload.extra = extra.read()
 
         if compression_type is not None:
             compression_type = getattr(Compression, compression_type)
-
-            if im4p.payload.compression != Compression.NONE:
-                raise click.BadParameter(
-                    f'Payload is already {im4p.payload.compression.name} compressed'
-                )
-
             click.echo(f'Compressing payload using {compression_type.name}...')
             im4p.payload.compress(compression_type)
 

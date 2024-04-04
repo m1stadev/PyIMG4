@@ -1164,7 +1164,7 @@ class IM4PData(_PyIMG4):
             self.size = size
 
     def __len__(self) -> int:
-        return self.size
+        return len(self.data)
 
     def __repr__(self) -> str:
         repr_ = f'IM4PData(payload length={hex(len(self))}, encrypted={self.encrypted}'

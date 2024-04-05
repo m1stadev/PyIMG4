@@ -2,13 +2,13 @@
 
 [[package]]
 name = "apple-compress"
-version = "0.2.2"
+version = "0.2.3"
 description = "Python bindings for Apple's libcompression."
 optional = true
-python-versions = ">=3.8,<4.0"
+python-versions = "<4.0,>=3.8"
 files = [
-    {file = "apple_compress-0.2.2-py3-none-any.whl", hash = "sha256:499b25f8d04c1e557dc5a50878b06170a7ca196931ee32cfd7d8cf2abc002745"},
-    {file = "apple_compress-0.2.2.tar.gz", hash = "sha256:a4be3d0db2633314ed1ad20fb0f17f547cf28ad2a71e200a84def5ed5f4f3ed1"},
+    {file = "apple_compress-0.2.3-py3-none-any.whl", hash = "sha256:b4eb22fb45e2e781bb44dc76b94dea7f616f3583fcbb4737ecc53e2a46ab7434"},
+    {file = "apple_compress-0.2.3.tar.gz", hash = "sha256:a1c855cec8bd73210ae9522c53a841ca515ded2f0c9d5b4e728d0d93fee46a29"},
 ]
 
 [package.dependencies]
@@ -231,13 +231,13 @@ dev = ["Sphinx (==7.2.5)", "colorama (==0.4.5)", "colorama (==0.4.6)", "exceptio
 
 [[package]]
 name = "packaging"
-version = "23.2"
+version = "24.0"
 description = "Core utilities for Python packages"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "packaging-23.2-py3-none-any.whl", hash = "sha256:8c491190033a9af7e1d931d0b5dacc2ef47509b34dd0de67ed209b5203fc88c7"},
-    {file = "packaging-23.2.tar.gz", hash = "sha256:048fb0e9405036518eaaf48a55953c750c11e1a1b68e0dd1a9d62ed0c092cfc5"},
+    {file = "packaging-24.0-py3-none-any.whl", hash = "sha256:2ddfb553fdf02fb784c234c7ba6ccc288296ceabec964ad2eae3777778130bc5"},
+    {file = "packaging-24.0.tar.gz", hash = "sha256:eb82c5e3e56209074766e6885bb04b8c38a0c015d0a30036ebe7ece34c9989e9"},
 ]
 
 [[package]]
@@ -434,20 +434,20 @@ testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "no
 
 [[package]]
 name = "remotezip"
-version = "0.12.2"
+version = "0.12.3"
 description = "Access zip file content hosted remotely without downloading the full file."
 optional = false
 python-versions = "*"
 files = [
-    {file = "remotezip-0.12.2.tar.gz", hash = "sha256:211ecf7dd291e5339359b3422ca758a679f3d89624f7cff6039e90a6904efd96"},
+    {file = "remotezip-0.12.3-py3-none-any.whl", hash = "sha256:f70a4026879439ecb0a2cf848a7c176ae5ee142bbe51ec69e3344e150b2a52de"},
+    {file = "remotezip-0.12.3.tar.gz", hash = "sha256:bf1ebe2be9f07a6e1c14d0e52ecffccd7a3e808dff4f9ba523c5e84d867a3fe3"},
 ]
 
 [package.dependencies]
 requests = "*"
-tabulate = "*"
 
 [package.extras]
-test = ["requests_mock"]
+test = ["requests-mock"]
 
 [[package]]
 name = "requests"
@@ -471,20 +471,6 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
-name = "tabulate"
-version = "0.9.0"
-description = "Pretty-print tabular data"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "tabulate-0.9.0-py3-none-any.whl", hash = "sha256:024ca478df22e9340661486f85298cff5f6dcdba14f3813e8830015b9ed1948f"},
-    {file = "tabulate-0.9.0.tar.gz", hash = "sha256:0095b12bf5966de529c0feb1fa08671671b3368eec77d7ef7ab114be2c068b3c"},
-]
-
-[package.extras]
-widechars = ["wcwidth"]
-
-[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -497,13 +483,13 @@ files = [
 
 [[package]]
 name = "urllib3"
-version = "2.2.0"
+version = "2.2.1"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "urllib3-2.2.0-py3-none-any.whl", hash = "sha256:ce3711610ddce217e6d113a2732fafad960a03fd0318c91faa79481e35c11224"},
-    {file = "urllib3-2.2.0.tar.gz", hash = "sha256:051d961ad0c62a94e50ecf1af379c3aba230c66c710493493560c0c223c49f20"},
+    {file = "urllib3-2.2.1-py3-none-any.whl", hash = "sha256:450b20ec296a467077128bff42b73080516e71b56ff59a60a02bef2232c4fa9d"},
+    {file = "urllib3-2.2.1.tar.gz", hash = "sha256:d0570876c61ab9e520d776c38acbbb5b05a776d3f9ff98a5c8fd5162a444cf19"},
 ]
 
 [package.extras]
@@ -532,4 +518,4 @@ compression = ["apple-compress", "pyliblzfse", "pylzss"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "7c0d25822fbe3e2fcdf0465f32db3f7cf08e43df18aad4ac104a9a0eb10dd4d6"
+content-hash = "63e9eb2968af6503e5d8ffb30a0bd7eea766aa90ec4455b75c4aa96bcd4d0f48"

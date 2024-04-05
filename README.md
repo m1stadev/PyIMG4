@@ -55,5 +55,4 @@ Commands:
     - Requires [Poetry](https://python-poetry.org)
 
 ## Support
-
-For any questions/issues you have, [open an issue](https://github.com/m1stadev/PyIMG4/issues) or join my [Discord](https://m1sta.xyz/discord).
+For any questions/issues you have, [open an issue](https://github.com/m1stadev/PyIMG4/issues).

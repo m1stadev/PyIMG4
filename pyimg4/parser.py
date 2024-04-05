@@ -1162,7 +1162,7 @@ class IM4PData(_PyIMG4):
         self._detect_compression(size, data)
         if self.compression == Compression.LZSS:
             self._parse_complzss_header()
-        elif self.compression not in (Compression.NONE, Compression.LZFSE_ENCRYPTED):
+        elif self.compression == Compression.LZFSE:
             self.size = len(self._decompress_data(data, self.compression, size))
         else:
             self.size = size

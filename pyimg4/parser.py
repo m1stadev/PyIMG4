@@ -1271,6 +1271,9 @@ class IM4PData(_PyIMG4):
         if 0 < size < len(self.data):
             raise ValueError('Size cannot be less than the length of the payload data.')
 
+        if self.encrypted is True:
+            self._detect_compression(size, self._data)
+
         self._size = size
 
     def add_keybag(self, keybag: Keybag) -> None:

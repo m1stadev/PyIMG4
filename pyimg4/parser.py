@@ -1363,6 +1363,12 @@ class IM4PData(_PyIMG4):
     def decrypt(self, kbag: Keybag) -> None:
         self._data = AES.new(kbag.key, AES.MODE_CBC, kbag.iv).decrypt(self._data)
         self._keybags = []
+        self._detect_compression(self.size, self._data)
+
+        if self.compression == Compression.LZSS:
+            self._parse_complzss_header()
+        elif self.compression == Compression.LZFSE:
+            self.size = len(self._decompress_data(self.data, self.compression))
 
     def output(self) -> Payload:
         kbag_data = None

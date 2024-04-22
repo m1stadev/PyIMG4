@@ -1,3 +1,4 @@
+from os import getenv
 from sys import platform
 from typing import Any, List, Optional, Tuple, Union
 from zlib import adler32
@@ -9,7 +10,18 @@ from Crypto.Cipher import AES
 from .errors import CompressionError, UnexpectedDataError, UnexpectedTagError
 from .types import Compression, KeybagType, Payload
 
-if platform == 'darwin':
+FORCE_LZFSE = getenv('PYIMG4_FORCE_LZFSE', None) is not None
+
+if platform != 'darwin' or FORCE_LZFSE is True:
+    import lzfse
+
+    def _lzfse_compress(data: bytes) -> bytes:
+        return lzfse.compress(data)
+
+    def _lzfse_decompress(data: bytes, _: Optional[int] = None) -> bytes:
+        return lzfse.decompress(data)
+
+else:
     import apple_compress
 
     def _lzfse_compress(data: bytes) -> bytes:
@@ -23,15 +35,6 @@ if platform == 'darwin':
             algorithm=apple_compress.Algorithm.LZFSE_IBOOT,
             decmp_size=decmp_size,
         )
-
-else:
-    import lzfse
-
-    def _lzfse_compress(data: bytes) -> bytes:
-        return lzfse.compress(data)
-
-    def _lzfse_decompress(data: bytes, _: Optional[int] = None) -> bytes:
-        return lzfse.decompress(data)
 
 
 class _PyIMG4:

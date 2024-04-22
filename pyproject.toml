@@ -24,9 +24,9 @@ python = "^3.8"
 asn1 = "^2.7.0"
 click = "^8.1.7"
 pycryptodome = "^3.18.0"
-lzfse = "^0.4.2"
-apple-compress = "^0.2.3"
 pylzss = "^0.3.7"
+lzfse = { version = "^0.4.2", markers = "sys_platform != 'darwin'" }
+apple-compress = { version = "^0.2.3", markers = "sys_platform == 'darwin'" }
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.4.0"

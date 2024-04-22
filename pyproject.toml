@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyimg4"
-version = "0.8.4"
+version = "0.0.0"
 description = "A Python library/CLI tool for parsing Apple's Image4 format."
 authors = ["m1stadev <adamhamdi31@gmail.com>"]
 license = "MIT"
@@ -15,6 +15,12 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Topic :: Utilities"
 ]
+
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+style = "semver"
+dirty = true
 
 [tool.poetry.scripts]
 pyimg4 = "pyimg4.__main__:cli"
@@ -49,5 +55,5 @@ quote-style = "single"
 "Bug Tracker" = "https://github.com/m1stadev/PyIMG4/issues"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"

@@ -9,7 +9,7 @@ from Crypto.Cipher import AES
 from .errors import CompressionError, UnexpectedDataError, UnexpectedTagError
 from .types import Compression, KeybagType, Payload
 
-if platform == 'Darwin':
+if platform == 'darwin':
     import apple_compress
 
     def _lzfse_compress(data: bytes) -> bytes:

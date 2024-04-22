@@ -3,52 +3,44 @@ from typing import Any, List, Optional, Tuple, Union
 from zlib import adler32
 
 import asn1
+import lzss
 from Crypto.Cipher import AES
 
 from .errors import CompressionError, UnexpectedDataError, UnexpectedTagError
 from .types import Compression, KeybagType, Payload
 
-try:
-    import lzss
 
-    _have_lzss = True
-except ImportError:
-    _have_lzss = False
+def _lzss_compress(data: bytes) -> bytes:
+    return lzss.compress(data, '    ')
 
-_have_lzfse = False
+
+def _lzss_decompress(data: bytes) -> bytes:
+    return lzss.decompress(data, '    ')
+
+
 if platform == 'Darwin':
-    try:
-        import apple_compress
+    import apple_compress
 
-        def _lzfse_decompress(data: bytes, decmp_size: Optional[int] = None) -> bytes:
-            return apple_compress.decompress(
-                data,
-                algorithm=apple_compress.Algorithm.LZFSE_IBOOT,
-                decmp_size=decmp_size,
-            )
+    def _lzfse_compress(data: bytes) -> bytes:
+        return apple_compress.compress(
+            data, algorithm=apple_compress.Algorithm.LZFSE_IBOOT
+        )
 
-        def _lzfse_compress(data: bytes) -> bytes:
-            return apple_compress.compress(
-                data, algorithm=apple_compress.Algorithm.LZFSE_IBOOT
-            )
+    def _lzfse_decompress(data: bytes, decmp_size: Optional[int] = None) -> bytes:
+        return apple_compress.decompress(
+            data,
+            algorithm=apple_compress.Algorithm.LZFSE_IBOOT,
+            decmp_size=decmp_size,
+        )
 
-        _have_lzfse = True
-    except ImportError:
-        pass
+else:
+    import lzfse
 
-if _have_lzfse is False:
-    try:
-        import liblzfse
+    def _lzfse_compress(data: bytes) -> bytes:
+        return lzfse.compress(data)
 
-        def _lzfse_decompress(data: bytes, _: Optional[int] = None) -> bytes:
-            return liblzfse.decompress(data)
-
-        def _lzfse_compress(data: bytes) -> bytes:
-            return liblzfse.compress(data)
-
-        _have_lzfse = True
-    except ImportError:
-        pass
+    def _lzfse_decompress(data: bytes, _: Optional[int] = None) -> bytes:
+        return lzfse.decompress(data)
 
 
 class _PyIMG4:
@@ -1191,17 +1183,9 @@ class IM4PData(_PyIMG4):
         self, data: bytes, compression: Compression, size: Optional[int] = None
     ) -> bytes:
         if compression == Compression.LZSS:
-            if not _have_lzss:
-                raise RuntimeError('pylzss not installed, cannot use LZSS compression')
-
-            return lzss.decompress(data)
+            return _lzss_decompress(data)
 
         elif self.compression == Compression.LZFSE:
-            if not _have_lzfse:
-                raise RuntimeError(
-                    'apple-compress/pyliblzfse not installed, cannot use LZFSE compression'
-                )
-
             return _lzfse_decompress(self._data, size)
 
     def _detect_compression(self, size: int, data: bytes) -> None:
@@ -1326,18 +1310,10 @@ class IM4PData(_PyIMG4):
 
         self.size = len(self._data)
         if compression == Compression.LZSS:
-            if not _have_lzss:
-                raise RuntimeError('pylzss not installed, cannot use LZSS compression')
-
-            comp_data = lzss.compress(self._data)
+            comp_data = _lzss_compress(self._data)
             self._data = self._create_complzss_header(len(comp_data)) + comp_data
 
         elif compression == Compression.LZFSE:
-            if not _have_lzfse:
-                raise RuntimeError(
-                    'apple-compress/pyliblzfse not installed, cannot use LZFSE compression'
-                )
-
             comp_data = _lzfse_compress(self._data)
             if not (comp_data.startswith(b'bvx2') and b'bvx$' in comp_data):
                 raise CompressionError('Failed to LZFSE-compress payload.')

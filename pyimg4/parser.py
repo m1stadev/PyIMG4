@@ -9,15 +9,6 @@ from Crypto.Cipher import AES
 from .errors import CompressionError, UnexpectedDataError, UnexpectedTagError
 from .types import Compression, KeybagType, Payload
 
-
-def _lzss_compress(data: bytes) -> bytes:
-    return lzss.compress(data, '    ')
-
-
-def _lzss_decompress(data: bytes) -> bytes:
-    return lzss.decompress(data, '    ')
-
-
 if platform == 'Darwin':
     import apple_compress
 
@@ -1183,7 +1174,7 @@ class IM4PData(_PyIMG4):
         self, data: bytes, compression: Compression, size: Optional[int] = None
     ) -> bytes:
         if compression == Compression.LZSS:
-            return _lzss_decompress(data)
+            return lzss.decompress(data)
 
         elif self.compression == Compression.LZFSE:
             return _lzfse_decompress(self.data, size)
@@ -1310,7 +1301,7 @@ class IM4PData(_PyIMG4):
 
         self.size = len(self.data)
         if compression == Compression.LZSS:
-            comp_data = _lzss_compress(self.data)
+            comp_data = lzss.compress(self.data)
             self._data = self._create_complzss_header(len(comp_data)) + comp_data
 
         elif compression == Compression.LZFSE:

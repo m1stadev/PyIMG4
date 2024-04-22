@@ -53,8 +53,8 @@ Commands:
     - Requires [Poetry](https://python-poetry.org)
 
 ## Notes
-- For compression, LZFSE compression utilizes the <a href="https://pypi.org/p/apple-compress">apple-compress</a> library on macOS, and the <a href="https://pypi.org/p/lzfse">lzfse</a> library on all other OSes (due to libcompression not being available outside of Apple platforms).
-  - If for some reason you'd like to force the lzfse library to be used on macOS, you can set the environment variable `PYIMG4_FORCE_LZFSE=1`.
+- For compression, LZFSE compression utilizes the <a href="https://pypi.org/p/apple-compress">apple-compress</a> library on *OS, and the <a href="https://pypi.org/p/lzfse">lzfse</a> library on all other OSes (due to libcompression not being available outside of Apple platforms).
+  - If for some reason you'd like to force the lzfse library to be used on *OS (not recommended), you can set the environment variable `PYIMG4_FORCE_LZFSE`.
 
 ## Support
 For any questions/issues you have, [open an issue](https://github.com/m1stadev/PyIMG4/issues).

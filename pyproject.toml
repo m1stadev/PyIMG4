@@ -33,10 +33,11 @@ pycryptodome = "^3.18.0"
 pylzss = "^0.3.7"
 lzfse = { version = "^0.4.2", markers = "sys_platform != 'darwin'" }
 apple-compress = { version = "^0.2.3", markers = "sys_platform == 'darwin'" }
+pytest = { version = "^8.1.1", optional = true }
+remotezip = { version = "^0.12.3", optional = true }
 
-[tool.poetry.dev-dependencies]
-pytest = "^7.4.0"
-remotezip = "^0.12.1"
+[tool.poetry.extras]
+test = ["pytest", "remotezip"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

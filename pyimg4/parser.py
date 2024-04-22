@@ -1171,7 +1171,7 @@ class IM4PData(_PyIMG4):
 
     def _create_complzss_header(self, comp_size: int) -> bytes:
         header = bytearray(b'complzss')
-        header += adler32(self._data).to_bytes(4, 'big')
+        header += adler32(self.data).to_bytes(4, 'big')
         header += self.size.to_bytes(4, 'big')
         header += comp_size.to_bytes(4, 'big')
         header += int(1).to_bytes(4, 'big')
@@ -1186,7 +1186,7 @@ class IM4PData(_PyIMG4):
             return _lzss_decompress(data)
 
         elif self.compression == Compression.LZFSE:
-            return _lzfse_decompress(self._data, size)
+            return _lzfse_decompress(self.data, size)
 
     def _detect_compression(self, size: int, data: bytes) -> None:
         if self.encrypted and size > 0:
@@ -1195,23 +1195,23 @@ class IM4PData(_PyIMG4):
         elif data.startswith(b'complzss'):
             self._compression = Compression.LZSS
 
-        elif data.startswith(b'bvx2') and b'bvx$' in self._data:
+        elif data.startswith(b'bvx2') and b'bvx$' in self.data:
             self._compression = Compression.LZFSE
 
         else:
             self._compression = Compression.NONE
 
     def _parse_complzss_header(self) -> None:
-        self.size = int(self._data[0xC:0x10].hex(), 16)
-        cmp_len = int(self._data[0x10:0x14].hex(), 16)
+        self.size = int(self.data[0xC:0x10].hex(), 16)
+        cmp_len = int(self.data[0x10:0x14].hex(), 16)
 
         if (
-            cmp_len < len(self._data) - 0x180
+            cmp_len < len(self.data) - 0x180
         ):  # iOS 9+ A7-A9 kernelcache, so KPP is appended to the LZSS-compressed data
-            extra_len = len(self._data) - cmp_len - 0x180
-            self.extra = self._data[-extra_len:]
+            extra_len = len(self.data) - cmp_len - 0x180
+            self.extra = self.data[-extra_len:]
 
-            self._data = self._data[:-extra_len]
+            self._data = self.data[:-extra_len]
 
     @property
     def compression(self) -> Compression:
@@ -1256,7 +1256,7 @@ class IM4PData(_PyIMG4):
             raise ValueError('Size cannot be less than the length of the payload data.')
 
         if self.encrypted is True:
-            self._detect_compression(size, self._data)
+            self._detect_compression(size, self.data)
 
         self._size = size
 
@@ -1308,22 +1308,19 @@ class IM4PData(_PyIMG4):
         elif self.compression in (Compression.LZSS, Compression.LZFSE):
             raise CompressionError(f'Payload is already {compression.name}-compressed.')
 
-        self.size = len(self._data)
+        self.size = len(self.data)
         if compression == Compression.LZSS:
-            comp_data = _lzss_compress(self._data)
+            comp_data = _lzss_compress(self.data)
             self._data = self._create_complzss_header(len(comp_data)) + comp_data
 
         elif compression == Compression.LZFSE:
-            comp_data = _lzfse_compress(self._data)
+            comp_data = _lzfse_compress(self.data)
             if not (comp_data.startswith(b'bvx2') and b'bvx$' in comp_data):
                 raise CompressionError('Failed to LZFSE-compress payload.')
 
             self._data = comp_data
 
-        self._detect_compression(self.size, self._data)
-
-        if self.extra is not None:
-            self._data += self.extra
+        self._detect_compression(self.size, self.data)
 
     def decompress(self) -> None:
         if self.compression == Compression.NONE:
@@ -1332,14 +1329,14 @@ class IM4PData(_PyIMG4):
         elif self.compression == Compression.LZFSE_ENCRYPTED:
             raise CompressionError('Cannot decompress encrypted payload.')
 
-        self._data = self._decompress_data(self._data, self.compression, self.size)
+        self._data = self._decompress_data(self.data, self.compression, self.size)
         self._compression = Compression.NONE
-        self._detect_compression(self.size, self._data)
+        self._detect_compression(self.size, self.data)
 
     def decrypt(self, kbag: Keybag) -> None:
-        self._data = AES.new(kbag.key, AES.MODE_CBC, kbag.iv).decrypt(self._data)
+        self._data = AES.new(kbag.key, AES.MODE_CBC, kbag.iv).decrypt(self.data)
         self._keybags = []
-        self._detect_compression(self.size, self._data)
+        self._detect_compression(self.size, self.data)
 
         if self.compression == Compression.LZSS:
             self._parse_complzss_header()
@@ -1376,4 +1373,9 @@ class IM4PData(_PyIMG4):
 
             kbag_data = self._encoder.output()
 
-        return Payload(self._data, kbag_data)
+        if self.extra is not None:
+            data = self.data + self.extra
+        else:
+            data = self.data
+
+        return Payload(data, kbag_data)

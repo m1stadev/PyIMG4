@@ -30,7 +30,7 @@ python = "^3.8"
 asn1 = "^2.7.0"
 click = "^8.1.7"
 pycryptodome = "^3.18.0"
-pylzss = "^0.3.7"
+pylzss = "0.3.4"
 lzfse = { version = "^0.4.2", markers = "sys_platform != 'darwin'" }
 apple-compress = { version = "^0.2.3", markers = "sys_platform == 'darwin'" }
 pytest = { version = "^8.1.1", optional = true }

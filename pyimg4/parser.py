@@ -994,10 +994,7 @@ class IM4P(_PyIMG4):
                     asn1.Classes.Universal,
                 )
 
-            if self.payload.compression in (
-                Compression.LZFSE,
-                Compression.LZFSE_ENCRYPTED,
-            ):
+            if self.payload.size != 0:
                 with self._encoder.construct(
                     asn1.Numbers.Sequence, asn1.Classes.Universal
                 ):

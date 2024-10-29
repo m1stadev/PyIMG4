@@ -362,7 +362,22 @@ class IM4M(_PyIMG4):
         for _ in range(4):
             self._decoder.leave()
 
+        if self._decoder.eof():
+            # IM4M has no signature/certificates
+            # TODO: Make this cleaner
+            self._signature = None
+            self._certificates = None
+            return
+
+        if self._decoder.peek().nr != asn1.Numbers.OctetString:
+            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.OctetString)
+
         self._signature = self._decoder.read()[1]
+
+        if self._decoder.peek().nr != asn1.Numbers.Sequence:
+            raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
+
+        # TODO: Parse certificates
         self._certificates = self._decoder.read()[1]
 
         if not self._decoder.eof():

@@ -26,7 +26,7 @@ dirty = true
 pyimg4 = "pyimg4.__main__:cli"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 asn1 = "^2.7.0"
 click = "^8.1.7"
 pycryptodome = "^3.18.0"

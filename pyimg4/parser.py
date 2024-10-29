@@ -1,5 +1,6 @@
 from os import getenv
 from sys import platform
+from types import NoneType
 from typing import Any, List, Optional, Tuple, Union
 from zlib import adler32
 
@@ -100,7 +101,7 @@ class _Property(_PyIMG4):
             raise TypeError('No data or fourcc/value pair provided.')
 
     def __repr__(self) -> str:
-        if not isinstance(self.value, (float, int)) and len(self.value) > 15:
+        if not isinstance(self.value, (float, int, NoneType)) and len(self.value) > 15:
             value = f'<{type(self.value).__name__} with len of {len(self.value)}>'
         elif isinstance(self.value, bytes):
             value = self.value.hex()

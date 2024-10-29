@@ -65,9 +65,14 @@ def im4m_info(input_: BinaryIO, verbose: bool) -> None:
     else:
         click.echo(f'  Device Processor: {soc}')
 
-    click.echo(f'  ECID (hex): {hex(im4m.ecid)}')
-    click.echo(f'  ApNonce (hex): {im4m.apnonce.hex()}')
-    click.echo(f'  SepNonce (hex): {im4m.sepnonce.hex()}')
+    if im4m.ecid is not None:
+        click.echo(f'  ECID (hex): {hex(im4m.ecid)}')
+
+    if im4m.apnonce is not None:
+        click.echo(f'  ApNonce (hex): {im4m.apnonce.hex()}')
+
+    if im4m.sepnonce is not None:
+        click.echo(f'  SepNonce (hex): {im4m.sepnonce.hex()}')
 
     if verbose:
         for p, prop in enumerate(im4m.properties):
@@ -944,9 +949,14 @@ def img4_info(input_: BinaryIO, verbose: bool) -> None:
     else:
         click.echo(f'    Device Processor: {soc}')
 
-    click.echo(f'    ECID (hex): {hex(img4.im4m.ecid)}')
-    click.echo(f'    ApNonce (hex): {img4.im4m.apnonce.hex()}')
-    click.echo(f'    SepNonce (hex): {img4.im4m.sepnonce.hex()}')
+    if img4.im4m.ecid is not None:
+        click.echo(f'    ECID (hex): {hex(img4.im4m.ecid)}')
+
+    if img4.im4m.apnonce is not None:
+        click.echo(f'    ApNonce (hex): {img4.im4m.apnonce.hex()}')
+
+    if img4.im4m.sepnonce is not None:
+        click.echo(f'    SepNonce (hex): {img4.im4m.sepnonce.hex()}')
 
     if verbose:
         for p, prop in enumerate(img4.im4m.properties):

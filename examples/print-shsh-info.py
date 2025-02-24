@@ -41,7 +41,7 @@ def main() -> None:
     print(f'  SepNonce (hex): {im4m.sepnonce.hex()}')
 
     print(
-        f"  Manifest images ({len(im4m.images)}): {', '.join(i.fourcc for i in im4m.images)}"
+        f'  Manifest images ({len(im4m.images)}): {", ".join(i.fourcc for i in im4m.images)}'
     )
 
 

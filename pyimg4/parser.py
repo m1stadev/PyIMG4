@@ -89,7 +89,7 @@ class _Property(_PyIMG4):
     ) -> None:
         super().__init__(data)
 
-        if fourcc and value:
+        if fourcc is not None and value is not None:
             self._fourcc = self._verify_fourcc(fourcc)
             self._value = value
 

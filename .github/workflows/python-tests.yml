@@ -13,7 +13,6 @@ permissions:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -25,13 +24,14 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+    - name: Install uv and Python ${{ matrix.python-version }}
+      uses: astral-sh/setup-uv@v5
       with:
         python-version: ${{ matrix.python-version }}
+        enable-cache: true
 
-    - name: Install dependencies
-      run: python -m pip install .[test]
+    - name: Install the project
+      run: uv sync --dev
 
     - name: Run tests
-      run: python -m pytest
+      run: uv run pytest

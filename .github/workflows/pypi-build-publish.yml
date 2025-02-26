@@ -14,8 +14,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build sdist
-        run: pipx run build
+      - name: Install uv and Python 3
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Build packages
+        run: uv build
 
       - uses: actions/upload-artifact@v4
         with:

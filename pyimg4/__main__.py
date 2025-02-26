@@ -735,6 +735,9 @@ def img4_create(
         img4.im4p = im4p
 
     elif input_ is not None:
+        if fourcc is None:
+            raise click.BadParameter('No FourCC specified')
+
         click.echo(f'Reading {input_.name}...')
         im4p = pyimg4.IM4P(
             fourcc=fourcc, description=description, payload=input_.read()

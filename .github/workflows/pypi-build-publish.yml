@@ -29,6 +29,7 @@ jobs:
 
   pypi-publish:
     name: Upload release to PyPI
+    needs: build_pkgs
     runs-on: ubuntu-latest
     environment:
       name: PyPI

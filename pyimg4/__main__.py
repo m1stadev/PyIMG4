@@ -511,6 +511,14 @@ def im4p_info(input_: BinaryIO, verbose: bool) -> None:
             payload_size = f'{round(im4p.payload.size / 1000, 2)}KB'
         click.echo(f'  Data size (uncompressed): {payload_size}')
 
+    if im4p.payload.extra is not None:
+        if verbose:
+            extra_size = len(im4p.payload.extra)
+        else:
+            extra_size = f'{round(len(im4p.payload.extra) / 1000, 2)}KB'
+
+        click.echo(f'  Extra data size: {extra_size}')
+
     click.echo(f'  Encrypted: {im4p.payload.encrypted}')
     if im4p.payload.encrypted:
         click.echo(f'  Keybags ({len(im4p.payload.keybags)}):')
@@ -923,6 +931,14 @@ def img4_info(input_: BinaryIO, verbose: bool) -> None:
         click.echo(
             f'    Data size (uncompressed): {round(len(img4.im4p.payload) / 1000, 2)}KB'
         )
+
+    if img4.im4p.payload.extra is not None:
+        if verbose:
+            extra_size = len(img4.im4p.payload.extra)
+        else:
+            extra_size = f'{round(len(img4.im4p.payload.extra) / 1000, 2)}KB'
+
+        click.echo(f'    Extra data size: {extra_size}')
 
     click.echo(f'    Encrypted: {img4.im4p.payload.encrypted}')
     if img4.im4p.payload.encrypted:

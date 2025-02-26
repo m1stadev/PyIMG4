@@ -43,7 +43,7 @@ Commands:
 ```
 
 ## Requirements
-- Python 3.8 or higher
+- Python 3.9 or later
 
 ## Installation
 - Install from <a href="https://pypi.org/p/pyimg4">PyPI</a>:

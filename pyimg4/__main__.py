@@ -102,7 +102,7 @@ def im4m_info(input_: BinaryIO, verbose: bool) -> None:
 
     else:
         click.echo(
-            f"  Manifest images ({len(im4m.images)}): {', '.join(i.fourcc for i in im4m.images)}"
+            f'  Manifest images ({len(im4m.images)}): {", ".join(i.fourcc for i in im4m.images)}'
         )
 
 
@@ -156,13 +156,13 @@ def im4m_verify(input_: BinaryIO, build_manifest: BinaryIO, verbose: bool) -> No
         ):
             if verbose:
                 click.echo(
-                    f"Skipping build identity {manifest['BuildIdentities'].index(identity) + 1}..."
+                    f'Skipping build identity {manifest["BuildIdentities"].index(identity) + 1}...'
                 )
 
             continue
 
         click.echo(
-            f"Selected build identity: {manifest['BuildIdentities'].index(identity) + 1}"
+            f'Selected build identity: {manifest["BuildIdentities"].index(identity) + 1}'
         )
         for name, image_info in identity['Manifest'].items():
             if 'Digest' not in image_info.keys():
@@ -185,9 +185,9 @@ def im4m_verify(input_: BinaryIO, build_manifest: BinaryIO, verbose: bool) -> No
             click.echo(
                 '\nImage4 manifest was successfully validated with the build manifest for the following restore:'
             )
-            click.echo(f"Board config: {identity['Info']['DeviceClass']}")
-            click.echo(f"Build ID: {identity['Info']['BuildNumber']}")
-            click.echo(f"Restore type: {identity['Info']['RestoreBehavior']}")
+            click.echo(f'Board config: {identity["Info"]["DeviceClass"]}')
+            click.echo(f'Build ID: {identity["Info"]["BuildNumber"]}')
+            click.echo(f'Restore type: {identity["Info"]["RestoreBehavior"]}')
             return
 
     click.echo('Image4 manifest is not valid for the provided build manifest!')
@@ -535,7 +535,7 @@ def im4p_info(input_: BinaryIO, verbose: bool) -> None:
                     click.echo()
         else:
             click.echo(
-                f"\n  Properties ({len(im4p.properties)}): {', '.join(i.fourcc for i in im4p.properties)}"
+                f'\n  Properties ({len(im4p.properties)}): {", ".join(i.fourcc for i in im4p.properties)}'
             )
 
 
@@ -628,7 +628,7 @@ def im4r_info(input_: BinaryIO, verbose: bool) -> None:
                 if p != (len(extra_props) - 1):
                     click.echo()
         else:
-            click.echo(f"  Properties ({len(extra_props)}): {', '.join(extra_props)}")
+            click.echo(f'  Properties ({len(extra_props)}): {", ".join(extra_props)}')
 
 
 @cli.group()
@@ -986,7 +986,7 @@ def img4_info(input_: BinaryIO, verbose: bool) -> None:
 
     else:
         click.echo(
-            f"    Manifest images ({len(img4.im4m.images)}): {', '.join(i.fourcc for i in img4.im4m.images)}"
+            f'    Manifest images ({len(img4.im4m.images)}): {", ".join(i.fourcc for i in img4.im4m.images)}'
         )
 
     if img4.im4r is not None:
@@ -1009,7 +1009,7 @@ def img4_info(input_: BinaryIO, verbose: bool) -> None:
                         click.echo()
             else:
                 click.echo(
-                    f"    Properties ({len(extra_props)}): {', '.join(extra_props)}"
+                    f'    Properties ({len(extra_props)}): {", ".join(extra_props)}'
                 )
 
 

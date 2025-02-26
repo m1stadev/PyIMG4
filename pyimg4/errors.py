@@ -30,7 +30,7 @@ class UnexpectedTagError(_PyIMG4Error, ValueError):
         try:
             tag_type = next(t.name for t in Numbers if t.value == tag.nr)
         except StopIteration:
-            tag_type = f"{next(t.name for t in Classes if t.value == tag.cls)} {tag.nr if tag.cls == Classes.Private else ''}"
+            tag_type = f'{next(t.name for t in Classes if t.value == tag.cls)} {tag.nr if tag.cls == Classes.Private else ""}'
 
         if isinstance(valid, Numbers):
             expected_type = next(t.name for t in Numbers if t.value == valid)

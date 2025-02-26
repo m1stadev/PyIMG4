@@ -64,7 +64,7 @@ def main() -> None:
     print(f'    SepNonce (hex): {img4.im4m.sepnonce.hex()}')
 
     print(
-        f"    Manifest images ({len(img4.im4m.images)}): {', '.join(i.fourcc for i in img4.im4m.images)}"
+        f'    Manifest images ({len(img4.im4m.images)}): {", ".join(i.fourcc for i in img4.im4m.images)}'
     )
 
     if img4.im4r is not None:
@@ -74,7 +74,7 @@ def main() -> None:
             print(f'    Boot nonce (hex): 0x{img4.im4r.boot_nonce.hex()}')
 
         print(
-            f"    Restore properties ({len(img4.im4r.properties)}): {', '.join(prop.fourcc for prop in img4.im4r.properties)}"
+            f'    Restore properties ({len(img4.im4r.properties)}): {", ".join(prop.fourcc for prop in img4.im4r.properties)}'
         )
 
 

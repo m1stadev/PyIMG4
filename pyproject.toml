@@ -17,6 +17,7 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
     "asn1>=2.7.0",
+    "asn1<3.0.0",
     "click>=8.1.7",
     "pycryptodome>=3.18.0",
     "pylzss==0.3.4",

@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from enum import IntEnum
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 
 class Compression(IntEnum):
@@ -11,7 +13,7 @@ class Compression(IntEnum):
 
 class Payload(NamedTuple):
     data: bytes
-    keybags: Optional[bytes]
+    keybags: bytes | None
 
 
 class KeybagType(IntEnum):

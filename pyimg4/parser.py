@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from os import getenv
 from sys import platform
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any
 from zlib import adler32
 
 import asn1
@@ -18,7 +20,7 @@ if platform != 'darwin' or FORCE_LZFSE is True:
     def _lzfse_compress(data: bytes) -> bytes:
         return lzfse.compress(data)
 
-    def _lzfse_decompress(data: bytes, _: Optional[int] = None) -> bytes:
+    def _lzfse_decompress(data: bytes, _: int | None = None) -> bytes:
         return lzfse.decompress(data)
 
 else:
@@ -29,7 +31,7 @@ else:
             data, algorithm=apple_compress.Algorithm.LZFSE_IBOOT
         )
 
-    def _lzfse_decompress(data: bytes, decmp_size: Optional[int] = None) -> bytes:
+    def _lzfse_decompress(data: bytes, decmp_size: int | None = None) -> bytes:
         return apple_compress.decompress(
             data,
             algorithm=apple_compress.Algorithm.LZFSE_IBOOT,
@@ -38,7 +40,7 @@ else:
 
 
 class _PyIMG4:
-    def __init__(self, data: Optional[bytes] = None) -> None:
+    def __init__(self, data: bytes | None = None) -> None:
         self._data = data
 
         self._decoder = asn1.Decoder()
@@ -47,7 +49,7 @@ class _PyIMG4:
     def __bytes__(self) -> bytes:
         return self.output()
 
-    def __eq__(self, obj: Any) -> bool:
+    def __eq__(self, obj: object) -> bool:
         if isinstance(obj, _PyIMG4):
             return self.output() == obj.output()
         elif isinstance(obj, bytes):
@@ -58,7 +60,7 @@ class _PyIMG4:
     def __len__(self) -> int:
         return len(self.output())
 
-    def _verify_fourcc(self, fourcc: str, correct: str = None) -> str:
+    def _verify_fourcc(self, fourcc: str, correct: str | None = None) -> str:
         if not isinstance(fourcc, str):
             raise UnexpectedDataError('string', fourcc)
 
@@ -82,9 +84,9 @@ class _PyIMG4:
 class _Property(_PyIMG4):
     def __init__(
         self,
-        data: Optional[bytes] = None,
+        data: bytes | None = None,
         *,
-        fourcc: Optional[str] = None,
+        fourcc: str | None = None,
         value: Any = None,
     ) -> None:
         super().__init__(data)
@@ -132,20 +134,22 @@ class _Property(_PyIMG4):
 
     def output(self) -> bytes:
         self._encoder.start()
-        with self._encoder.construct(
-            int(bytes(self.fourcc, 'ascii').hex(), 16), asn1.Classes.Private
+        with (
+            self._encoder.construct(
+                int(bytes(self.fourcc, 'ascii').hex(), 16), asn1.Classes.Private
+            ),
+            self._encoder.construct(asn1.Numbers.Sequence, asn1.Classes.Universal),
         ):
-            with self._encoder.construct(asn1.Numbers.Sequence, asn1.Classes.Universal):
-                self._encoder.write(
-                    self.fourcc,
-                    asn1.Numbers.IA5String,
-                    asn1.Types.Primitive,
-                    asn1.Classes.Universal,
-                )
+            self._encoder.write(
+                self.fourcc,
+                asn1.Numbers.IA5String,
+                asn1.Types.Primitive,
+                asn1.Classes.Universal,
+            )
 
-                self._encoder.write(
-                    self.value, None, asn1.Types.Primitive, asn1.Classes.Universal
-                )
+            self._encoder.write(
+                self.value, None, asn1.Types.Primitive, asn1.Classes.Universal
+            )
 
         return self._encoder.output()
 
@@ -153,12 +157,10 @@ class _Property(_PyIMG4):
 class _PropertyGroup(_PyIMG4):
     _property = _Property
 
-    def __init__(
-        self, data: Optional[bytes] = None, *, fourcc: Optional[str] = None
-    ) -> None:
+    def __init__(self, data: bytes | None = None, *, fourcc: str | None = None) -> None:
         super().__init__(data)
 
-        self._properties: List[Optional[self._property]] = []
+        self._properties: list[self._property | None] = []
 
         if data:
             self._parse()
@@ -195,7 +197,7 @@ class _PropertyGroup(_PyIMG4):
         return self._fourcc
 
     @property
-    def properties(self) -> Tuple[Optional[_property]]:
+    def properties(self) -> tuple[_property | None]:
         return tuple(self._properties)
 
     def add_property(self, prop: _property) -> None:
@@ -208,7 +210,7 @@ class _PropertyGroup(_PyIMG4):
         self._properties.append(prop)
 
     def remove_property(
-        self, prop: Optional[_property] = None, fourcc: Optional[str] = None
+        self, prop: _property | None = None, fourcc: str | None = None
     ) -> None:
         if prop is not None:
             if not isinstance(prop, self._property):
@@ -238,36 +240,38 @@ class _PropertyGroup(_PyIMG4):
             raise ValueError('No properties are set')
 
         self._encoder.start()
-        with self._encoder.construct(
-            int(bytes(self.fourcc, 'ascii').hex(), 16), asn1.Classes.Private
+        with (
+            self._encoder.construct(
+                int(bytes(self.fourcc, 'ascii').hex(), 16), asn1.Classes.Private
+            ),
+            self._encoder.construct(asn1.Numbers.Sequence, asn1.Classes.Universal),
         ):
-            with self._encoder.construct(asn1.Numbers.Sequence, asn1.Classes.Universal):
-                self._encoder.write(
-                    self.fourcc,
-                    asn1.Numbers.IA5String,
-                    asn1.Types.Primitive,
-                    asn1.Classes.Universal,
-                )
+            self._encoder.write(
+                self.fourcc,
+                asn1.Numbers.IA5String,
+                asn1.Types.Primitive,
+                asn1.Classes.Universal,
+            )
 
-                with self._encoder.construct(asn1.Numbers.Set, asn1.Classes.Universal):
-                    for prop in self.properties:
-                        self._decoder.start(prop.output())
-                        with self._encoder.construct(
-                            self._decoder.peek().nr, asn1.Classes.Private
-                        ):
-                            self._decoder.enter()
-                            self._encoder.write(
-                                self._decoder.read()[1],
-                                asn1.Numbers.Sequence,
-                                asn1.Types.Constructed,
-                                asn1.Classes.Universal,
-                            )
+            with self._encoder.construct(asn1.Numbers.Set, asn1.Classes.Universal):
+                for prop in self.properties:
+                    self._decoder.start(prop.output())
+                    with self._encoder.construct(
+                        self._decoder.peek().nr, asn1.Classes.Private
+                    ):
+                        self._decoder.enter()
+                        self._encoder.write(
+                            self._decoder.read()[1],
+                            asn1.Numbers.Sequence,
+                            asn1.Types.Constructed,
+                            asn1.Classes.Universal,
+                        )
 
         return self._encoder.output()
 
 
 class Data(_PyIMG4):
-    def get_type(self) -> Optional[Union['IMG4', 'IM4P', 'IM4M', 'IM4R']]:
+    def get_type(self) -> IMG4 | IM4P | IM4M | IM4R | None:
         self._decoder.start(self._data)
 
         if self._decoder.peek().nr != asn1.Numbers.Sequence:
@@ -294,7 +298,7 @@ class ManifestImageProperties(_PropertyGroup):
     _property = ManifestProperty
 
     @property
-    def digest(self) -> Optional[bytes]:
+    def digest(self) -> bytes | None:
         return next(
             (prop.value for prop in self.properties if prop.fourcc == 'DGST'),
             None,
@@ -302,11 +306,11 @@ class ManifestImageProperties(_PropertyGroup):
 
 
 class IM4M(_PyIMG4):
-    def __init__(self, data: Optional[bytes] = None) -> None:
+    def __init__(self, data: bytes | None = None) -> None:
         super().__init__(data)
 
-        self._images: List[ManifestImageProperties] = []
-        self._properties: List[ManifestProperty] = []
+        self._images: list[ManifestImageProperties] = []
+        self._properties: list[ManifestProperty] = []
 
         if data:
             self._parse()
@@ -389,14 +393,14 @@ class IM4M(_PyIMG4):
             )
 
     @property
-    def apnonce(self) -> Optional[bytes]:
+    def apnonce(self) -> bytes | None:
         return next(
             (prop.value for prop in self.properties if prop.fourcc == 'BNCH'),
             None,
         )
 
     @property
-    def board_id(self) -> Optional[int]:
+    def board_id(self) -> int | None:
         return next(
             (prop.value for prop in self.properties if prop.fourcc == 'BORD'), None
         )
@@ -406,27 +410,27 @@ class IM4M(_PyIMG4):
         return self._certificates
 
     @property
-    def chip_id(self) -> Optional[int]:
+    def chip_id(self) -> int | None:
         return next(
             (prop.value for prop in self.properties if prop.fourcc == 'CHIP'), None
         )
 
     @property
-    def ecid(self) -> Optional[int]:
+    def ecid(self) -> int | None:
         return next(
             (prop.value for prop in self.properties if prop.fourcc == 'ECID'), None
         )
 
     @property
-    def images(self) -> Tuple[Optional[ManifestImageProperties]]:
+    def images(self) -> tuple[ManifestImageProperties | None]:
         return tuple(self._images)
 
     @property
-    def properties(self) -> Tuple[Optional[ManifestProperty]]:
+    def properties(self) -> tuple[ManifestProperty | None]:
         return tuple(self._properties)
 
     @property
-    def sepnonce(self) -> Optional[bytes]:
+    def sepnonce(self) -> bytes | None:
         return next(
             (prop.value for prop in self.properties if prop.fourcc == 'snon'),
             None,
@@ -452,8 +456,8 @@ class IM4M(_PyIMG4):
 
     def remove_image_properties(
         self,
-        image_properties: Optional[ManifestImageProperties] = None,
-        fourcc: Optional[str] = None,
+        image_properties: ManifestImageProperties | None = None,
+        fourcc: str | None = None,
     ) -> None:
         if image_properties is not None:
             if not isinstance(image_properties, ManifestImageProperties):
@@ -493,7 +497,7 @@ class IM4M(_PyIMG4):
         self._properties.append(prop)
 
     def remove_property(
-        self, prop: Optional[ManifestProperty] = None, fourcc: Optional[str] = None
+        self, prop: ManifestProperty | None = None, fourcc: str | None = None
     ) -> None:
         if prop is not None:
             if not isinstance(prop, ManifestProperty):
@@ -583,7 +587,7 @@ class RestoreProperty(_Property):
 class IM4R(_PropertyGroup):
     _property = RestoreProperty
 
-    def __init__(self, data: Optional[bytes] = None) -> None:
+    def __init__(self, data: bytes | None = None) -> None:
         super().__init__(data, fourcc='IM4R')
 
         if self.boot_nonce is not None:
@@ -593,7 +597,7 @@ class IM4R(_PropertyGroup):
         return f'IM4R(properties={len(self.properties)})'
 
     @property
-    def boot_nonce(self) -> Optional[bytes]:
+    def boot_nonce(self) -> bytes | None:
         return next(
             (prop.value for prop in self.properties if prop.fourcc == 'BNCN'),
             None,
@@ -649,11 +653,11 @@ class IM4R(_PropertyGroup):
 class IMG4(_PyIMG4):
     def __init__(
         self,
-        data: Optional[bytes] = None,
+        data: bytes | None = None,
         *,
-        im4p: Optional[Union['IM4P', bytes]] = None,
-        im4m: Optional[Union[IM4M, bytes]] = None,
-        im4r: Optional[Union[IM4R, bytes]] = None,
+        im4p: IM4P | bytes | None = None,
+        im4m: IM4M | bytes | None = None,
+        im4r: IM4R | bytes | None = None,
     ) -> None:
         super().__init__(data)
 
@@ -710,33 +714,33 @@ class IMG4(_PyIMG4):
             )
 
     @property
-    def im4m(self) -> Optional[IM4M]:
+    def im4m(self) -> IM4M | None:
         return self._im4m
 
     @im4m.setter
-    def im4m(self, im4m: Optional[Union[IM4M, bytes]]) -> None:
+    def im4m(self, im4m: IM4M | bytes | None) -> None:
         if im4m is not None and not isinstance(im4m, (IM4M, bytes)):
             raise UnexpectedDataError('IM4M or bytes', im4m)
 
         self._im4m = IM4M(im4m) if isinstance(im4m, bytes) else im4m
 
     @property
-    def im4p(self) -> Optional['IM4P']:
+    def im4p(self) -> IM4P | None:
         return self._im4p
 
     @im4p.setter
-    def im4p(self, im4p: Optional[Union['IM4P', bytes]]) -> None:
+    def im4p(self, im4p: IM4P | bytes | None) -> None:
         if im4p is not None and not isinstance(im4p, (IM4P, bytes)):
             raise UnexpectedDataError('IM4P or bytes', im4p)
 
         self._im4p = IM4P(im4p) if isinstance(im4p, bytes) else im4p
 
     @property
-    def im4r(self) -> Optional[IM4R]:
+    def im4r(self) -> IM4R | None:
         return self._im4r
 
     @im4r.setter
-    def im4r(self, im4r: Optional[Union[IM4R, bytes]]) -> None:
+    def im4r(self, im4r: IM4R | bytes | None) -> None:
         if im4r is not None and not isinstance(im4r, (IM4R, bytes)):
             raise UnexpectedDataError('IM4R or bytes', im4r)
 
@@ -792,11 +796,11 @@ class PayloadProperty(_Property):
 class IM4P(_PyIMG4):
     def __init__(
         self,
-        data: Optional[bytes] = None,
+        data: bytes | None = None,
         *,
-        fourcc: Optional[str] = None,
-        description: Optional[str] = None,
-        payload: Optional[Union['IM4PData', bytes]] = None,
+        fourcc: str | None = None,
+        description: str | None = None,
+        payload: IM4PData | bytes | None = None,
     ) -> None:
         super().__init__(data)
 
@@ -905,18 +909,18 @@ class IM4P(_PyIMG4):
         return self._description
 
     @description.setter
-    def description(self, description: Optional[str]) -> None:
+    def description(self, description: str | None) -> None:
         if description is not None and not isinstance(description, str):
             raise UnexpectedDataError('string', description)
 
         self._description = description or ''
 
     @property
-    def fourcc(self) -> Optional[str]:
+    def fourcc(self) -> str | None:
         return self._fourcc
 
     @fourcc.setter
-    def fourcc(self, fourcc: Optional[str]) -> None:
+    def fourcc(self, fourcc: str | None) -> None:
         if fourcc is None:
             self._fourcc = fourcc
 
@@ -926,18 +930,18 @@ class IM4P(_PyIMG4):
             raise UnexpectedDataError('string', fourcc)
 
     @property
-    def payload(self) -> Optional['IM4PData']:
+    def payload(self) -> IM4PData | None:
         return self._payload
 
     @payload.setter
-    def payload(self, payload: Optional[Union['IM4PData', bytes]]) -> None:
+    def payload(self, payload: IM4PData | bytes | None) -> None:
         if payload is not None and not isinstance(payload, (IM4PData, bytes)):
             raise UnexpectedDataError('IM4PData or bytes', payload)
 
         self._payload = IM4PData(payload) if isinstance(payload, bytes) else payload
 
     @property
-    def properties(self) -> Tuple[Optional[PayloadProperty]]:
+    def properties(self) -> tuple[PayloadProperty | None]:
         return tuple(self._properties)
 
     def add_property(self, prop: PayloadProperty) -> None:
@@ -950,7 +954,7 @@ class IM4P(_PyIMG4):
         self._properties.append(prop)
 
     def remove_property(
-        self, prop: Optional[PayloadProperty] = None, fourcc: Optional[str] = None
+        self, prop: PayloadProperty | None = None, fourcc: str | None = None
     ) -> None:
         if prop is not None:
             if not isinstance(prop, PayloadProperty):
@@ -1067,10 +1071,10 @@ class IM4P(_PyIMG4):
 class Keybag(_PyIMG4):
     def __init__(
         self,
-        data: Optional[bytes] = None,
+        data: bytes | None = None,
         *,
-        iv: bytes = None,
-        key: bytes = None,
+        iv: bytes | None = None,
+        key: bytes | None = None,
         type_: KeybagType = KeybagType.PRODUCTION,  # Assume PRODUCTION if not provided
     ) -> None:
         super().__init__(data)
@@ -1156,7 +1160,7 @@ class Keybag(_PyIMG4):
 
 class IM4PData(_PyIMG4):
     def __init__(
-        self, data: bytes, *, size: int = 0, extra: Optional[bytes] = None
+        self, data: bytes, *, size: int = 0, extra: bytes | None = None
     ) -> None:
         super().__init__(data)
 
@@ -1186,13 +1190,13 @@ class IM4PData(_PyIMG4):
         header += adler32(self.data).to_bytes(4, 'big')
         header += self.size.to_bytes(4, 'big')
         header += comp_size.to_bytes(4, 'big')
-        header += int(1).to_bytes(4, 'big')
+        header += (1).to_bytes(4, 'big')
         header += bytearray(0x180 - len(header))
 
         return bytes(header)
 
     def _decompress_data(
-        self, data: bytes, compression: Compression, size: Optional[int] = None
+        self, data: bytes, compression: Compression, size: int | None = None
     ) -> bytes:
         if compression == Compression.LZSS:
             return lzss.decompress(data)
@@ -1238,18 +1242,18 @@ class IM4PData(_PyIMG4):
         return len(self.keybags) > 0
 
     @property
-    def extra(self) -> Optional[bytes]:
+    def extra(self) -> bytes | None:
         return self._extra
 
     @extra.setter
-    def extra(self, extra: Optional[bytes]) -> None:
+    def extra(self, extra: bytes | None) -> None:
         if extra is not None and not isinstance(extra, bytes):
             raise UnexpectedDataError('bytes', extra)
 
         self._extra = extra
 
     @property
-    def keybags(self) -> Tuple[Optional[Keybag]]:
+    def keybags(self) -> tuple[Keybag | None]:
         return tuple(self._keybags)
 
     @property
@@ -1287,7 +1291,7 @@ class IM4PData(_PyIMG4):
         self._keybags.append(keybag)
 
     def remove_keybag(
-        self, keybag: Optional[Keybag] = None, type_: Optional[KeybagType] = None
+        self, keybag: Keybag | None = None, type_: KeybagType | None = None
     ) -> None:
         if keybag is not None:
             if not isinstance(keybag, keybag):

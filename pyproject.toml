@@ -20,7 +20,7 @@ dependencies = [
     "asn1<3.0.0",
     "click>=8.1.7",
     "pycryptodome>=3.18.0",
-    "pylzss==0.3.4",
+    "pylzss>=0.3.9",
     "lzfse>=0.4.2; sys_platform != 'darwin'",
     "apple-compress>=0.2.3; sys_platform == 'darwin'",
 

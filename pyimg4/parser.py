@@ -1195,7 +1195,9 @@ class IM4PData(_PyIMG4):
         self, data: bytes, compression: Compression, size: Optional[int] = None
     ) -> bytes:
         if compression == Compression.LZSS:
-            return lzss.decompress(data)
+            # Skip the 0x180-byte complzss header; it is not part of the LZSS stream.
+            cmp_len = int.from_bytes(data[0x10:0x14], 'big')
+            return lzss.decompress(data[0x180 : 0x180 + cmp_len])
 
         elif self.compression == Compression.LZFSE:
             return _lzfse_decompress(self.data, size)

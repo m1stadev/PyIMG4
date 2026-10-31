@@ -18,6 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        asn1-version: ["asn1<3", "asn1>=3"]
 
     steps:
     - uses: actions/checkout@v4
@@ -33,5 +34,8 @@ jobs:
     - name: Install the project
       run: uv sync --dev
 
+    - name: Install python-asn1 (${{ matrix.asn1-version }})
+      run: uv pip install '${{ matrix.asn1-version }}'
+
     - name: Run tests
-      run: uv run pytest
+      run: uv run --no-sync pytest

@@ -7,6 +7,7 @@ import asn1
 import lzss
 from Crypto.Cipher import AES
 
+from ._asn1compat import _at_end, _leave, _read_constructed, _write_constructed
 from .errors import CompressionError, UnexpectedDataError, UnexpectedTagError
 from .types import Compression, KeybagType, Payload
 
@@ -187,8 +188,8 @@ class _PropertyGroup(_PyIMG4):
 
         self._decoder.enter()
 
-        while not self._decoder.eof():
-            self._properties.append(self._property(self._decoder.read()[1]))
+        while not _at_end(self._decoder):
+            self._properties.append(self._property(_read_constructed(self._decoder)))
 
     @property
     def fourcc(self) -> str:
@@ -256,10 +257,10 @@ class _PropertyGroup(_PyIMG4):
                             self._decoder.peek().nr, asn1.Classes.Private
                         ):
                             self._decoder.enter()
-                            self._encoder.write(
-                                self._decoder.read()[1],
+                            _write_constructed(
+                                self._encoder,
+                                _read_constructed(self._decoder),
                                 asn1.Numbers.Sequence,
-                                asn1.Types.Constructed,
                                 asn1.Classes.Universal,
                             )
 
@@ -355,17 +356,17 @@ class IM4M(_PyIMG4):
             raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Set)
 
         self._decoder.enter()
-        while not self._decoder.eof():
-            data = ManifestImageProperties(self._decoder.read()[1])
+        while not _at_end(self._decoder):
+            data = ManifestImageProperties(_read_constructed(self._decoder))
             if data.fourcc == 'MANP':
                 self._properties = list(data.properties)
             else:
                 self._images.append(data)
 
         for _ in range(4):
-            self._decoder.leave()
+            _leave(self._decoder)
 
-        if self._decoder.eof():
+        if _at_end(self._decoder):
             # IM4M has no signature/certificates
             # TODO: Make this cleaner
             self._signature = None
@@ -381,9 +382,9 @@ class IM4M(_PyIMG4):
             raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
 
         # TODO: Parse certificates
-        self._certificates = self._decoder.read()[1]
+        self._certificates = _read_constructed(self._decoder)
 
-        if not self._decoder.eof():
+        if not _at_end(self._decoder):
             raise ValueError(
                 f'Unexpected data found at end of Image4 manifest: {self._decoder.peek().nr.name.upper()}'
             )
@@ -553,10 +554,10 @@ class IM4M(_PyIMG4):
                     self._decoder.peek().nr, asn1.Classes.Private
                 ):
                     self._decoder.enter()
-                    self._encoder.write(
-                        self._decoder.read()[1],
+                    _write_constructed(
+                        self._encoder,
+                        _read_constructed(self._decoder),
                         asn1.Numbers.Sequence,
-                        asn1.Types.Constructed,
                         asn1.Classes.Universal,
                     )
 
@@ -567,10 +568,10 @@ class IM4M(_PyIMG4):
                 asn1.Classes.Universal,
             )
 
-            self._encoder.write(
+            _write_constructed(
+                self._encoder,
                 self.certificates,
                 asn1.Numbers.Sequence,
-                asn1.Types.Constructed,
                 asn1.Classes.Universal,
             )
         return self._encoder.output()
@@ -636,10 +637,10 @@ class IM4R(_PropertyGroup):
                         self._decoder.peek().nr, asn1.Classes.Private
                     ):
                         self._decoder.enter()
-                        self._encoder.write(
-                            self._decoder.read()[1],
+                        _write_constructed(
+                            self._encoder,
+                            _read_constructed(self._decoder),
                             asn1.Numbers.Sequence,
-                            asn1.Types.Constructed,
                             asn1.Classes.Universal,
                         )
 
@@ -683,10 +684,10 @@ class IMG4(_PyIMG4):
         if self._decoder.peek().nr != asn1.Numbers.Sequence:
             raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Sequence)
 
-        self._encoder.write(
-            self._decoder.read()[1],
+        _write_constructed(
+            self._encoder,
+            _read_constructed(self._decoder),
             asn1.Numbers.Sequence,
-            asn1.Types.Constructed,
             asn1.Classes.Universal,
         )
         self.im4p = IM4P(self._encoder.output())  # IM4P
@@ -694,17 +695,17 @@ class IMG4(_PyIMG4):
         if self._decoder.peek().cls != asn1.Classes.Context:
             raise UnexpectedTagError(self._decoder.peek(), asn1.Classes.Context)
 
-        self.im4m = IM4M(self._decoder.read()[1])  # IM4M
+        self.im4m = IM4M(_read_constructed(self._decoder))  # IM4M
 
-        if self._decoder.eof():
+        if _at_end(self._decoder):
             self.im4r = None
 
         elif self._decoder.peek().cls != asn1.Classes.Context:
             raise UnexpectedTagError(self._decoder.peek(), asn1.Classes.Context)
 
         else:
-            self.im4r = IM4R(self._decoder.read()[1])  # IM4R
-        if not self._decoder.eof():
+            self.im4r = IM4R(_read_constructed(self._decoder))  # IM4R
+        if not _at_end(self._decoder):
             raise ValueError(
                 f'Unexpected data found at end of Image4: {self._decoder.peek().nr.name.upper()}'
             )
@@ -757,28 +758,28 @@ class IMG4(_PyIMG4):
                 raise ValueError('No IM4P is set.')
 
             self._decoder.start(self.im4p.output())
-            self._encoder.write(
-                self._decoder.read()[1],
+            _write_constructed(
+                self._encoder,
+                _read_constructed(self._decoder),
                 asn1.Numbers.Sequence,
-                asn1.Types.Constructed,
                 asn1.Classes.Universal,
             )
 
             if self.im4m is None:
                 raise ValueError('No IM4M is set.')
 
-            self._encoder.write(
+            _write_constructed(
+                self._encoder,
                 self.im4m.output(),
                 0,
-                asn1.Types.Constructed,
                 asn1.Classes.Context,
             )
 
             if self.im4r is not None:
-                self._encoder.write(
+                _write_constructed(
+                    self._encoder,
                     self.im4r.output(),
                     1,
-                    asn1.Types.Constructed,
                     asn1.Classes.Context,
                 )
 
@@ -851,7 +852,7 @@ class IM4P(_PyIMG4):
         self.payload = self._decoder.read()[1]
 
         if (
-            not self._decoder.eof()
+            not _at_end(self._decoder)
             and self._decoder.peek().nr == asn1.Numbers.OctetString
         ):
             kbag_decoder = asn1.Decoder()
@@ -862,13 +863,16 @@ class IM4P(_PyIMG4):
 
             kbag_decoder.enter()
 
-            while not kbag_decoder.eof():
+            while not _at_end(kbag_decoder):
                 if kbag_decoder.peek().nr != asn1.Numbers.Sequence:
                     raise UnexpectedTagError(kbag_decoder.peek(), asn1.Numbers.Sequence)
 
-                self.payload.add_keybag(Keybag(kbag_decoder.read()[1]))
+                self.payload.add_keybag(Keybag(_read_constructed(kbag_decoder)))
 
-        if not self._decoder.eof() and self._decoder.peek().nr == asn1.Numbers.Sequence:
+        if (
+            not _at_end(self._decoder)
+            and self._decoder.peek().nr == asn1.Numbers.Sequence
+        ):
             self._decoder.enter()
 
             if (
@@ -877,9 +881,12 @@ class IM4P(_PyIMG4):
             ):
                 self.payload.size = self._decoder.read()[1]
 
-            self._decoder.leave()
+            _leave(self._decoder)
 
-        if not self._decoder.eof() and self._decoder.peek().cls == asn1.Classes.Context:
+        if (
+            not _at_end(self._decoder)
+            and self._decoder.peek().cls == asn1.Classes.Context
+        ):
             self._decoder.enter()
 
             if self._decoder.peek().nr != asn1.Numbers.Sequence:
@@ -892,10 +899,12 @@ class IM4P(_PyIMG4):
                 raise UnexpectedTagError(self._decoder.peek(), asn1.Numbers.Set)
 
             self._decoder.enter()
-            while not self._decoder.eof():
-                self._properties.append(PayloadProperty(self._decoder.read()[1]))
+            while not _at_end(self._decoder):
+                self._properties.append(
+                    PayloadProperty(_read_constructed(self._decoder))
+                )
 
-        if not self._decoder.eof():
+        if not _at_end(self._decoder):
             raise ValueError(
                 f'Unexpected data found at end of Image4 payload: {self._decoder.peek().nr.name.upper()}'
             )
@@ -1054,10 +1063,10 @@ class IM4P(_PyIMG4):
                                     self._decoder.peek().nr, asn1.Classes.Private
                                 ):
                                     self._decoder.enter()
-                                    self._encoder.write(
-                                        self._decoder.read()[1],
+                                    _write_constructed(
+                                        self._encoder,
+                                        _read_constructed(self._decoder),
                                         asn1.Numbers.Sequence,
-                                        asn1.Types.Constructed,
                                         asn1.Classes.Universal,
                                     )
 
@@ -1109,7 +1118,7 @@ class Keybag(_PyIMG4):
 
         self.key = self._decoder.read()[1]
 
-        if not self._decoder.eof():
+        if not _at_end(self._decoder):
             raise ValueError(
                 f'Unexpected data found at end of keybag: {self._decoder.peek().nr.name.upper()}'
             )

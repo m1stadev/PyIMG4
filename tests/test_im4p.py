@@ -31,6 +31,8 @@ def test_read_lzss_dec(DEC_LZSS_IM4P: bytes) -> None:
     im4p.payload.decompress()
 
     assert im4p.payload.compression == pyimg4.Compression.NONE
+    assert im4p.payload.data[:4] == bytes.fromhex('cffaedfe')  # MH_MAGIC_64
+    assert len(im4p.payload.data) == im4p.payload.size
     assert im4p.payload.extra is not None and len(im4p.payload.extra) == 0xC000
 
     im4p.output()

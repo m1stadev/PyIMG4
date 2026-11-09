@@ -1,4 +1,6 @@
-from typing import Any, Union
+from __future__ import annotations
+
+from typing import Any
 
 from asn1 import Classes, Numbers, Tag
 
@@ -26,7 +28,7 @@ class UnexpectedDataError(_PyIMG4Error, ValueError):
 
 
 class UnexpectedTagError(_PyIMG4Error, ValueError):
-    def __init__(self, tag: Tag, valid: Union[Classes, Numbers]) -> None:
+    def __init__(self, tag: Tag, valid: Classes | Numbers) -> None:
         try:
             tag_type = next(t.name for t in Numbers if t.value == tag.nr)
         except StopIteration:

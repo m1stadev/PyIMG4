@@ -1,13 +1,15 @@
+from __future__ import annotations
+
 import plistlib
 import sys
-from typing import BinaryIO, Optional
+from typing import BinaryIO
 
 import click
 
 import pyimg4
 from pyimg4 import Compression, Keybag
 
-CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+CONTEXT_SETTINGS = {'help_option_names': ['-h', '--help']}
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -21,8 +23,6 @@ def cli():
 @cli.group()
 def im4m() -> None:
     """Image4 manifest commands."""
-
-    pass
 
 
 @im4m.command('info')
@@ -165,7 +165,7 @@ def im4m_verify(input_: BinaryIO, build_manifest: BinaryIO, verbose: bool) -> No
             f'Selected build identity: {manifest["BuildIdentities"].index(identity) + 1}'
         )
         for name, image_info in identity['Manifest'].items():
-            if 'Digest' not in image_info.keys():
+            if 'Digest' not in image_info:
                 if verbose:
                     click.echo(f'Component: {name} has no hash, skipping...')
 
@@ -224,9 +224,7 @@ def im4m_verify(input_: BinaryIO, build_manifest: BinaryIO, verbose: bool) -> No
     flag_value='noNonce',
     help='Extract no-nonce Image4 manifest (if available).',
 )
-def im4m_extract(
-    input_: BinaryIO, output: BinaryIO, install_type: Optional[str]
-) -> None:
+def im4m_extract(input_: BinaryIO, output: BinaryIO, install_type: str | None) -> None:
     """Extract an Image4 manifest from an SHSH blob."""
 
     try:
@@ -235,21 +233,21 @@ def im4m_extract(
         raise click.BadParameter(f'Failed to read SHSH blob: {input_.name}')
 
     if install_type == 'updateInstall':
-        if 'updateInstall' not in data.keys():
+        if 'updateInstall' not in data:
             raise click.BadParameter(
                 f'SHSH blob does not contain an update Image4 manifest: {input_.name}'
             )
 
         data = data['updateInstall']
     elif install_type == 'noNonce':
-        if 'noNonce' not in data.keys():
+        if 'noNonce' not in data:
             raise click.BadParameter(
                 f'SHSH blob does not contain a no-nonce Image4 manifest: {input_.name}'
             )
 
         data = data['noNonce']
 
-    if 'ApImg4Ticket' not in data.keys():
+    if 'ApImg4Ticket' not in data:
         raise click.BadParameter(
             f'SHSH blob does not contain an Image4 manifest: {input_.name}'
         )
@@ -268,8 +266,6 @@ def im4m_extract(
 @cli.group()
 def im4p() -> None:
     """Image4 payload commands."""
-
-    pass
 
 
 @im4p.command('create')
@@ -313,9 +309,9 @@ def im4p_create(
     input_: BinaryIO,
     output: BinaryIO,
     fourcc: str,
-    description: Optional[str],
-    compression_type: Optional[str],
-    extra: Optional[BinaryIO],
+    description: str | None,
+    compression_type: str | None,
+    extra: BinaryIO | None,
 ) -> None:
     """Create an Image4 payload file."""
 
@@ -386,10 +382,10 @@ def im4p_create(
 def im4p_extract(
     input_: BinaryIO,
     output: BinaryIO,
-    extra: Optional[BinaryIO],
+    extra: BinaryIO | None,
     decompress: bool,
-    iv: Optional[str],
-    key: Optional[str],
+    iv: str | None,
+    key: str | None,
 ) -> None:
     """Extract data from an Image4 payload."""
 
@@ -551,8 +547,6 @@ def im4p_info(input_: BinaryIO, verbose: bool) -> None:
 def im4r() -> None:
     """Image4 restore info commands."""
 
-    pass
-
 
 @im4r.command('create')
 @click.option(
@@ -643,8 +637,6 @@ def im4r_info(input_: BinaryIO, verbose: bool) -> None:
 def img4() -> None:
     """Image4 commands."""
 
-    pass
-
 
 @img4.command('create')
 @click.option(
@@ -705,15 +697,15 @@ def img4() -> None:
     '-o', '--output', type=click.File('wb'), required=True, help='Output file.'
 )
 def img4_create(
-    input_: Optional[BinaryIO],
-    fourcc: Optional[str],
-    description: Optional[str],
-    compression_type: Optional[str],
-    extra: Optional[BinaryIO],
-    im4p: Optional[BinaryIO],
+    input_: BinaryIO | None,
+    fourcc: str | None,
+    description: str | None,
+    compression_type: str | None,
+    extra: BinaryIO | None,
+    im4p: BinaryIO | None,
     im4m: BinaryIO,
-    im4r: Optional[BinaryIO],
-    boot_nonce: Optional[str],
+    im4r: BinaryIO | None,
+    boot_nonce: str | None,
     output: BinaryIO,
 ):
     """Create an Image4 file."""
@@ -840,11 +832,11 @@ def img4_create(
 )
 def img4_extract(
     input_: BinaryIO,
-    raw: Optional[BinaryIO],
-    extra: Optional[BinaryIO],
-    im4p: Optional[BinaryIO],
-    im4m: Optional[BinaryIO],
-    im4r: Optional[BinaryIO],
+    raw: BinaryIO | None,
+    extra: BinaryIO | None,
+    im4p: BinaryIO | None,
+    im4m: BinaryIO | None,
+    im4r: BinaryIO | None,
 ) -> None:
     """Extract Image4 manifest/payload/restore info from an Image4 file."""
 
